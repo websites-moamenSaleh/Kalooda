@@ -18,7 +18,14 @@ const productEmoji: Record<string, string> = {
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+
+  const name =
+    locale === "ar" && product.name_ar ? product.name_ar : product.name;
+  const description =
+    locale === "ar" && product.description_ar
+      ? product.description_ar
+      : product.description;
 
   return (
     <div className="group relative flex flex-col rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition-all hover:shadow-lg hover:-translate-y-0.5">
@@ -29,10 +36,10 @@ export function ProductCard({ product }: { product: Product }) {
       </div>
 
       <h3 className="text-base font-semibold text-stone-900 leading-tight">
-        {product.name}
+        {name}
       </h3>
       <p className="mt-1 text-sm text-stone-500 line-clamp-2">
-        {product.description}
+        {description}
       </p>
 
       {product.allergens.length > 0 && (

@@ -33,11 +33,15 @@ export default function HomePage() {
   }, []);
 
   const filtered = products.filter((p) => {
+    if (p.unavailable_today) return false;
     const matchesCategory = !activeCategory || p.category_id === activeCategory;
+    const q = search.toLowerCase();
     const matchesSearch =
       !search ||
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase());
+      p.name.toLowerCase().includes(q) ||
+      p.description?.toLowerCase().includes(q) ||
+      p.name_ar?.toLowerCase().includes(q) ||
+      p.description_ar?.toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
 

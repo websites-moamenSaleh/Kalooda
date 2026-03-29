@@ -3,19 +3,25 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 
 interface ProductRow {
   name: string;
+  name_ar: string | null;
   price: number;
   allergens: string[];
   ingredients: string;
+  ingredients_ar: string | null;
   description: string;
+  description_ar: string | null;
+  unavailable_today: boolean;
 }
 
 async function getProducts(): Promise<ProductRow[]> {
   const { data, error } = await supabaseAdmin
     .from("products")
-    .select("name, price, allergens, ingredients, description");
+    .select(
+      "name, name_ar, price, allergens, ingredients, ingredients_ar, description, description_ar, unavailable_today"
+    );
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).filter((p: ProductRow) => !p.unavailable_today);
 }
 
 function buildSystemPrompt(products: ProductRow[]): string {

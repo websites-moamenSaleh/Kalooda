@@ -15,6 +15,10 @@ export interface Product {
   ingredients: string;
   allergens: string[];
   image_url: string;
+  name_ar: string | null;
+  description_ar: string | null;
+  ingredients_ar: string | null;
+  unavailable_today: boolean;
 }
 
 export interface Order {

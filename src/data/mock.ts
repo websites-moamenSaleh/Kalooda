@@ -38,6 +38,10 @@ export const products: Product[] = [
     ingredients: "70% Cocoa, Heavy Cream, Soy Lecithin, Vanilla extract",
     allergens: ["dairy", "soy"],
     image_url: "/images/dark-truffle.jpg",
+    name_ar: null,
+    description_ar: null,
+    ingredients_ar: null,
+    unavailable_today: false,
   },
   {
     id: "prod-2",
@@ -49,6 +53,10 @@ export const products: Product[] = [
     ingredients: "Sugar, Glucose Syrup, Wheat Flour, Malic Acid",
     allergens: ["gluten"],
     image_url: "/images/watermelon-belts.jpg",
+    name_ar: null,
+    description_ar: null,
+    ingredients_ar: null,
+    unavailable_today: false,
   },
   {
     id: "prod-3",
@@ -62,6 +70,10 @@ export const products: Product[] = [
       "Milk Chocolate, Hazelnuts, Sugar, Cocoa Butter, Soy Lecithin",
     allergens: ["dairy", "nuts", "soy"],
     image_url: "/images/hazelnut-praline.jpg",
+    name_ar: null,
+    description_ar: null,
+    ingredients_ar: null,
+    unavailable_today: false,
   },
   {
     id: "prod-4",
@@ -73,6 +85,10 @@ export const products: Product[] = [
     ingredients: "Sugar, Corn Syrup, Gelatin, Citric Acid, Natural Flavors",
     allergens: [],
     image_url: "/images/peach-rings.jpg",
+    name_ar: null,
+    description_ar: null,
+    ingredients_ar: null,
+    unavailable_today: false,
   },
   {
     id: "prod-5",
@@ -85,6 +101,10 @@ export const products: Product[] = [
     ingredients: "Sugar, Corn Syrup, Citric Acid, Artificial Colors & Flavors",
     allergens: [],
     image_url: "/images/lollipop.jpg",
+    name_ar: null,
+    description_ar: null,
+    ingredients_ar: null,
+    unavailable_today: false,
   },
   {
     id: "prod-6",
@@ -96,6 +116,10 @@ export const products: Product[] = [
     ingredients: "Sugar, Honey, Lemon Juice Concentrate, Natural Flavors",
     allergens: [],
     image_url: "/images/honey-lemon.jpg",
+    name_ar: null,
+    description_ar: null,
+    ingredients_ar: null,
+    unavailable_today: false,
   },
   {
     id: "prod-7",
@@ -108,6 +132,10 @@ export const products: Product[] = [
     ingredients: "Phyllo Dough, Pistachios, Butter, Sugar, Honey, Rose Water",
     allergens: ["gluten", "dairy", "nuts"],
     image_url: "/images/baklava.jpg",
+    name_ar: null,
+    description_ar: null,
+    ingredients_ar: null,
+    unavailable_today: false,
   },
   {
     id: "prod-8",
@@ -121,6 +149,10 @@ export const products: Product[] = [
       "Flour, Butter, Eggs, Cream, Strawberries, White Chocolate, Sugar",
     allergens: ["gluten", "dairy", "eggs"],
     image_url: "/images/eclair.jpg",
+    name_ar: null,
+    description_ar: null,
+    ingredients_ar: null,
+    unavailable_today: false,
   },
 ];
 
