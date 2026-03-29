@@ -44,6 +44,13 @@ export interface Delivery {
   timestamp: string;
 }
 
+export interface Driver {
+  id: string;
+  name: string;
+  phone: string | null;
+  created_at: string;
+}
+
 export interface CartItem {
   product: Product;
   quantity: number;

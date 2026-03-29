@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCart } from "@/contexts/cart-context";
+import { useLanguage } from "@/contexts/language-context";
 import { Header } from "@/components/header";
 import { CartDrawer } from "@/components/cart-drawer";
 import { CheckCircle, ArrowLeft, Loader2 } from "lucide-react";
@@ -9,6 +10,7 @@ import Link from "next/link";
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
+  const { t } = useLanguage();
   const [cartOpen, setCartOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -40,7 +42,7 @@ export default function CheckoutPage() {
       setOrderId(data.display_id ?? data.id ?? "confirmed");
       clearCart();
     } catch {
-      alert("Failed to place order. Please try again.");
+      alert(t("orderFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -56,18 +58,18 @@ export default function CheckoutPage() {
             <CheckCircle className="h-10 w-10 text-emerald-600" />
           </div>
           <h1 className="text-2xl font-bold text-stone-900">
-            Order Placed!
+            {t("orderPlaced")}
           </h1>
           <p className="mt-2 text-stone-500">
-            Your order <span className="font-semibold text-primary">{orderId}</span>{" "}
-            is being prepared. A driver will be notified shortly.
+            {t("yourOrder")} <span className="font-semibold text-primary">{orderId}</span>{" "}
+            {t("orderConfirmation")}
           </p>
           <Link
             href="/"
             className="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-primary-dark transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Continue Shopping
+            {t("continueShopping")}
           </Link>
         </main>
       </>
@@ -85,23 +87,23 @@ export default function CheckoutPage() {
           className="mb-6 inline-flex items-center gap-1 text-sm text-stone-500 hover:text-primary transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to shop
+          {t("backToShop")}
         </Link>
 
-        <h1 className="text-2xl font-bold text-stone-900">Checkout</h1>
+        <h1 className="text-2xl font-bold text-stone-900">{t("checkout")}</h1>
 
         {items.length === 0 ? (
           <p className="mt-8 text-center text-stone-400">
-            Your cart is empty.{" "}
+            {t("cartEmptyCheckout")}{" "}
             <Link href="/" className="text-primary underline">
-              Browse products
+              {t("browseProducts")}
             </Link>
           </p>
         ) : (
           <>
             <div className="mt-6 rounded-xl border border-stone-200 bg-white p-4">
               <h2 className="mb-3 text-sm font-semibold text-stone-700">
-                Order Summary
+                {t("orderSummary")}
               </h2>
               <ul className="divide-y divide-stone-100">
                 {items.map((item) => (
@@ -119,7 +121,7 @@ export default function CheckoutPage() {
                 ))}
               </ul>
               <div className="mt-3 flex items-center justify-between border-t border-stone-200 pt-3">
-                <span className="font-semibold text-stone-700">Total</span>
+                <span className="font-semibold text-stone-700">{t("total")}</span>
                 <span className="text-lg font-bold text-primary">
                   ${totalPrice.toFixed(2)}
                 </span>
@@ -129,26 +131,26 @@ export default function CheckoutPage() {
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-stone-700">
-                  Name
+                  {t("name")}
                 </label>
                 <input
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  placeholder="Your name"
+                  placeholder={t("namePlaceholder")}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-stone-700">
-                  Phone
+                  {t("phone")}
                 </label>
                 <input
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  placeholder="+1234567890"
+                  placeholder={t("phonePlaceholder")}
                 />
               </div>
               <button
@@ -157,7 +159,7 @@ export default function CheckoutPage() {
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-sm hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                {submitting ? "Placing Order..." : "Place Order"}
+                {submitting ? t("placingOrder") : t("placeOrder")}
               </button>
             </form>
           </>

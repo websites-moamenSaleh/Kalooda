@@ -1,38 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mockOrders } from "@/data/mock";
-
-let orderCounter = mockOrders.length;
+import { supabaseAdmin } from "@/lib/supabase-server";
 
 export async function GET() {
-  return NextResponse.json(mockOrders);
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error("Fetch orders error:", err);
+    return NextResponse.json(
+      { error: "Failed to fetch orders" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    orderCounter++;
-    const displayId = `ORD-${7720 + orderCounter}`;
 
-    const useMock =
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      process.env.NEXT_PUBLIC_SUPABASE_URL === "your_supabase_url";
+    const { count } = await supabaseAdmin
+      .from("orders")
+      .select("*", { count: "exact", head: true });
+    const displayId = `ORD-${7721 + (count ?? 0)}`;
 
-    if (useMock) {
-      const newOrder = {
-        id: `order-${orderCounter}`,
-        display_id: displayId,
-        customer_name: body.customer_name,
-        customer_phone: body.customer_phone,
-        items: body.items,
-        total_price: body.total_price,
-        status: "pending" as const,
-        created_at: new Date().toISOString(),
-      };
-      mockOrders.push(newOrder);
-      return NextResponse.json(newOrder, { status: 201 });
-    }
-
-    const { supabaseAdmin } = await import("@/lib/supabase-server");
     const { data, error } = await supabaseAdmin
       .from("orders")
       .insert({

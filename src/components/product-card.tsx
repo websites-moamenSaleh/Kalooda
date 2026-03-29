@@ -2,6 +2,7 @@
 
 import { Product } from "@/types/database";
 import { useCart } from "@/contexts/cart-context";
+import { useLanguage } from "@/contexts/language-context";
 import { Plus, ShieldAlert } from "lucide-react";
 
 const productEmoji: Record<string, string> = {
@@ -17,6 +18,7 @@ const productEmoji: Record<string, string> = {
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
+  const { t } = useLanguage();
 
   return (
     <div className="group relative flex flex-col rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition-all hover:shadow-lg hover:-translate-y-0.5">
@@ -56,7 +58,7 @@ export function ProductCard({ product }: { product: Product }) {
           className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark transition-colors active:scale-95"
         >
           <Plus className="h-4 w-4" />
-          Add
+          {t("add")}
         </button>
       </div>
     </div>

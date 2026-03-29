@@ -10,6 +10,8 @@ import {
   Candy,
 } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/language-context";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 type DeliveryStatus = "loading" | "idle" | "accepting" | "accepted" | "error";
 
@@ -28,21 +30,20 @@ export default function DeliveryAcceptPage({
   params: Promise<{ orderId: string }>;
 }) {
   const { orderId } = use(params);
+  const { t } = useLanguage();
   const [order, setOrder] = useState<OrderData | null>(null);
   const [status, setStatus] = useState<DeliveryStatus>("loading");
   const [driverName, setDriverName] = useState("");
 
   useEffect(() => {
-    fetch("/api/orders")
-      .then((r) => r.json())
-      .then((orders: OrderData[]) => {
-        const found = orders.find((o) => o.id === orderId);
-        if (found) {
-          setOrder(found);
-          setStatus(found.status === "assigned" ? "accepted" : "idle");
-        } else {
-          setStatus("error");
-        }
+    fetch(`/api/orders/${orderId}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("Not found");
+        return r.json();
+      })
+      .then((found: OrderData) => {
+        setOrder(found);
+        setStatus(found.status === "assigned" ? "accepted" : "idle");
       })
       .catch(() => setStatus("error"));
   }, [orderId]);
@@ -65,16 +66,19 @@ export default function DeliveryAcceptPage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-amber-50 to-rose-50 px-4">
-      <Link href="/" className="mb-8 flex items-center gap-2">
-        <Candy className="h-7 w-7 text-primary" />
-        <span className="text-xl font-bold text-stone-900">SweetDrop</span>
-      </Link>
+      <div className="mb-8 flex items-center gap-4">
+        <Link href="/" className="flex items-center gap-2">
+          <Candy className="h-7 w-7 text-primary" />
+          <span className="text-xl font-bold text-stone-900">SweetDrop</span>
+        </Link>
+        <LanguageSwitcher />
+      </div>
 
       <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-lg">
         {status === "loading" && (
           <div className="flex flex-col items-center py-8 text-stone-400">
             <Loader2 className="h-8 w-8 animate-spin" />
-            <p className="mt-3 text-sm">Loading order...</p>
+            <p className="mt-3 text-sm">{t("loadingOrder")}</p>
           </div>
         )}
 
@@ -82,7 +86,7 @@ export default function DeliveryAcceptPage({
           <div className="flex flex-col items-center py-8 text-red-500">
             <XCircle className="h-10 w-10" />
             <p className="mt-3 text-sm font-medium">
-              Order not found or already taken.
+              {t("orderNotFound")}
             </p>
           </div>
         )}
@@ -93,10 +97,10 @@ export default function DeliveryAcceptPage({
               <CheckCircle className="h-8 w-8 text-emerald-600" />
             </div>
             <h2 className="mt-4 text-lg font-bold text-stone-900">
-              Delivery Accepted!
+              {t("deliveryAccepted")}
             </h2>
             <p className="mt-1 text-sm text-stone-500">
-              Order {order?.display_id} is now assigned to you.
+              {t("order")} {order?.display_id} {t("orderAssigned")}
             </p>
           </div>
         )}
@@ -109,17 +113,17 @@ export default function DeliveryAcceptPage({
               </div>
               <div>
                 <h2 className="text-lg font-bold text-stone-900">
-                  New Delivery
+                  {t("newDelivery")}
                 </h2>
                 <p className="text-xs text-stone-500">
-                  Order {order.display_id}
+                  {t("order")} {order.display_id}
                 </p>
               </div>
             </div>
 
             <div className="mb-5 rounded-xl border border-stone-100 bg-stone-50 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-stone-400 mb-2">
-                Items
+                {t("items")}
               </p>
               <ul className="space-y-1">
                 {order.items.map((item, i) => (
@@ -132,21 +136,21 @@ export default function DeliveryAcceptPage({
                 ))}
               </ul>
               <p className="mt-2 text-sm font-semibold text-stone-800">
-                Total: ${order.total_price.toFixed(2)}
+                {t("total")}: ${order.total_price.toFixed(2)}
               </p>
               <p className="text-xs text-stone-500 mt-1">
-                Customer: {order.customer_name}
+                {t("customerLabel")} {order.customer_name}
               </p>
             </div>
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-stone-700 mb-1">
-                Your Name
+                {t("yourName")}
               </label>
               <input
                 value={driverName}
                 onChange={(e) => setDriverName(e.target.value)}
-                placeholder="Enter your name"
+                placeholder={t("enterYourName")}
                 className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
@@ -158,11 +162,11 @@ export default function DeliveryAcceptPage({
             >
               {status === "accepting" ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Accepting...
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("accepting")}
                 </>
               ) : (
                 <>
-                  <CheckCircle className="h-4 w-4" /> Accept Delivery
+                  <CheckCircle className="h-4 w-4" /> {t("acceptDelivery")}
                 </>
               )}
             </button>

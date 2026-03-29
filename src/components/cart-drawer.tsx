@@ -2,6 +2,7 @@
 
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
+import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
 
 interface CartDrawerProps {
@@ -11,6 +12,7 @@ interface CartDrawerProps {
 
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, totalPrice } = useCart();
+  const { t, dir } = useLanguage();
 
   return (
     <>
@@ -24,14 +26,20 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
 
       {/* Drawer */}
       <div
-        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-300 ${
-          open ? "translate-x-0" : "translate-x-full"
+        className={`fixed top-0 z-50 flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-300 ${
+          dir === "rtl" ? "left-0" : "right-0"
+        } ${
+          open
+            ? "translate-x-0"
+            : dir === "rtl"
+              ? "-translate-x-full"
+              : "translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
           <h2 className="flex items-center gap-2 text-lg font-bold text-stone-900">
             <ShoppingBag className="h-5 w-5 text-primary" />
-            Your Cart
+            {t("yourCart")}
           </h2>
           <button
             onClick={onClose}
@@ -45,8 +53,8 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-stone-400">
               <ShoppingBag className="h-12 w-12 mb-3" />
-              <p className="text-sm font-medium">Your cart is empty</p>
-              <p className="text-xs mt-1">Add some sweet treats!</p>
+              <p className="text-sm font-medium">{t("cartEmpty")}</p>
+              <p className="text-xs mt-1">{t("cartEmptyHint")}</p>
             </div>
           ) : (
             <ul className="space-y-4">
@@ -60,7 +68,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       {item.product.name}
                     </p>
                     <p className="text-xs text-stone-500">
-                      ${item.product.price.toFixed(2)} each
+                      ${item.product.price.toFixed(2)} {t("each")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -99,7 +107,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         {items.length > 0 && (
           <div className="border-t border-stone-200 px-5 py-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-stone-600">Total</span>
+              <span className="text-sm font-medium text-stone-600">{t("total")}</span>
               <span className="text-xl font-bold text-stone-900">
                 ${totalPrice.toFixed(2)}
               </span>
@@ -109,7 +117,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               onClick={onClose}
               className="block w-full rounded-xl bg-primary py-3 text-center text-sm font-bold text-white shadow-sm hover:bg-primary-dark transition-colors"
             >
-              Proceed to Checkout
+              {t("proceedToCheckout")}
             </Link>
           </div>
         )}

@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { products } from "@/data/mock";
+import { supabaseAdmin } from "@/lib/supabase-server";
 
-const SYSTEM_PROMPT = `You are SweetBot, the friendly AI assistant for SweetDrop, a premium sweets and candy shop.
+interface ProductRow {
+  name: string;
+  price: number;
+  allergens: string[];
+  ingredients: string;
+  description: string;
+}
+
+async function getProducts(): Promise<ProductRow[]> {
+  const { data, error } = await supabaseAdmin
+    .from("products")
+    .select("name, price, allergens, ingredients, description");
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+function buildSystemPrompt(products: ProductRow[]): string {
+  return `You are SweetBot, the friendly AI assistant for SweetDrop, a premium sweets and candy shop.
 
 Your responsibilities:
 1. Help customers find products and answer questions about ingredients and allergens.
@@ -22,14 +40,16 @@ RULES:
 - If someone asks about a product you don't have data for, say so honestly.
 - If asked about delivery, tell them we offer same-day delivery in the metro area.
 - Keep answers under 3 sentences unless the customer asks for details.`;
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
+    const products = await getProducts();
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey || apiKey === "your_openai_api_key") {
-      return fallbackReply(messages);
+      return fallbackReply(messages, products);
     }
 
     const { default: OpenAI } = await import("openai");
@@ -38,7 +58,7 @@ export async function POST(req: NextRequest) {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: buildSystemPrompt(products) },
         ...messages.map((m: { role: string; content: string }) => ({
           role: m.role,
           content: m.content,
@@ -49,17 +69,25 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-      reply: completion.choices[0]?.message?.content ?? "I'm not sure how to answer that.",
+      reply:
+        completion.choices[0]?.message?.content ??
+        "I'm not sure how to answer that.",
     });
-  } catch {
+  } catch (err) {
+    console.error("Chat error:", err);
     return NextResponse.json(
-      { reply: "Sorry, I'm having trouble right now. Please try again later." },
+      {
+        reply: "Sorry, I'm having trouble right now. Please try again later.",
+      },
       { status: 500 }
     );
   }
 }
 
-function fallbackReply(messages: { role: string; content: string }[]) {
+function fallbackReply(
+  messages: { role: string; content: string }[],
+  products: ProductRow[]
+) {
   const last = messages[messages.length - 1]?.content?.toLowerCase() ?? "";
 
   if (last.includes("allerg")) {
@@ -72,10 +100,17 @@ function fallbackReply(messages: { role: string; content: string }[]) {
     });
   }
 
-  if (last.includes("dairy") || last.includes("soy") || last.includes("gluten") || last.includes("nut") || last.includes("egg")) {
-    const allergen = ["dairy", "soy", "gluten", "nuts", "eggs"].find((a) =>
-      last.includes(a.replace("s", ""))
-    ) ?? "";
+  if (
+    last.includes("dairy") ||
+    last.includes("soy") ||
+    last.includes("gluten") ||
+    last.includes("nut") ||
+    last.includes("egg")
+  ) {
+    const allergen =
+      ["dairy", "soy", "gluten", "nuts", "eggs"].find((a) =>
+        last.includes(a.replace("s", ""))
+      ) ?? "";
     const safe = products.filter(
       (p) => !p.allergens.some((a) => a.includes(allergen.replace("s", "")))
     );
@@ -88,12 +123,16 @@ function fallbackReply(messages: { role: string; content: string }[]) {
       reply += `⚠️ Contains ${allergen}: ${unsafe.map((p) => p.name).join(", ")}\n`;
     if (safe.length)
       reply += `✅ ${allergen}-free options: ${safe.map((p) => p.name).join(", ")}`;
-    return NextResponse.json({ reply: reply || "I could not find specific allergen info. Please ask about a specific allergen." });
+    return NextResponse.json({
+      reply:
+        reply ||
+        "I could not find specific allergen info. Please ask about a specific allergen.",
+    });
   }
 
   if (last.includes("deliver")) {
     return NextResponse.json({
-      reply: "We offer same-day delivery in the metro area! Delivery is tracked in real-time. 🚚",
+      reply: "We offer same-day delivery in the metro area! Delivery is tracked in real-time.",
     });
   }
 
@@ -107,6 +146,6 @@ function fallbackReply(messages: { role: string; content: string }[]) {
   }
 
   return NextResponse.json({
-    reply: "I can help you with our products, ingredients, and allergy info! Just ask about a specific product or allergen. 🍬",
+    reply: "I can help you with our products, ingredients, and allergy info! Just ask about a specific product or allergen.",
   });
 }

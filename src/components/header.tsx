@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { ShoppingCart, Candy, LayoutDashboard } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
+import { useLanguage } from "@/contexts/language-context";
+import { LanguageSwitcher } from "./language-switcher";
 
 interface HeaderProps {
   onCartClick: () => void;
@@ -10,6 +12,7 @@ interface HeaderProps {
 
 export function Header({ onCartClick }: HeaderProps) {
   const { totalItems } = useCart();
+  const { t } = useLanguage();
 
   return (
     <header className="sticky top-0 z-40 border-b border-rose-200 bg-white/80 backdrop-blur-md">
@@ -22,21 +25,22 @@ export function Header({ onCartClick }: HeaderProps) {
         </Link>
 
         <div className="flex items-center gap-3">
+          <LanguageSwitcher />
           <Link
             href="/admin"
             className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors"
           >
             <LayoutDashboard className="h-4 w-4" />
-            Admin
+            {t("admin")}
           </Link>
           <button
             onClick={onCartClick}
             className="relative flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark transition-colors"
           >
             <ShoppingCart className="h-4 w-4" />
-            Cart
+            {t("cart")}
             {totalItems > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-stone-900">
+              <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-stone-900 ltr:-right-2 rtl:-left-2">
                 {totalItems}
               </span>
             )}

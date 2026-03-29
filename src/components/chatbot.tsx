@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, User } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 
 interface Message {
   role: "user" | "assistant";
@@ -9,17 +10,20 @@ interface Message {
 }
 
 export function Chatbot() {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Hi! I'm SweetBot 🍬 Ask me about our products, ingredients, or allergies!",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const greetingInitialized = useRef(false);
+
+  useEffect(() => {
+    if (!greetingInitialized.current) {
+      greetingInitialized.current = true;
+      setMessages([{ role: "assistant", content: t("chatbotGreeting") }]);
+    }
+  }, [t]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -46,12 +50,12 @@ export function Chatbot() {
       const data = await res.json();
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.reply ?? "Sorry, something went wrong." },
+        { role: "assistant", content: data.reply ?? t("chatbotError") },
       ]);
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Unable to connect. Please try again." },
+        { role: "assistant", content: t("chatbotOffline") },
       ]);
     } finally {
       setLoading(false);
@@ -63,21 +67,21 @@ export function Chatbot() {
       {/* Toggle button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark transition-all hover:scale-105 active:scale-95"
-        aria-label="Toggle chat"
+        className="fixed bottom-5 end-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark transition-all hover:scale-105 active:scale-95"
+        aria-label={t("toggleChat")}
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </button>
 
       {/* Chat window */}
       {open && (
-        <div className="fixed bottom-22 right-5 z-50 flex h-[28rem] w-[22rem] flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl animate-slide-up">
+        <div className="fixed bottom-22 end-5 z-50 flex h-[28rem] w-[22rem] flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl animate-slide-up">
           {/* Header */}
           <div className="flex items-center gap-2 border-b border-stone-100 bg-gradient-to-r from-primary to-primary-dark px-4 py-3">
             <Bot className="h-5 w-5 text-white" />
-            <span className="text-sm font-bold text-white">SweetBot</span>
-            <span className="ml-auto text-xs text-rose-200">
-              Ask about allergies & ingredients
+            <span className="text-sm font-bold text-white">{t("sweetBot")}</span>
+            <span className="ms-auto text-xs text-rose-200">
+              {t("chatbotSubtitle")}
             </span>
           </div>
 
@@ -118,7 +122,7 @@ export function Chatbot() {
                   <Bot className="h-3.5 w-3.5" />
                 </div>
                 <div className="rounded-xl bg-stone-100 px-4 py-2 text-sm text-stone-400">
-                  Typing&hellip;
+                  {t("typing")}
                 </div>
               </div>
             )}
@@ -135,7 +139,7 @@ export function Chatbot() {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about allergies..."
+              placeholder={t("chatbotPlaceholder")}
               className="flex-1 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none placeholder:text-stone-400 focus:border-primary focus:ring-1 focus:ring-primary"
             />
             <button
