@@ -4,7 +4,10 @@
 
 ## Up Next
 
-### 1. Full frontend redesign
+### 1. Seed real drivers into Supabase
+- Insert real driver data into the `drivers` table
+
+### 3. Full frontend redesign
 - New theme, color palette, and typography
 - New logo / brand identity
 - Redesign all pages: storefront, checkout, admin, delivery driver page
