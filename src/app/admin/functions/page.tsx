@@ -107,7 +107,7 @@ function formToPayload(form: ProductFormData) {
 }
 
 export default function FunctionsPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
 
   // --- Products state ---
   const [products, setProducts] = useState<Product[]>([]);
@@ -475,7 +475,7 @@ export default function FunctionsPage() {
                   <option value="">{t("selectCategory")}</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name}
+                      {locale === "ar" && c.name_ar ? c.name_ar : c.name}
                     </option>
                   ))}
                 </select>
@@ -548,7 +548,7 @@ export default function FunctionsPage() {
                         ${p.price.toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-stone-600">
-                        {cat?.name ?? "—"}
+                        {cat ? (locale === "ar" && cat.name_ar ? cat.name_ar : cat.name) : "—"}
                       </td>
                       <td className="px-4 py-3">
                         <button
