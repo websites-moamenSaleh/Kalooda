@@ -4,24 +4,28 @@ export const categories: Category[] = [
   {
     id: "cat-1",
     name: "Chocolates",
+    name_ar: "شوكولاتة",
     slug: "chocolates",
     image_url: "/images/chocolates.jpg",
   },
   {
     id: "cat-2",
     name: "Gummies",
+    name_ar: "حلوى جيلاتينية",
     slug: "gummies",
     image_url: "/images/gummies.jpg",
   },
   {
     id: "cat-3",
     name: "Hard Candy",
+    name_ar: "حلوى صلبة",
     slug: "hard-candy",
     image_url: "/images/hard-candy.jpg",
   },
   {
     id: "cat-4",
     name: "Pastries",
+    name_ar: "معجنات",
     slug: "pastries",
     image_url: "/images/pastries.jpg",
   },

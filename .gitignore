@@ -41,3 +41,8 @@ yarn-error.log*
 next-env.d.ts
 
 supabase/.temp/
+
+# local config
+CLAUDE.md
+AGENTS.md
+.mcp.json

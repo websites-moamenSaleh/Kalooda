@@ -1,6 +1,7 @@
 "use client";
 
 import { Category } from "@/types/database";
+import { useLanguage } from "@/contexts/language-context";
 
 interface CategoryCardProps {
   category: Category;
@@ -16,6 +17,9 @@ const categoryEmoji: Record<string, string> = {
 };
 
 export function CategoryCard({ category, isActive, onClick }: CategoryCardProps) {
+  const { locale } = useLanguage();
+  const name = locale === "ar" && category.name_ar ? category.name_ar : category.name;
+
   return (
     <button
       onClick={onClick}
@@ -27,7 +31,7 @@ export function CategoryCard({ category, isActive, onClick }: CategoryCardProps)
     >
       <span className="text-3xl">{categoryEmoji[category.slug] ?? "🍪"}</span>
       <span className={`text-sm font-semibold ${isActive ? "text-primary" : "text-stone-700"}`}>
-        {category.name}
+        {name}
       </span>
     </button>
   );
