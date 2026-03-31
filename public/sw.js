@@ -1,4 +1,4 @@
-const CACHE_NAME = "sweetdrop-v1";
+const CACHE_NAME = "sweetdrop-v2";
 const PRECACHE_URLS = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -25,10 +25,17 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
+        if (!response || response.status !== 200 || response.type === "error") {
+          return response;
+        }
         const clone = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() =>
+        caches.match(event.request).then(
+          (cached) => cached || new Response("Network error", { status: 503 })
+        )
+      )
   );
 });
