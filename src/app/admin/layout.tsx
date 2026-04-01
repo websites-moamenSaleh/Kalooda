@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Candy, LayoutDashboard, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Settings, LogOut } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { useAdminAuth } from "@/contexts/admin-auth-context";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -35,22 +36,27 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/90 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-[#D3A94C]/25 bg-[#1F443C]/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link href="/" className="flex items-center gap-2 group">
-            <Candy className="h-6 w-6 text-primary group-hover:rotate-12 transition-transform" />
-            <span className="text-lg font-bold text-stone-900">SweetDrop</span>
+          <Link href="/" className="flex items-center group">
+            <Image
+              src="/brand/logo-transparent.png"
+              alt="Kalooda"
+              width={120}
+              height={62}
+              className="h-8 w-auto object-contain transition-opacity group-hover:opacity-80"
+            />
           </Link>
           <div className="flex items-center gap-3">
             {profile?.full_name && (
-              <span className="hidden sm:block text-sm text-stone-600">
+              <span className="hidden sm:block text-sm text-[#F5E6C8]/60">
                 {profile.full_name}
               </span>
             )}
             <LanguageSwitcher />
             <button
               onClick={signOut}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[#F5E6C8]/70 hover:text-[#D3A94C] hover:bg-white/5 transition-colors"
             >
               <LogOut className="h-4 w-4" />
               {t("signOut")}
@@ -72,7 +78,7 @@ export default function AdminLayout({
                 className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
                   isActive
                     ? "border-primary text-primary"
-                    : "border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300"
+                    : "border-transparent text-[#F5E6C8]/60 hover:text-[#F5E6C8] hover:border-[#F5E6C8]/30"
                 }`}
               >
                 <Icon className="h-4 w-4" />

@@ -2,8 +2,9 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Candy, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -69,11 +70,17 @@ function SignInContent() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-amber-50 to-rose-50 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mb-8 flex items-center gap-4">
-        <Link href="/" className="flex items-center gap-2">
-          <Candy className="h-7 w-7 text-primary" />
-          <span className="text-xl font-bold text-stone-900">SweetDrop</span>
+        <Link href="/">
+          <Image
+            src="/brand/logo-transparent.png"
+            alt="Kalooda"
+            width={160}
+            height={82}
+            className="h-12 w-auto object-contain"
+            priority
+          />
         </Link>
         <LanguageSwitcher />
       </div>
@@ -85,7 +92,7 @@ function SignInContent() {
         <p className="mb-6 text-sm text-stone-500">{t("signIn")}</p>
 
         {confirmEmail && (
-          <p className="mb-4 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
+          <p className="mb-4 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
             {t("confirmEmailMessage")}
           </p>
         )}
@@ -131,7 +138,7 @@ function SignInContent() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">
+            <label className="block text-sm font-medium text-stone-600 mb-1">
               {t("email")}
             </label>
             <input
@@ -140,11 +147,11 @@ function SignInContent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t("emailPlaceholder")}
-              className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900 outline-none placeholder:text-stone-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">
+            <label className="block text-sm font-medium text-stone-600 mb-1">
               {t("password")}
             </label>
             <input
@@ -153,7 +160,7 @@ function SignInContent() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={t("passwordPlaceholder")}
-              className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900 outline-none placeholder:text-stone-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -166,7 +173,7 @@ function SignInContent() {
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-sm hover:bg-primary-dark transition-colors disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F443C] py-3 text-sm font-bold text-white shadow-sm hover:bg-primary-dark transition-colors disabled:opacity-50"
           >
             {submitting ? (
               <>
@@ -179,10 +186,10 @@ function SignInContent() {
           </button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-stone-500">
+        <p className="mt-5 text-center text-sm text-stone-400">
           <Link
             href="/admin/sign-in"
-            className="font-semibold text-stone-600 hover:text-stone-800 block mb-3"
+            className="font-semibold text-stone-400 hover:text-stone-600 block mb-3"
           >
             {t("adminSignInTitle")}
           </Link>

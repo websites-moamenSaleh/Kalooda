@@ -91,20 +91,20 @@ export default function CheckoutPage() {
         <Header onCartClick={() => setCartOpen(true)} />
         <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
         <main className="mx-auto flex max-w-lg flex-col items-center px-4 py-24 text-center">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
-            <CheckCircle className="h-10 w-10 text-emerald-600" />
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/15">
+            <CheckCircle className="h-10 w-10 text-emerald-400" />
           </div>
-          <h1 className="text-2xl font-bold text-stone-900">
+          <h1 className="text-2xl font-bold text-[#F5E6C8]">
             {t("orderPlaced")}
           </h1>
-          <p className="mt-2 text-stone-500">
+          <p className="mt-2 text-[#F5E6C8]/60">
             {t("yourOrder")}{" "}
             <span className="font-semibold text-primary">{orderId}</span>{" "}
             {t("orderConfirmation")}
           </p>
           <Link
             href="/account/orders"
-            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-primary-dark transition-colors"
+            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-[#0A2923] shadow-sm hover:bg-primary-dark transition-colors"
           >
             <ClipboardList className="h-4 w-4" />
             {t("myOrders")}
@@ -122,16 +122,16 @@ export default function CheckoutPage() {
       <main className="mx-auto max-w-lg px-4 py-10">
         <Link
           href="/"
-          className="mb-6 inline-flex items-center gap-1 text-sm text-stone-500 hover:text-primary transition-colors"
+          className="mb-6 inline-flex items-center gap-1 text-sm text-[#F5E6C8]/60 hover:text-primary transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           {t("backToShop")}
         </Link>
 
-        <h1 className="text-2xl font-bold text-stone-900">{t("checkout")}</h1>
+        <h1 className="text-2xl font-bold text-[#F5E6C8]">{t("checkout")}</h1>
 
         {items.length === 0 ? (
-          <p className="mt-8 text-center text-stone-400">
+          <p className="mt-8 text-center text-[#F5E6C8]/50">
             {t("cartEmptyCheckout")}{" "}
             <Link href="/" className="text-primary underline">
               {t("browseProducts")}
@@ -139,27 +139,27 @@ export default function CheckoutPage() {
           </p>
         ) : (
           <>
-            <div className="mt-6 rounded-xl border border-stone-200 bg-white p-4">
-              <h2 className="mb-3 text-sm font-semibold text-stone-700">
+            <div className="mt-6 rounded-xl border border-[#D3A94C]/20 bg-[#1F443C] p-4">
+              <h2 className="mb-3 text-sm font-semibold text-[#F5E6C8]/70">
                 {t("orderSummary")}
               </h2>
-              <ul className="divide-y divide-stone-100">
+              <ul className="divide-y divide-[#D3A94C]/10">
                 {items.map((item) => (
                   <li
                     key={item.product.id}
                     className="flex items-center justify-between py-2 text-sm"
                   >
-                    <span className="text-stone-700">
+                    <span className="text-[#F5E6C8]/70">
                       {item.product.name} &times; {item.quantity}
                     </span>
-                    <span className="font-semibold text-stone-900">
+                    <span className="font-semibold text-[#F5E6C8]">
                       ₪{(item.product.price * item.quantity).toFixed(2)}
                     </span>
                   </li>
                 ))}
               </ul>
-              <div className="mt-3 flex items-center justify-between border-t border-stone-200 pt-3">
-                <span className="font-semibold text-stone-700">{t("total")}</span>
+              <div className="mt-3 flex items-center justify-between border-t border-[#D3A94C]/20 pt-3">
+                <span className="font-semibold text-[#F5E6C8]/70">{t("total")}</span>
                 <span className="text-lg font-bold text-primary">
                   ₪{totalPrice.toFixed(2)}
                 </span>
@@ -168,11 +168,11 @@ export default function CheckoutPage() {
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               {profileComplete ? (
-                <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
-                  <p className="font-medium text-stone-900">
+                <div className="rounded-xl border border-[#D3A94C]/20 bg-[#1F443C] p-4 text-sm">
+                  <p className="font-medium text-[#F5E6C8]">
                     {t("deliveryContact")}
                   </p>
-                  <p className="mt-2">
+                  <p className="mt-2 text-[#F5E6C8]/70">
                     {profile!.full_name}
                     <br />
                     {profile!.phone}
@@ -187,36 +187,36 @@ export default function CheckoutPage() {
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-stone-700">
+                    <label className="block text-sm font-medium text-[#F5E6C8]/70">
                       {t("name")}
                     </label>
                     <input
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      className="mt-1 w-full rounded-lg border border-[#D3A94C]/20 bg-[#163530] px-3 py-2 text-sm text-[#F5E6C8] outline-none placeholder:text-[#F5E6C8]/30 focus:border-primary focus:ring-2 focus:ring-primary/20"
                       placeholder={t("namePlaceholder")}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-stone-700">
+                    <label className="block text-sm font-medium text-[#F5E6C8]/70">
                       {t("phone")}
                     </label>
                     <input
                       required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      className="mt-1 w-full rounded-lg border border-[#D3A94C]/20 bg-[#163530] px-3 py-2 text-sm text-[#F5E6C8] outline-none placeholder:text-[#F5E6C8]/30 focus:border-primary focus:ring-2 focus:ring-primary/20"
                       placeholder={t("phonePlaceholder")}
                     />
                   </div>
-                  <p className="text-xs text-stone-500">{t("checkoutProfileHint")}</p>
+                  <p className="text-xs text-[#F5E6C8]/40">{t("checkoutProfileHint")}</p>
                 </>
               )}
               <button
                 type="submit"
                 disabled={submitting || !cartReady}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-sm hover:bg-primary-dark transition-colors disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-[#0A2923] shadow-sm hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {submitting ? t("placingOrder") : t("placeOrder")}

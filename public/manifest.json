@@ -1,11 +1,11 @@
 {
-  "name": "SweetDrop — Fresh Sweets, Delivered Fast",
-  "short_name": "SweetDrop",
-  "description": "Order sweets online with same-day delivery.",
+  "name": "Kalooda — Cheesecake And More",
+  "short_name": "Kalooda",
+  "description": "Hand-crafted cheesecakes and more. Order online with same-day delivery.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fffbeb",
-  "theme_color": "#e11d48",
+  "background_color": "#0A2923",
+  "theme_color": "#1F443C",
   "orientation": "portrait-primary",
   "icons": [
     {

@@ -54,58 +54,58 @@ export default function AccountPage() {
       <main className="mx-auto max-w-lg px-4 py-10">
         <Link
           href="/"
-          className="mb-6 inline-flex items-center gap-1 text-sm text-stone-500 hover:text-primary transition-colors"
+          className="mb-6 inline-flex items-center gap-1 text-sm text-[#F5E6C8]/60 hover:text-primary transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           {t("backToShop")}
         </Link>
 
-        <h1 className="text-2xl font-bold text-stone-900">{t("myProfile")}</h1>
+        <h1 className="text-2xl font-bold text-[#F5E6C8]">{t("myProfile")}</h1>
 
         <div className="mt-6">
           <AccountSubnav />
         </div>
 
         {loading ? (
-          <p className="text-stone-500">{t("loadingProducts")}</p>
+          <p className="text-[#F5E6C8]/50">{t("loadingProducts")}</p>
         ) : (
           <form onSubmit={handleSave} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700">
+              <label className="block text-sm font-medium text-[#F5E6C8]/70">
                 {t("email")}
               </label>
               <input
                 readOnly
                 value={user?.email ?? ""}
-                className="mt-1 w-full cursor-not-allowed rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-600"
+                className="mt-1 w-full cursor-not-allowed rounded-lg border border-[#D3A94C]/10 bg-[#163530] px-3 py-2 text-sm text-[#F5E6C8]/50"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-stone-700">
+              <label className="block text-sm font-medium text-[#F5E6C8]/70">
                 {t("fullName")}
               </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="mt-1 w-full rounded-lg border border-[#D3A94C]/20 bg-[#163530] px-3 py-2 text-sm text-[#F5E6C8] outline-none placeholder:text-[#F5E6C8]/30 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 placeholder={t("fullNamePlaceholder")}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-stone-700">
+              <label className="block text-sm font-medium text-[#F5E6C8]/70">
                 {t("phone")}
               </label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="mt-1 w-full rounded-lg border border-[#D3A94C]/20 bg-[#163530] px-3 py-2 text-sm text-[#F5E6C8] outline-none placeholder:text-[#F5E6C8]/30 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 placeholder={t("phonePlaceholder")}
               />
             </div>
             <button
               type="submit"
               disabled={saving}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-sm hover:bg-primary-dark transition-colors disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-[#0A2923] shadow-sm hover:bg-primary-dark transition-colors disabled:opacity-50"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {saving ? t("saving") : t("saveProfile")}

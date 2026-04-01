@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Cormorant_Garamond } from "next/font/google";
 import { Noto_Sans_Arabic } from "next/font/google";
 import { cookies } from "next/headers";
 import { CartProvider } from "@/contexts/cart-context";
@@ -23,6 +23,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 const notoArabic = Noto_Sans_Arabic({
   variable: "--font-noto-arabic",
   subsets: ["arabic"],
@@ -30,19 +36,19 @@ const notoArabic = Noto_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "SweetDrop — Fresh Sweets, Delivered Fast",
+  title: "Kalooda — Cheesecake And More",
   description:
-    "Hand-crafted chocolates, gummies, pastries & more. Order online and get same-day delivery.",
+    "Hand-crafted cheesecakes and more. Order online and get same-day delivery.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "SweetDrop",
+    statusBarStyle: "black-translucent",
+    title: "Kalooda",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#e11d48",
+  themeColor: "#1F443C",
   width: "device-width",
   initialScale: 1,
 };
@@ -63,7 +69,7 @@ export default async function RootLayout({
       lang={locale}
       dir={dir}
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${notoArabic.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${notoArabic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
         <LanguageProvider initialLocale={locale}>

@@ -51,13 +51,13 @@ export default function AccountOrdersPage() {
       <main className="mx-auto max-w-lg px-4 py-10">
         <Link
           href="/"
-          className="mb-6 inline-flex items-center gap-1 text-sm text-stone-500 hover:text-primary transition-colors"
+          className="mb-6 inline-flex items-center gap-1 text-sm text-[#F5E6C8]/60 hover:text-primary transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           {t("backToShop")}
         </Link>
 
-        <h1 className="text-2xl font-bold text-stone-900">
+        <h1 className="text-2xl font-bold text-[#F5E6C8]">
           {t("orderHistoryTitle")}
         </h1>
 
@@ -70,7 +70,7 @@ export default function AccountOrdersPage() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : orders.length === 0 ? (
-          <p className="mt-4 text-center text-stone-500">
+          <p className="mt-4 text-center text-[#F5E6C8]/50">
             {t("orderHistoryEmpty")}
           </p>
         ) : (
@@ -78,18 +78,18 @@ export default function AccountOrdersPage() {
             {orders.map((o) => (
               <li
                 key={o.id}
-                className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm"
+                className="rounded-xl border border-[#D3A94C]/20 bg-[#1F443C] p-4 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-semibold text-stone-900">
+                    <p className="font-semibold text-[#F5E6C8]">
                       {o.display_id}
                     </p>
-                    <p className="text-xs text-stone-500">
+                    <p className="text-xs text-[#F5E6C8]/50">
                       {new Date(o.created_at).toLocaleString()}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700">
+                  <span className="shrink-0 rounded-full bg-[#D3A94C]/10 px-2 py-0.5 text-xs font-medium text-[#D3A94C]">
                     {t(STATUS_KEY[o.status])}
                   </span>
                 </div>
