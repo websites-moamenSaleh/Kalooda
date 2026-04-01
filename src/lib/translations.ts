@@ -185,6 +185,12 @@ export const translations = {
     authErrorTitle: "Account Problem",
     authErrorMessage: "There is a problem with your account. Please contact support for help.",
     contactSupport: "Contact Support",
+    adminAccountUseAdminSignIn:
+      "Staff accounts cannot use the shop sign-in. Use the admin sign-in page instead.",
+    adminSignInTitle: "Admin sign in",
+    adminSignInSubtitle: "Dashboard access for staff",
+    adminSignInNoAccess: "This account does not have admin access.",
+    adminSignInCustomerLink: "Customer shop sign in",
 
     // Language
     switchLanguage: "العربية",
@@ -372,6 +378,12 @@ export const translations = {
     authErrorTitle: "مشكلة في الحساب",
     authErrorMessage: "هناك مشكلة في حسابك. يرجى التواصل مع الدعم للمساعدة.",
     contactSupport: "التواصل مع الدعم",
+    adminAccountUseAdminSignIn:
+      "لا يمكن لحسابات الموظفين استخدام تسجيل دخول المتجر. استخدم صفحة تسجيل دخول الإدارة.",
+    adminSignInTitle: "تسجيل دخول الإدارة",
+    adminSignInSubtitle: "الوصول إلى لوحة التحكم للموظفين",
+    adminSignInNoAccess: "هذا الحساب ليس لديه صلاحية الإدارة.",
+    adminSignInCustomerLink: "تسجيل دخول متجر العملاء",
 
     // Language
     switchLanguage: "English",

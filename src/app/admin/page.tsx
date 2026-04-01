@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/language-context";
+import { getSupabaseAdminBrowser } from "@/lib/supabase-client-admin";
 import type { Order, Product, Driver } from "@/types/database";
 
 const statusIcons: Record<string, React.ElementType> = {
@@ -87,7 +88,7 @@ export default function AdminDashboard() {
     fetchProducts();
     fetchDrivers();
 
-    const { supabase } = require("@/lib/supabase-client");
+    const supabase = getSupabaseAdminBrowser();
     const channel = supabase
       .channel("orders-realtime")
       .on(

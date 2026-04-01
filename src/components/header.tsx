@@ -5,6 +5,7 @@ import { ShoppingCart, Candy, LayoutDashboard, LogOut, LogIn } from "lucide-reac
 import { useCart } from "@/contexts/cart-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
+import { useAdminAuth } from "@/contexts/admin-auth-context";
 import { LanguageSwitcher } from "./language-switcher";
 
 interface HeaderProps {
@@ -14,55 +15,63 @@ interface HeaderProps {
 export function Header({ onCartClick }: HeaderProps) {
   const { totalItems } = useCart();
   const { t } = useLanguage();
-  const { user, profile, loading, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const { profile: adminProfile, loading: adminLoading } = useAdminAuth();
 
-  const isAdmin =
-    profile?.role === "admin" || profile?.role === "super_admin";
+  const hasAdminSession =
+    !adminLoading &&
+    adminProfile &&
+    (adminProfile.role === "admin" || adminProfile.role === "super_admin");
 
   return (
     <header className="sticky top-0 z-40 border-b border-rose-200 bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 group">
-          <Candy className="h-7 w-7 text-primary group-hover:rotate-12 transition-transform" />
-          <span className="text-xl font-bold tracking-tight text-stone-900">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
+        <Link
+          href="/"
+          className="flex min-w-0 max-w-[55%] shrink items-center gap-2 group sm:max-w-none"
+        >
+          <Candy className="h-7 w-7 shrink-0 text-primary group-hover:rotate-12 transition-transform" />
+          <span className="truncate text-xl font-bold tracking-tight text-stone-900">
             SweetDrop
           </span>
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:flex-none sm:gap-3">
           <LanguageSwitcher />
 
-          {!loading && isAdmin && (
+          {!adminLoading && hasAdminSession && (
             <Link
               href="/admin"
-              className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors sm:px-3"
             >
-              <LayoutDashboard className="h-4 w-4" />
+              <LayoutDashboard className="h-4 w-4 shrink-0" />
               {t("admin")}
             </Link>
           )}
 
           {!loading && user ? (
             <button
+              type="button"
               onClick={signOut}
-              className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors sm:px-3"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4 shrink-0" />
               {t("signOut")}
             </button>
           ) : !loading ? (
             <Link
               href="/sign-in"
-              className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors sm:px-3"
             >
-              <LogIn className="h-4 w-4" />
+              <LogIn className="h-4 w-4 shrink-0" />
               {t("signIn")}
             </Link>
           ) : null}
 
           <button
+            type="button"
             onClick={onCartClick}
-            className="relative flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark transition-colors"
+            className="relative flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark transition-colors"
           >
             <ShoppingCart className="h-4 w-4" />
             {t("cart")}

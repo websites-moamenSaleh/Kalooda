@@ -9,16 +9,12 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase-client";
+import { getSupabaseCustomerBrowser } from "@/lib/supabase-client-customer";
 import { getSafeNextPath } from "@/lib/auth-redirect";
-import type { User } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
+import type { Profile } from "@/types/profile";
 
-export interface Profile {
-  id: string;
-  role: "customer" | "admin" | "super_admin";
-  full_name: string | null;
-  phone: string | null;
-}
+export type { Profile };
 
 interface AuthContextValue {
   user: User | null;
@@ -42,6 +38,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const supabase = getSupabaseCustomerBrowser();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,44 +51,123 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single();
     setProfile(data as Profile | null);
     return data as Profile | null;
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
-    async function init() {
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
-      setUser(currentUser);
-      if (currentUser) {
-        await fetchProfile(currentUser.id);
-      }
-      setLoading(false);
+    let cancelled = false;
+
+    async function fetchCustomerFromApi(): Promise<{
+      id: string;
+      email: string | null;
+    } | null> {
+      const res = await fetch("/api/auth/customer-session", {
+        credentials: "same-origin",
+      });
+      const data = (await res.json()) as {
+        user: { id: string; email: string | null } | null;
+      };
+      return data.user ?? null;
     }
-    init();
+
+    async function applySessionOrApi(
+      sessionUser: User | null,
+      apiFallback: boolean
+    ) {
+      if (cancelled) return;
+      if (sessionUser) {
+        setUser(sessionUser);
+        await fetchProfile(sessionUser.id);
+        return;
+      }
+      if (!apiFallback) {
+        setUser(null);
+        setProfile(null);
+        return;
+      }
+      try {
+        const apiUser = await fetchCustomerFromApi();
+        if (cancelled) return;
+        if (apiUser) {
+          setUser({
+            id: apiUser.id,
+            email: apiUser.email ?? undefined,
+          } as User);
+          await fetchProfile(apiUser.id);
+        } else {
+          setUser(null);
+          setProfile(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setUser(null);
+          setProfile(null);
+        }
+      }
+    }
+
+    async function initAuth() {
+      try {
+        const [{ data: sessionData }, apiUser] = await Promise.all([
+          supabase.auth.getSession(),
+          fetchCustomerFromApi(),
+        ]);
+        if (cancelled) return;
+
+        const sessionUser = sessionData.session?.user ?? null;
+        if (sessionUser) {
+          setUser(sessionUser);
+          await fetchProfile(sessionUser.id);
+        } else if (apiUser) {
+          setUser({
+            id: apiUser.id,
+            email: apiUser.email ?? undefined,
+          } as User);
+          await fetchProfile(apiUser.id);
+        } else {
+          setUser(null);
+        }
+      } catch {
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void initAuth();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const sessionUser = session?.user ?? null;
-      setUser(sessionUser);
-      if (sessionUser) {
-        await fetchProfile(sessionUser.id);
-      } else {
-        setProfile(null);
+    } = supabase.auth.onAuthStateChange(
+      async (evt: AuthChangeEvent, session: Session | null) => {
+        setLoading(false);
+        const sessionUser = session?.user ?? null;
+        if (sessionUser) {
+          setUser(sessionUser);
+          void fetchProfile(sessionUser.id);
+          return;
+        }
+        if (evt === "SIGNED_OUT") {
+          setUser(null);
+          setProfile(null);
+          return;
+        }
+        await applySessionOrApi(null, true);
       }
-    });
+    );
 
-    return () => subscription.unsubscribe();
-  }, [fetchProfile]);
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [fetchProfile, supabase]);
 
-  function postAuthPath(role: string | null | undefined): string {
+  function postCustomerAuthPath(): string {
     if (typeof window !== "undefined") {
       const next = getSafeNextPath(
         new URLSearchParams(window.location.search).get("next")
       );
       if (next) return next;
     }
-    if (role === "admin" || role === "super_admin") return "/admin";
     return "/";
   }
 
@@ -110,7 +186,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = await supabase.auth.getUser();
     if (signedInUser) {
       const p = await fetchProfile(signedInUser.id);
-      router.push(postAuthPath(p?.role));
+      if (p?.role === "admin" || p?.role === "super_admin") {
+        await supabase.auth.signOut();
+        await fetch("/auth/sign-out", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audience: "customer" }),
+        });
+        return "adminPortal";
+      }
+      router.push(postCustomerAuthPath());
     }
     return null;
   };
@@ -132,7 +217,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (data.session && data.user) {
       const p = await fetchProfile(data.user.id);
-      router.push(postAuthPath(p?.role));
+      if (p?.role === "admin" || p?.role === "super_admin") {
+        await supabase.auth.signOut();
+        await fetch("/auth/sign-out", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audience: "customer" }),
+        });
+        return "adminPortal";
+      }
+      router.push(postCustomerAuthPath());
     } else {
       router.push("/sign-in?message=confirm-email");
     }
@@ -148,16 +242,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback${qs}`,
+        redirectTo: `${window.location.origin}/auth/callback/customer${qs}`,
       },
     });
   };
 
   const signOutFn = async () => {
-    await supabase.auth.signOut();
+    await fetch("/auth/sign-out", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audience: "customer" }),
+    });
     setUser(null);
     setProfile(null);
-    router.push("/sign-in");
+    window.location.href = "/sign-in";
   };
 
   return (

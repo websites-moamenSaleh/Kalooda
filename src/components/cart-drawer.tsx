@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Minus, Plus, ShoppingBag } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, LogOut } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
@@ -14,7 +14,7 @@ interface CartDrawerProps {
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, totalPrice } = useCart();
   const { t, dir } = useLanguage();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   const checkoutHref = user
     ? "/checkout"
@@ -110,21 +110,40 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           )}
         </div>
 
-        {items.length > 0 && (
+        {(items.length > 0 || user) && (
           <div className="border-t border-stone-200 px-5 py-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-stone-600">{t("total")}</span>
-              <span className="text-xl font-bold text-stone-900">
-                ₪{totalPrice.toFixed(2)}
-              </span>
-            </div>
-            <Link
-              href={checkoutHref}
-              onClick={onClose}
-              className="block w-full rounded-xl bg-primary py-3 text-center text-sm font-bold text-white shadow-sm hover:bg-primary-dark transition-colors"
-            >
-              {user ? t("proceedToCheckout") : t("signInToCheckout")}
-            </Link>
+            {items.length > 0 && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-stone-600">
+                    {t("total")}
+                  </span>
+                  <span className="text-xl font-bold text-stone-900">
+                    ₪{totalPrice.toFixed(2)}
+                  </span>
+                </div>
+                <Link
+                  href={checkoutHref}
+                  onClick={onClose}
+                  className="block w-full rounded-xl bg-primary py-3 text-center text-sm font-bold text-white shadow-sm hover:bg-primary-dark transition-colors"
+                >
+                  {user ? t("proceedToCheckout") : t("signInToCheckout")}
+                </Link>
+              </>
+            )}
+            {user && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  void signOut();
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-stone-200 py-3 text-sm font-semibold text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                {t("signOut")}
+              </button>
+            )}
           </div>
         )}
       </div>

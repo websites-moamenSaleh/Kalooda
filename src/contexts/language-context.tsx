@@ -6,9 +6,14 @@ import {
   useState,
   useEffect,
   useCallback,
+  startTransition,
   type ReactNode,
 } from "react";
 import { translations, type Locale, type TranslationKey } from "@/lib/translations";
+import {
+  LOCALE_COOKIE_NAME,
+  clientLocaleCookieHeader,
+} from "@/lib/locale-preference";
 
 interface LanguageContextType {
   locale: Locale;
@@ -19,15 +24,41 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
+function hasLocaleCookie(): boolean {
+  if (typeof document === "undefined") return true;
+  return document.cookie
+    .split(";")
+    .some((c) => c.trim().startsWith(`${LOCALE_COOKIE_NAME}=`));
+}
 
+export function LanguageProvider({
+  children,
+  initialLocale,
+}: {
+  children: ReactNode;
+  initialLocale: Locale;
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+
+  // Backfill cookie + align state when only localStorage exists (legacy).
   useEffect(() => {
-    const saved = localStorage.getItem("locale") as Locale | null;
-    if (saved && (saved === "en" || saved === "ar")) {
-      setLocaleState(saved);
+    try {
+      if (hasLocaleCookie()) return;
+      const saved = localStorage.getItem("locale") as Locale | null;
+      const fromStorage: Locale | null =
+        saved === "en" || saved === "ar" ? saved : null;
+      const resolved: Locale = fromStorage ?? initialLocale;
+      if (fromStorage && fromStorage !== initialLocale) {
+        startTransition(() => {
+          setLocaleState(fromStorage);
+        });
+      }
+      document.cookie = clientLocaleCookieHeader(resolved);
+      localStorage.setItem("locale", resolved);
+    } catch {
+      /* private mode / no storage */
     }
-  }, []);
+  }, [initialLocale]);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -36,7 +67,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
-    localStorage.setItem("locale", newLocale);
+    try {
+      localStorage.setItem("locale", newLocale);
+      document.cookie = clientLocaleCookieHeader(newLocale);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const t = useCallback(

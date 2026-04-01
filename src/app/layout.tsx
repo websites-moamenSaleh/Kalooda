@@ -1,10 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Noto_Sans_Arabic } from "next/font/google";
+import { cookies } from "next/headers";
 import { CartProvider } from "@/contexts/cart-context";
 import { LanguageProvider } from "@/contexts/language-context";
 import { AuthProvider } from "@/contexts/auth-context";
+import { AdminAuthProvider } from "@/contexts/admin-auth-context";
 import { PWARegister } from "@/components/pwa-register";
+import {
+  LOCALE_COOKIE_NAME,
+  parseLocaleCookie,
+} from "@/lib/locale-preference";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,24 +47,33 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const locale = parseLocaleCookie(
+    cookieStore.get(LOCALE_COOKIE_NAME)?.value
+  );
+  const dir = locale === "ar" ? "rtl" : "ltr";
+
   return (
     <html
-      lang="en"
+      lang={locale}
+      dir={dir}
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${notoArabic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <LanguageProvider>
+        <LanguageProvider initialLocale={locale}>
           <AuthProvider>
-            <CartProvider>
-              {children}
-              <PWARegister />
-            </CartProvider>
+            <AdminAuthProvider>
+              <CartProvider>
+                {children}
+                <PWARegister />
+              </CartProvider>
+            </AdminAuthProvider>
           </AuthProvider>
         </LanguageProvider>
       </body>

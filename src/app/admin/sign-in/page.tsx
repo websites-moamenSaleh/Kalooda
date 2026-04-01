@@ -4,12 +4,12 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Candy, Loader2 } from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
+import { useAdminAuth } from "@/contexts/admin-auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { getSafeNextPath } from "@/lib/auth-redirect";
 
-export default function SignInPage() {
+export default function AdminSignInPage() {
   return (
     <Suspense
       fallback={
@@ -18,20 +18,16 @@ export default function SignInPage() {
         </div>
       }
     >
-      <SignInContent />
+      <AdminSignInContent />
     </Suspense>
   );
 }
 
-function SignInContent() {
-  const { signIn, signInWithOAuth, loading: authLoading } = useAuth();
+function AdminSignInContent() {
+  const { signIn, signInWithOAuth, loading: authLoading } = useAdminAuth();
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const nextSafe = getSafeNextPath(searchParams.get("next"));
-  const signUpHref = nextSafe
-    ? `/sign-up?next=${encodeURIComponent(nextSafe)}`
-    : "/sign-up";
-  const confirmEmail = searchParams.get("message") === "confirm-email";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,7 +37,7 @@ function SignInContent() {
   const urlError = (() => {
     const e = searchParams.get("error");
     if (e === "oauth") return t("oauthError");
-    if (e === "adminPortal") return t("adminAccountUseAdminSignIn");
+    if (e === "forbidden") return t("adminSignInNoAccess");
     return null;
   })();
 
@@ -52,9 +48,7 @@ function SignInContent() {
     const err = await signIn(email, password);
     if (err) {
       setError(
-        err === "adminPortal"
-          ? t("adminAccountUseAdminSignIn")
-          : t("signInError")
+        err === "forbidden" ? t("adminSignInNoAccess") : err
       );
       setSubmitting(false);
     }
@@ -69,7 +63,7 @@ function SignInContent() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-amber-50 to-rose-50 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200 px-4">
       <div className="mb-8 flex items-center gap-4">
         <Link href="/" className="flex items-center gap-2">
           <Candy className="h-7 w-7 text-primary" />
@@ -80,22 +74,14 @@ function SignInContent() {
 
       <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-lg">
         <h1 className="mb-1 text-xl font-bold text-stone-900">
-          {t("welcomeBack")}
+          {t("adminSignInTitle")}
         </h1>
-        <p className="mb-6 text-sm text-stone-500">{t("signIn")}</p>
-
-        {confirmEmail && (
-          <p className="mb-4 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
-            {t("confirmEmailMessage")}
-          </p>
-        )}
+        <p className="mb-6 text-sm text-stone-500">{t("adminSignInSubtitle")}</p>
 
         <div className="flex flex-col gap-3 mb-5">
           <button
             type="button"
-            onClick={() =>
-              signInWithOAuth("google", { next: nextSafe })
-            }
+            onClick={() => signInWithOAuth("google", { next: nextSafe })}
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white py-2.5 text-sm font-medium text-stone-700 hover:bg-stone-50 transition-colors"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -120,9 +106,7 @@ function SignInContent() {
           </button>
           <button
             type="button"
-            onClick={() =>
-              signInWithOAuth("apple", { next: nextSafe })
-            }
+            onClick={() => signInWithOAuth("apple", { next: nextSafe })}
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-stone-200 bg-stone-900 py-2.5 text-sm font-medium text-white hover:bg-stone-800 transition-colors"
           >
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -178,7 +162,7 @@ function SignInContent() {
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-sm hover:bg-primary-dark transition-colors disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 py-3 text-sm font-bold text-white shadow-sm hover:bg-stone-800 transition-colors disabled:opacity-50"
           >
             {submitting ? (
               <>
@@ -193,17 +177,10 @@ function SignInContent() {
 
         <p className="mt-5 text-center text-sm text-stone-500">
           <Link
-            href="/admin/sign-in"
-            className="font-semibold text-stone-600 hover:text-stone-800 block mb-3"
-          >
-            {t("adminSignInTitle")}
-          </Link>
-          {t("dontHaveAccount")}{" "}
-          <Link
-            href={signUpHref}
+            href="/sign-in"
             className="font-semibold text-primary hover:text-primary-dark"
           >
-            {t("signUp")}
+            {t("adminSignInCustomerLink")}
           </Link>
         </p>
       </div>

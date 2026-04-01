@@ -1,14 +1,24 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import {
+  adminAuthCookieOptions,
+  customerAuthCookieOptions,
+  type AuthAudience,
+} from "@/lib/supabase-session";
 
-export async function createSupabaseServerClient() {
+export async function createSupabaseServerClient(
+  audience: AuthAudience = "customer"
+) {
   const cookieStore = await cookies();
+  const cookieOptions =
+    audience === "admin" ? adminAuthCookieOptions : customerAuthCookieOptions;
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions,
       cookies: {
         getAll() {
           return cookieStore.getAll();

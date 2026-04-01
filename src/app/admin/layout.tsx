@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Candy, LayoutDashboard, Settings, LogOut } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
-import { useAuth } from "@/contexts/auth-context";
+import { useAdminAuth } from "@/contexts/admin-auth-context";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function AdminLayout({
@@ -14,7 +14,15 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const { t } = useLanguage();
-  const { profile, signOut } = useAuth();
+  const { profile, signOut } = useAdminAuth();
+
+  if (pathname === "/admin/sign-in") {
+    return (
+      <div className="min-h-screen bg-stone-50">
+        {children}
+      </div>
+    );
+  }
 
   const isSuperAdmin = profile?.role === "super_admin";
 

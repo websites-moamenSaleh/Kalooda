@@ -45,7 +45,11 @@ function SignUpContent() {
     setSubmitting(true);
     const err = await signUp(email, password, fullName, phone);
     if (err) {
-      setError(t("signUpError"));
+      setError(
+        err === "adminPortal"
+          ? t("adminAccountUseAdminSignIn")
+          : t("signUpError")
+      );
       setSubmitting(false);
     }
   }
