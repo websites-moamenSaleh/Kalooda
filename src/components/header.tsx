@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, Candy, LayoutDashboard, LogOut, LogIn } from "lucide-react";
+import {
+  ShoppingCart,
+  Candy,
+  LayoutDashboard,
+  LogOut,
+  LogIn,
+  User,
+} from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
@@ -50,14 +57,23 @@ export function Header({ onCartClick }: HeaderProps) {
           )}
 
           {!loading && user ? (
-            <button
-              type="button"
-              onClick={signOut}
-              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors sm:px-3"
-            >
-              <LogOut className="h-4 w-4 shrink-0" />
-              {t("signOut")}
-            </button>
+            <>
+              <Link
+                href="/account"
+                className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors sm:px-3"
+              >
+                <User className="h-4 w-4 shrink-0" />
+                {t("account")}
+              </Link>
+              <button
+                type="button"
+                onClick={signOut}
+                className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors sm:px-3"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                {t("signOut")}
+              </button>
+            </>
           ) : !loading ? (
             <Link
               href="/sign-in"

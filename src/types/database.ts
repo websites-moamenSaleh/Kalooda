@@ -25,13 +25,21 @@ export interface Product {
 export interface Order {
   id: string;
   display_id: string;
+  user_id: string | null;
   customer_name: string;
-  customer_phone: string;
+  customer_phone: string | null;
   items: OrderItem[];
   total_price: number;
   status: "pending" | "assigned" | "out_for_delivery" | "delivered";
   created_at: string;
   delivery_token: string;
+}
+
+export interface CartItemRow {
+  user_id: string;
+  product_id: string;
+  quantity: number;
+  updated_at: string;
 }
 
 export interface OrderItem {

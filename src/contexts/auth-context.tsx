@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseCustomerBrowser } from "@/lib/supabase-client-customer";
+import { GUEST_CART_KEY } from "@/lib/guest-cart-constants";
 import { getSafeNextPath } from "@/lib/auth-redirect";
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import type { Profile } from "@/types/profile";
@@ -20,6 +21,7 @@ interface AuthContextValue {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  refreshProfile: () => Promise<Profile | null>;
   signIn: (email: string, password: string) => Promise<string | null>;
   signUp: (
     email: string,
@@ -28,7 +30,7 @@ interface AuthContextValue {
     phone: string
   ) => Promise<string | null>;
   signInWithOAuth: (
-    provider: "google" | "apple",
+    provider: "google",
     options?: { next?: string | null }
   ) => Promise<void>;
   signOut: () => Promise<void>;
@@ -52,6 +54,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(data as Profile | null);
     return data as Profile | null;
   }, [supabase]);
+
+  const refreshProfile = useCallback(async () => {
+    const {
+      data: { user: u },
+    } = await supabase.auth.getUser();
+    if (!u?.id) return null;
+    return fetchProfile(u.id);
+  }, [fetchProfile, supabase]);
 
   useEffect(() => {
     let cancelled = false;
@@ -234,7 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithOAuth = async (
-    provider: "google" | "apple",
+    provider: "google",
     options?: { next?: string | null }
   ) => {
     const next = getSafeNextPath(options?.next ?? undefined);
@@ -248,6 +258,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOutFn = async () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(GUEST_CART_KEY);
+    }
     await fetch("/auth/sign-out", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -264,6 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         profile,
         loading,
+        refreshProfile,
         signIn,
         signUp,
         signInWithOAuth,

@@ -59,6 +59,25 @@ export const translations = {
     placeOrder: "Place Order",
     placingOrder: "Placing Order...",
     orderFailed: "Failed to place order. Please try again.",
+    orderSchemaOutdated:
+      "The database needs updating: run Supabase migrations (add orders.user_id). See supabase/migrations/.",
+    profileIncompleteCheckout:
+      "Add your name and phone in the form or in your account to place an order.",
+    deliveryContact: "Delivery contact",
+    editInAccount: "Edit in account",
+    checkoutProfileHint:
+      "We will save these details to your profile for your next order.",
+
+    // Account
+    account: "Account",
+    myProfile: "My profile",
+    myOrders: "My orders",
+    saveProfile: "Save profile",
+    profileSavedToast: "Profile saved.",
+    profileSaveFailedToast: "Could not save profile.",
+    orderHistoryTitle: "Order history",
+    orderHistoryEmpty: "You have no orders yet.",
+    viewOrderHistory: "View order history",
 
     // Admin
     adminDashboard: "Admin Dashboard",
@@ -178,7 +197,6 @@ export const translations = {
     alreadyHaveAccount: "Already have an account?",
     dontHaveAccount: "Don't have an account?",
     continueWithGoogle: "Continue with Google",
-    continueWithApple: "Continue with Apple",
     or: "or",
     oauthError: "Something went wrong with sign in. Please try again.",
     confirmEmailMessage: "Account created! Please check your email and click the confirmation link before signing in.",
@@ -252,6 +270,25 @@ export const translations = {
     placeOrder: "تأكيد الطلب",
     placingOrder: "جارٍ تأكيد الطلب...",
     orderFailed: "فشل تقديم الطلب. يرجى المحاولة مرة أخرى.",
+    orderSchemaOutdated:
+      "قاعدة البيانات تحتاج تحديثاً: شغّل ترحيلات Supabase (إضافة orders.user_id). راجع مجلد supabase/migrations/.",
+    profileIncompleteCheckout:
+      "أضف اسمك ورقم هاتفك في النموذج أو في حسابك لإتمام الطلب.",
+    deliveryContact: "بيانات التوصيل",
+    editInAccount: "تعديل من الحساب",
+    checkoutProfileHint:
+      "سنحفظ هذه البيانات في ملفك للطلبات القادمة.",
+
+    // Account
+    account: "الحساب",
+    myProfile: "ملفي الشخصي",
+    myOrders: "طلباتي",
+    saveProfile: "حفظ الملف الشخصي",
+    profileSavedToast: "تم حفظ الملف الشخصي.",
+    profileSaveFailedToast: "تعذر حفظ الملف الشخصي.",
+    orderHistoryTitle: "سجل الطلبات",
+    orderHistoryEmpty: "لا توجد طلبات بعد.",
+    viewOrderHistory: "عرض سجل الطلبات",
 
     // Admin
     adminDashboard: "لوحة التحكم",
@@ -371,7 +408,6 @@ export const translations = {
     alreadyHaveAccount: "لديك حساب بالفعل؟",
     dontHaveAccount: "ليس لديك حساب؟",
     continueWithGoogle: "المتابعة مع جوجل",
-    continueWithApple: "المتابعة مع أبل",
     or: "أو",
     oauthError: "حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.",
     confirmEmailMessage: "تم إنشاء الحساب! يرجى التحقق من بريدك الإلكتروني والنقر على رابط التأكيد قبل تسجيل الدخول.",

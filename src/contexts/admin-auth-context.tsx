@@ -19,10 +19,6 @@ interface AdminAuthContextValue {
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<string | null>;
-  signInWithOAuth: (
-    provider: "google" | "apple",
-    options?: { next?: string | null }
-  ) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -113,20 +109,6 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     return null;
   };
 
-  const signInWithOAuth = async (
-    provider: "google" | "apple",
-    options?: { next?: string | null }
-  ) => {
-    const next = getSafeNextPath(options?.next ?? undefined);
-    const qs = next ? `?next=${encodeURIComponent(next)}` : "";
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback/admin${qs}`,
-      },
-    });
-  };
-
   const signOutFn = async () => {
     await fetch("/auth/sign-out", {
       method: "POST",
@@ -145,7 +127,6 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         profile,
         loading,
         signIn,
-        signInWithOAuth,
         signOut: signOutFn,
       }}
     >
