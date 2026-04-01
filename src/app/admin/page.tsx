@@ -157,17 +157,18 @@ export default function AdminDashboard() {
     <>
       {/* Refresh button */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-stone-900">
+        <h1 className="text-xl font-bold text-admin-ink">
           {t("adminDashboard")}
         </h1>
         <button
+          type="button"
           onClick={() => {
             setLoading(true);
             fetchOrders();
             fetchProducts();
             fetchDrivers();
           }}
-          className="rounded-lg border border-stone-200 p-2 text-stone-500 hover:bg-stone-100 transition-colors"
+          className="rounded-lg border border-admin-border bg-admin-panel p-2 text-admin-muted transition-colors hover:bg-[rgba(31, 68, 60,0.05)]"
         >
           <RefreshCw
             className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
@@ -185,19 +186,19 @@ export default function AdminDashboard() {
           return (
             <div
               key={key}
-              className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm"
+              className="rounded-xl border border-admin-border bg-admin-panel p-5 shadow-sm"
             >
               <div className="flex items-center gap-2">
                 <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${colors.bg}`}
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg border border-admin-border ${colors.bg}`}
                 >
                   <Icon className={`h-4 w-4 ${colors.color}`} />
                 </div>
-                <span className="text-sm font-medium text-stone-600">
+                <span className="text-sm font-semibold text-admin-muted">
                   {t(tKey)}
                 </span>
               </div>
-              <p className="mt-2 text-2xl font-bold text-stone-900">
+              <p className="mt-3 font-display text-3xl font-bold text-admin-ink">
                 {count}
               </p>
             </div>
@@ -206,32 +207,32 @@ export default function AdminDashboard() {
       </div>
 
       {/* Orders table */}
-      <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-panel shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-stone-200 bg-stone-50/50 text-start">
-                <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+              <tr className="admin-table-head text-start">
+                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                   {t("order")}
                 </th>
-                <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                   {t("customer")}
                 </th>
-                <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                   {t("items")}
                 </th>
-                <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                   {t("total")}
                 </th>
-                <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                   {t("status")}
                 </th>
-                <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                   {t("actions")}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody className="divide-y divide-admin-border">
               {orders.map((order) => {
                 const colors =
                   statusColors[order.status] ?? statusColors.pending;
@@ -247,20 +248,20 @@ export default function AdminDashboard() {
                         : ""
                     }`}
                   >
-                    <td className="px-4 py-3 font-semibold text-stone-900">
+                    <td className="px-4 py-3 font-semibold text-admin-ink">
                       {order.display_id}
                     </td>
-                    <td className="px-4 py-3 text-stone-700">
+                    <td className="px-4 py-3 text-admin-ink">
                       {order.customer_name}
                     </td>
-                    <td className="px-4 py-3 text-stone-600">
+                    <td className="px-4 py-3 text-admin-muted">
                       {order.items
                         .map(
                           (i) => `${i.product_name} (x${i.quantity})`
                         )
                         .join(", ")}
                     </td>
-                    <td className="px-4 py-3 font-semibold text-stone-900">
+                    <td className="px-4 py-3 font-semibold text-admin-ink">
                       ₪{order.total_price.toFixed(2)}
                     </td>
                     <td className="px-4 py-3">
@@ -277,7 +278,7 @@ export default function AdminDashboard() {
                         onChange={(e) =>
                           updateStatus(order.id, e.target.value)
                         }
-                        className="rounded-lg border border-stone-200 px-2 py-1.5 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                        className="admin-input max-w-[11rem] px-2 py-1.5 text-xs"
                       >
                         <option value="pending">{t("pending")}</option>
                         <option value="preparing">{t("preparing")}</option>
@@ -293,7 +294,7 @@ export default function AdminDashboard() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-4 py-12 text-center text-stone-400"
+                    className="px-4 py-12 text-center text-admin-muted"
                   >
                     {t("noOrders")}
                   </td>
@@ -306,24 +307,24 @@ export default function AdminDashboard() {
 
       {/* Product availability toggles */}
       <div className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold text-stone-900">
+        <h2 className="mb-4 text-lg font-semibold text-admin-ink">
           {t("productAvailability")}
         </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
             <div
               key={product.id}
-              className={`flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm transition-colors ${
+              className={`flex items-center justify-between rounded-xl border p-4 shadow-sm transition-colors ${
                 product.unavailable_today
-                  ? "border-red-200 bg-red-50/50"
-                  : "border-stone-200"
+                  ? "border-red-200 bg-red-50/80"
+                  : "border-admin-border bg-admin-panel"
               }`}
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-stone-900">
+                <p className="truncate font-medium text-admin-ink">
                   {product.name}
                 </p>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs text-admin-muted">
                   ₪{product.price.toFixed(2)}
                 </p>
               </div>
@@ -342,7 +343,7 @@ export default function AdminDashboard() {
             </div>
           ))}
           {products.length === 0 && (
-            <p className="col-span-full py-8 text-center text-stone-400">
+            <p className="col-span-full py-8 text-center text-admin-muted">
               {t("noProductsYet")}
             </p>
           )}
@@ -352,40 +353,40 @@ export default function AdminDashboard() {
       {/* Read-only drivers list */}
       <div className="mt-8">
         <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-100">
-            <Users className="h-4 w-4 text-stone-600" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-admin-border bg-admin-panel">
+            <Users className="h-4 w-4 text-admin-muted" />
           </div>
-          <h2 className="text-lg font-semibold text-stone-900">
+          <h2 className="text-lg font-semibold text-admin-ink">
             {t("drivers")}
           </h2>
         </div>
-        <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-panel shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-stone-200 bg-stone-50/50 text-start">
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                <tr className="admin-table-head text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("driverName")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("driverPhone")}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-admin-border">
                 {drivers.map((driver) => (
                   <tr key={driver.id}>
-                    <td className="px-4 py-3 font-medium text-stone-900">
+                    <td className="px-4 py-3 font-medium text-admin-ink">
                       {driver.name}
                     </td>
-                    <td className="px-4 py-3 text-stone-600">
+                    <td className="px-4 py-3 text-admin-muted">
                       {driver.phone ? (
                         <span className="inline-flex items-center gap-1.5">
-                          <Phone className="h-3.5 w-3.5 text-stone-400" />
+                          <Phone className="h-3.5 w-3.5 text-admin-muted/60" />
                           {driver.phone}
                         </span>
                       ) : (
-                        <span className="text-stone-400">—</span>
+                        <span className="text-admin-muted/50">—</span>
                       )}
                     </td>
                   </tr>
@@ -394,7 +395,7 @@ export default function AdminDashboard() {
                   <tr>
                     <td
                       colSpan={2}
-                      className="px-4 py-12 text-center text-stone-400"
+                      className="px-4 py-12 text-center text-admin-muted"
                     >
                       {t("noDrivers")}
                     </td>

@@ -15,7 +15,7 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
       onClick={() => setLocale(locale === "en" ? "ar" : "en")}
       className={
         className ??
-        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[#F5E6C8]/75 hover:text-[#D3A94C] hover:bg-white/5 transition-colors"
+        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[#E5EDE8]/80 transition-colors hover:bg-white/[0.06] hover:text-[#FFEC94]"
       }
       aria-label="Switch language"
     >

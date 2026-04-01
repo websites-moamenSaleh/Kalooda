@@ -18,11 +18,7 @@ export default function AdminLayout({
   const { profile, signOut } = useAdminAuth();
 
   if (pathname === "/admin/sign-in") {
-    return (
-      <div className="min-h-screen bg-stone-50">
-        {children}
-      </div>
-    );
+    return <div className="min-h-screen admin-canvas">{children}</div>;
   }
 
   const isSuperAdmin = profile?.role === "super_admin";
@@ -35,36 +31,37 @@ export default function AdminLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <header className="sticky top-0 z-40 border-b border-[#D3A94C]/25 bg-[#1F443C]/95 backdrop-blur-md">
+    <div className="min-h-screen admin-canvas">
+      <header className="sticky top-0 z-40 border-b border-[#1F443C]/12 bg-gradient-to-b from-[#0A2923] to-[#123A33] shadow-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link href="/" className="flex items-center group">
+          <Link href="/" className="group flex items-center">
             <Image
               src="/brand/logo-transparent.png"
               alt="Kalooda"
               width={120}
               height={62}
-              className="h-8 w-auto object-contain transition-opacity group-hover:opacity-80"
+              className="h-8 w-auto object-contain transition-opacity group-hover:opacity-90"
             />
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {profile?.full_name && (
-              <span className="hidden sm:block text-sm text-[#F5E6C8]/60">
+              <span className="hidden max-w-[10rem] truncate text-sm text-[#A8B5AD]/75 sm:block">
                 {profile.full_name}
               </span>
             )}
-            <LanguageSwitcher />
+            <LanguageSwitcher className="flex items-center gap-1.5 rounded-lg border border-[#D3A94C]/20 px-3 py-2 text-sm font-medium text-[#E5EDE8]/85 transition-colors hover:bg-white/[0.06] hover:text-[#FFEC94]" />
             <button
+              type="button"
               onClick={signOut}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[#F5E6C8]/70 hover:text-[#D3A94C] hover:bg-white/5 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-[#E5EDE8]/75 transition-colors hover:bg-white/[0.06] hover:text-[#FFEC94] sm:px-3"
             >
               <LogOut className="h-4 w-4" />
-              {t("signOut")}
+              <span className="hidden sm:inline">{t("signOut")}</span>
             </button>
           </div>
         </div>
 
-        <nav className="mx-auto flex max-w-7xl gap-1 px-4 sm:px-6">
+        <nav className="mx-auto flex max-w-7xl gap-0.5 border-t border-white/[0.06] px-2 sm:px-6">
           {navItems.map((item) => {
             const isActive =
               item.href === "/admin"
@@ -75,13 +72,13 @@ export default function AdminLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
                   isActive
-                    ? "border-primary text-primary"
-                    : "border-transparent text-[#F5E6C8]/60 hover:text-[#F5E6C8] hover:border-[#F5E6C8]/30"
+                    ? "border-[#FFEC94] text-[#FFEC94]"
+                    : "border-transparent text-[#A8B5AD]/65 hover:border-[#D3A94C]/25 hover:text-[#E5EDE8]"
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4 opacity-80" />
                 {t(item.labelKey)}
               </Link>
             );
@@ -89,7 +86,9 @@ export default function AdminLayout({
         </nav>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+        {children}
+      </main>
     </div>
   );
 }

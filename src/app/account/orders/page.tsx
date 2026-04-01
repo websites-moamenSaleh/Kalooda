@@ -7,8 +7,9 @@ import { CartDrawer } from "@/components/cart-drawer";
 import { AccountSubnav } from "@/components/account-subnav";
 import type { Order } from "@/types/database";
 import type { TranslationKey } from "@/lib/translations";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, ClipboardList } from "lucide-react";
 import Link from "next/link";
+import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
 
 const STATUS_KEY: Record<Order["status"], TranslationKey> = {
   pending: "pending",
@@ -21,6 +22,8 @@ export default function AccountOrdersPage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useCartDrawerEvent(setCartOpen);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -48,52 +51,53 @@ export default function AccountOrdersPage() {
       <Header onCartClick={() => setCartOpen(true)} />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
 
-      <main className="mx-auto max-w-lg px-4 py-10">
+      <main className="mx-auto max-w-lg px-4 py-10 sm:py-14">
         <Link
           href="/"
-          className="mb-6 inline-flex items-center gap-1 text-sm text-[#F5E6C8]/60 hover:text-primary transition-colors"
+          className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-ink-soft transition-colors hover:text-primary-dark"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
           {t("backToShop")}
         </Link>
 
-        <h1 className="text-2xl font-bold text-[#F5E6C8]">
+        <h1 className="font-display text-3xl font-semibold text-ink">
           {t("orderHistoryTitle")}
         </h1>
 
-        <div className="mt-6">
+        <div className="mt-8">
           <AccountSubnav />
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-9 w-9 animate-spin text-primary" />
           </div>
         ) : orders.length === 0 ? (
-          <p className="mt-4 text-center text-[#F5E6C8]/50">
-            {t("orderHistoryEmpty")}
-          </p>
+          <div className="surface-panel mt-8 rounded-xl border border-dashed border-[#1F443C]/15 p-12 text-center">
+            <ClipboardList className="mx-auto h-10 w-10 text-[#D3A94C]/40" />
+            <p className="mt-4 text-ink-soft">{t("orderHistoryEmpty")}</p>
+          </div>
         ) : (
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-8 space-y-4">
             {orders.map((o) => (
               <li
                 key={o.id}
-                className="rounded-xl border border-[#D3A94C]/20 bg-[#1F443C] p-4 shadow-sm"
+                className="surface-panel rounded-xl border border-[#1F443C]/10 p-5 transition-shadow hover:shadow-[var(--shadow-card)]"
               >
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-[#F5E6C8]">
+                    <p className="font-display text-lg font-semibold text-ink">
                       {o.display_id}
                     </p>
-                    <p className="text-xs text-[#F5E6C8]/50">
+                    <p className="mt-1 text-xs text-ink-soft">
                       {new Date(o.created_at).toLocaleString()}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-[#D3A94C]/10 px-2 py-0.5 text-xs font-medium text-[#D3A94C]">
+                  <span className="shrink-0 rounded-full border border-[#D3A94C]/30 bg-[#FFF8E6] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#946E2A]">
                     {t(STATUS_KEY[o.status])}
                   </span>
                 </div>
-                <p className="mt-2 text-sm font-medium text-primary">
+                <p className="mt-4 font-display text-xl font-bold text-primary-dark">
                   ₪{Number(o.total_price).toFixed(2)}
                 </p>
               </li>

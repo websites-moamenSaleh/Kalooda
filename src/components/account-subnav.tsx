@@ -9,14 +9,14 @@ export function AccountSubnav() {
   const { t } = useLanguage();
 
   const linkCls = (active: boolean) =>
-    `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+    `rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
       active
-        ? "bg-primary/10 text-primary"
-        : "text-[#F5E6C8]/60 hover:bg-white/5 hover:text-[#F5E6C8]"
+        ? "bg-[#0A2923] text-[#FFEC94] shadow-md"
+        : "text-ink-soft hover:bg-[#1F443C]/8 hover:text-ink"
     }`;
 
   return (
-    <nav className="mb-8 flex flex-wrap gap-2 border-b border-[#D3A94C]/20 pb-4">
+    <nav className="mb-10 flex flex-wrap gap-2 rounded-xl border border-[#1F443C]/10 bg-[#E0EBE6]/50 p-2">
       <Link href="/account" className={linkCls(pathname === "/account")}>
         {t("myProfile")}
       </Link>

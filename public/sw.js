@@ -1,4 +1,4 @@
-const CACHE_NAME = "sweetdrop-v2";
+const CACHE_NAME = "kalooda-v3";
 const PRECACHE_URLS = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {

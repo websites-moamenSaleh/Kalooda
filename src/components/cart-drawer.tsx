@@ -22,18 +22,17 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
 
   return (
     <>
-      {/* Overlay */}
       {open && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 bg-[#1f443c]/35 backdrop-blur-md transition-opacity animate-fade-in"
           onClick={onClose}
+          aria-hidden
         />
       )}
 
-      {/* Drawer */}
       <div
-        className={`fixed top-0 z-50 flex h-full w-full max-w-md flex-col bg-[#0A1A16] shadow-2xl shadow-black/60 transition-transform duration-300 ${
-          dir === "rtl" ? "left-0" : "right-0"
+        className={`fixed top-0 z-[55] flex h-full w-full max-w-lg flex-col border-[#D3A94C]/30 bg-gradient-to-b from-[#fffcf8] via-[#faf6ef] to-[#f5f0e6] shadow-[0_0_48px_rgba(10,41,35,0.12)] transition-transform duration-300 ease-out ${
+          dir === "rtl" ? "left-0 border-e" : "right-0 border-s"
         } ${
           open
             ? "translate-x-0"
@@ -42,68 +41,80 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               : "translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between border-b border-[#D3A94C]/20 px-5 py-4">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-[#F5E6C8]">
-            <ShoppingBag className="h-5 w-5 text-primary" />
+        <div className="flex items-center justify-between border-b border-[#1f443c]/10 bg-[#fffcf8]/90 px-6 py-5">
+          <h2 className="font-display flex items-center gap-3 text-xl font-semibold text-ink">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#D3A94C]/18 text-[#946e2a]">
+              <ShoppingBag className="h-5 w-5" />
+            </span>
             {t("yourCart")}
           </h2>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-[#F5E6C8]/50 hover:bg-white/5 hover:text-[#F5E6C8] transition-colors"
+            className="rounded-lg p-2 text-ink-soft/50 transition-colors hover:bg-[#1f443c]/[0.06] hover:text-ink"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 overflow-y-auto px-6 py-5">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-[#F5E6C8]/40">
-              <ShoppingBag className="h-12 w-12 mb-3" />
-              <p className="text-sm font-medium">{t("cartEmpty")}</p>
-              <p className="text-xs mt-1">{t("cartEmptyHint")}</p>
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#D3A94C]/30 bg-white/60 px-6 py-20 text-center">
+              <ShoppingBag className="h-14 w-14 text-[#D3A94C]/45" />
+              <p className="mt-4 font-medium text-ink">
+                {t("cartEmpty")}
+              </p>
+              <p className="mt-2 text-sm text-ink-soft/80">{t("cartEmptyHint")}</p>
             </div>
           ) : (
             <ul className="space-y-4">
               {items.map((item) => (
                 <li
                   key={item.product.id}
-                  className="flex items-center gap-4 rounded-xl border border-[#D3A94C]/15 bg-[#1F443C] p-3"
+                  className="flex flex-col gap-4 rounded-xl border border-[#1f443c]/10 bg-white/85 p-4 shadow-sm sm:flex-row sm:items-center"
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-[#F5E6C8] truncate">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-ink">
                       {item.product.name}
                     </p>
-                    <p className="text-xs text-[#F5E6C8]/50">
+                    <p className="mt-1 text-xs text-ink-soft/75">
                       ₪{item.product.price.toFixed(2)} {t("each")}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between gap-3 sm:justify-end">
+                    <div className="flex items-center gap-1 rounded-lg border border-[#1f443c]/12 bg-[#faf6ef] p-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateQuantity(item.product.id, item.quantity - 1)
+                        }
+                        className="rounded-md p-2 text-ink transition-colors hover:bg-[#D3A94C]/15"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="min-w-8 text-center text-sm font-bold text-ink">
+                        {item.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateQuantity(item.product.id, item.quantity + 1)
+                        }
+                        className="rounded-md p-2 text-ink transition-colors hover:bg-[#D3A94C]/15"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                     <button
-                      onClick={() =>
-                        updateQuantity(item.product.id, item.quantity - 1)
-                      }
-                      className="rounded-md border border-[#D3A94C]/30 p-1 text-[#F5E6C8] hover:bg-[#D3A94C]/10 transition-colors"
+                      type="button"
+                      onClick={() => removeItem(item.product.id)}
+                      className="rounded-lg p-2 text-ink-soft/40 transition-colors hover:bg-red-500/[0.08] hover:text-red-600"
+                      aria-label="Remove"
                     >
-                      <Minus className="h-3 w-3" />
-                    </button>
-                    <span className="w-6 text-center text-sm font-semibold text-[#F5E6C8]">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() =>
-                        updateQuantity(item.product.id, item.quantity + 1)
-                      }
-                      className="rounded-md border border-[#D3A94C]/30 p-1 text-[#F5E6C8] hover:bg-[#D3A94C]/10 transition-colors"
-                    >
-                      <Plus className="h-3 w-3" />
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
-                  <button
-                    onClick={() => removeItem(item.product.id)}
-                    className="rounded-md p-1 text-[#F5E6C8]/40 hover:bg-red-500/10 hover:text-red-400 transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
                 </li>
               ))}
             </ul>
@@ -111,19 +122,19 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         </div>
 
         {items.length > 0 && (
-          <div className="border-t border-[#D3A94C]/20 px-5 py-4 space-y-3">
+          <div className="border-t border-[#1f443c]/10 bg-[#fffcf8] px-6 py-5 shadow-[0_-8px_24px_rgba(10,41,35,0.04)]">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-[#F5E6C8]/70">
+              <span className="text-sm font-medium uppercase tracking-wide text-ink-soft">
                 {t("total")}
               </span>
-              <span className="text-xl font-bold text-primary">
+              <span className="font-display text-2xl font-bold text-primary-dark">
                 ₪{totalPrice.toFixed(2)}
               </span>
             </div>
             <Link
               href={checkoutHref}
               onClick={onClose}
-              className="block w-full rounded-xl bg-primary py-3 text-center text-sm font-bold text-[#0A2923] shadow-sm hover:bg-primary-dark transition-colors"
+              className="btn-primary-solid mt-4 block w-full py-3.5 text-center"
             >
               {user ? t("proceedToCheckout") : t("signInToCheckout")}
             </Link>

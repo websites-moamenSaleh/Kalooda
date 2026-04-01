@@ -13,8 +13,8 @@ export default function AdminSignInPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex min-h-screen items-center justify-center admin-canvas">
+          <Loader2 className="h-9 w-9 animate-spin text-primary" />
         </div>
       }
     >
@@ -46,46 +46,47 @@ function AdminSignInContent() {
     setSubmitting(true);
     const err = await signIn(email, password);
     if (err) {
-      setError(
-        err === "forbidden" ? t("adminSignInNoAccess") : err
-      );
+      setError(err === "forbidden" ? t("adminSignInNoAccess") : err);
       setSubmitting(false);
     }
   }
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center admin-canvas">
+        <Loader2 className="h-9 w-9 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-stone-100 px-4">
-      <div className="mb-8 flex items-center gap-4">
+    <div className="flex min-h-screen flex-col items-center justify-center admin-canvas px-4 py-10">
+      <div className="mb-10 flex items-center gap-4">
         <Link href="/" className="flex items-center">
           <Image
             src="/brand/logo-transparent.png"
             alt="Kalooda"
-            width={140}
-            height={72}
+            width={160}
+            height={82}
             className="h-10 w-auto object-contain"
             priority
           />
         </Link>
-        <LanguageSwitcher className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-200 transition-colors" />
+        <LanguageSwitcher className="flex items-center gap-1.5 rounded-lg border border-admin-border bg-admin-panel px-3 py-2 text-sm font-medium text-admin-muted transition-colors hover:border-primary/40 hover:text-admin-ink" />
       </div>
 
-      <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-lg">
-        <h1 className="mb-1 text-xl font-bold text-stone-900">
+      <div className="admin-panel w-full max-w-md rounded-xl border border-admin-border p-8 shadow-sm">
+        <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+          <span className="text-xs font-bold text-primary-dark">Ops</span>
+        </div>
+        <h1 className="mt-4 text-xl font-bold text-admin-ink">
           {t("adminSignInTitle")}
         </h1>
-        <p className="mb-6 text-sm text-stone-500">{t("adminSignInSubtitle")}</p>
+        <p className="mt-1 text-sm text-admin-muted">{t("adminSignInSubtitle")}</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-muted">
               {t("email")}
             </label>
             <input
@@ -94,11 +95,11 @@ function AdminSignInContent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t("emailPlaceholder")}
-              className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="admin-input"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-muted">
               {t("password")}
             </label>
             <input
@@ -107,12 +108,12 @@ function AdminSignInContent() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={t("passwordPlaceholder")}
-              className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="admin-input"
             />
           </div>
 
           {(error ?? urlError) && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
               {error ?? urlError}
             </p>
           )}
@@ -120,7 +121,7 @@ function AdminSignInContent() {
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F443C] py-3 text-sm font-bold text-white shadow-sm hover:bg-[#163530] transition-colors disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0A2923] py-3 text-sm font-bold text-[#FFEC94] shadow-sm transition-colors hover:bg-[#082018] disabled:opacity-50"
           >
             {submitting ? (
               <>
@@ -133,10 +134,10 @@ function AdminSignInContent() {
           </button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-stone-500">
+        <p className="mt-6 text-center text-sm text-admin-muted">
           <Link
             href="/sign-in"
-            className="font-semibold text-[#1F443C] hover:text-[#163530]"
+            className="font-semibold text-primary-dark hover:underline"
           >
             {t("adminSignInCustomerLink")}
           </Link>

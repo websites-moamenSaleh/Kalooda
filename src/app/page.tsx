@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { CategoryCard } from "@/components/category-card";
 import { ProductCard } from "@/components/product-card";
 import { Header } from "@/components/header";
 import { CartDrawer } from "@/components/cart-drawer";
 import { Chatbot } from "@/components/chatbot";
-import { Search, Loader2 } from "lucide-react";
+import { SiteFooter } from "@/components/site-footer";
+import { Search, Loader2, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
+import { useAuth } from "@/contexts/auth-context";
+import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
 import type { Category, Product } from "@/types/database";
 
 export default function HomePage() {
@@ -18,6 +22,9 @@ export default function HomePage() {
   const [search, setSearch] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
   const { t } = useLanguage();
+  const { user } = useAuth();
+
+  useCartDrawerEvent(setCartOpen);
 
   useEffect(() => {
     Promise.all([
@@ -32,9 +39,14 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = products.filter((p) => {
-    if (p.unavailable_today) return false;
-    const matchesCategory = !activeCategory || p.category_id === activeCategory;
+  const available = useMemo(
+    () => products.filter((p) => !p.unavailable_today),
+    [products]
+  );
+
+  const filtered = available.filter((p) => {
+    const matchesCategory =
+      !activeCategory || p.category_id === activeCategory;
     const q = search.toLowerCase();
     const matchesSearch =
       !search ||
@@ -45,86 +57,260 @@ export default function HomePage() {
     return matchesCategory && matchesSearch;
   });
 
+  const featuredPick = useMemo(() => available.slice(0, 4), [available]);
+
+  const showFeaturedBlock = !search.trim() && !activeCategory;
+
   return (
     <>
       <Header onCartClick={() => setCartOpen(true)} />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <main>
         {/* Hero */}
-        <section className="mb-12 text-center pt-6">
-          <h1
-            className="text-5xl font-bold tracking-tight text-stone-900 sm:text-6xl"
-            style={{ fontFamily: "var(--font-cormorant)" }}
-          >
-            {t("heroTitle1")}{" "}
-            <span className="text-[#1F443C] italic">{t("heroTitle2")}</span>
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-stone-500">
-            {t("heroSubtitle")}
-          </p>
+        <section className="relative overflow-hidden border-b border-[#1F443C]/10">
+          <div
+            className="absolute inset-0 bg-[#082018]"
+            aria-hidden
+          />
+          <div
+            className="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(211, 169, 76,0.35),transparent),radial-gradient(ellipse_60%_50%_at_100%_50%,rgba(92,40,52,0.2),transparent)]"
+            aria-hidden
+          />
+          <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:py-28">
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#D3A94C]/30 bg-[#D3A94C]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FFEC94]">
+                <Sparkles className="h-3.5 w-3.5" />
+                Kalooda
+              </p>
+              <h1 className="font-display text-4xl font-semibold leading-[1.1] tracking-tight text-[#F0F5F3] sm:text-5xl lg:text-6xl">
+                {t("heroTitle1")}{" "}
+                <span className="text-gradient-gold italic">
+                  {t("heroTitle2")}
+                </span>
+              </h1>
+              <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[#A8B5AD] sm:text-lg">
+                {t("heroSubtitle")}
+              </p>
+              <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                <a href="#browse" className="btn-primary-solid px-8 py-3.5">
+                  {t("browseMenu")}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setCartOpen(true)}
+                  className="btn-outline-light px-8 py-3.5"
+                >
+                  {t("orderNow")}
+                </button>
+                <a href="#categories" className="btn-outline-light px-8 py-3.5">
+                  {t("viewCategories")}
+                </a>
+              </div>
+            </div>
+          </div>
         </section>
 
         {loading ? (
-          <div className="flex flex-col items-center py-20 text-stone-400">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="mt-3 text-sm">{t("loadingProducts")}</p>
+          <div className="mx-auto flex max-w-7xl flex-col items-center px-4 py-24 sm:px-6">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="mt-4 text-sm text-ink-soft">{t("loadingProducts")}</p>
           </div>
         ) : (
           <>
-            {/* Search */}
-            <div className="relative mx-auto mb-8 max-w-lg">
-              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("searchPlaceholder")}
-                className="w-full rounded-xl border border-stone-200 bg-white py-2.5 ps-10 pe-4 text-sm text-stone-800 outline-none placeholder:text-stone-400 focus:border-[#1F443C]/50 focus:ring-2 focus:ring-[#1F443C]/10 shadow-sm"
-              />
-            </div>
-
             {/* Categories */}
-            <div className="mb-8 flex flex-wrap justify-center gap-3">
-              <button
-                onClick={() => setActiveCategory(null)}
-                className={`rounded-2xl border-2 px-5 py-3 text-sm font-semibold transition-all hover:scale-105 ${
-                  !activeCategory
-                    ? "border-[#1F443C] bg-[#1F443C] text-[#D3A94C] shadow-lg"
-                    : "border-stone-200 bg-white text-stone-700 hover:border-[#1F443C]/40 hover:bg-stone-50"
-                }`}
-              >
-                {t("all")}
-              </button>
-              {categories.map((cat) => (
-                <CategoryCard
-                  key={cat.id}
-                  category={cat}
-                  isActive={activeCategory === cat.id}
-                  onClick={() =>
-                    setActiveCategory((prev) =>
-                      prev === cat.id ? null : cat.id
-                    )
-                  }
-                />
-              ))}
-            </div>
+            <section
+              id="categories"
+              className="border-b border-[#1F443C]/8 bg-gradient-to-b from-[#fcfaf5] to-[#f0e9dd] py-16 sm:py-20"
+            >
+              <div className="mx-auto max-w-7xl px-4 sm:px-6">
+                <div className="mx-auto max-w-2xl text-center">
+                  <h2 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
+                    {t("sectionCategoriesTitle")}
+                  </h2>
+                  <div className="divider-gold mx-auto mt-4 max-w-xs" />
+                  <p className="mt-4 text-ink-soft">
+                    {t("sectionCategoriesSubtitle")}
+                  </p>
+                </div>
+                <div className="mt-12 flex flex-wrap justify-center gap-3 sm:gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCategory(null)}
+                    className={`rounded-xl border-2 px-5 py-3 text-sm font-semibold transition-all duration-200 sm:px-6 sm:py-3.5 ${
+                      !activeCategory
+                        ? "border-[#D3A94C] bg-[#0A2923] text-[#FFEC94] shadow-[0_8px_28px_rgba(10, 41, 35,0.25)]"
+                        : "surface-panel border-[#1F443C]/12 text-ink hover:border-[#D3A94C]/35"
+                    }`}
+                  >
+                    {t("all")}
+                  </button>
+                  {categories.map((cat) => (
+                    <CategoryCard
+                      key={cat.id}
+                      category={cat}
+                      isActive={activeCategory === cat.id}
+                      onClick={() =>
+                        setActiveCategory((prev) =>
+                          prev === cat.id ? null : cat.id
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
 
-            {/* Product grid */}
-            {filtered.length === 0 ? (
-              <p className="py-16 text-center text-stone-400">
-                {t("noProducts")}
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filtered.map((p) => (
-                  <ProductCard key={p.id} product={p} />
+            {/* Story + featured */}
+            {showFeaturedBlock && featuredPick.length > 0 && (
+              <section className="border-b border-[#1F443C]/8 bg-[#faf6ef] py-16 sm:py-20">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6">
+                  <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+                    <div className="order-2 lg:order-1">
+                      <h2 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
+                        {t("sectionStoryTitle")}
+                      </h2>
+                      <div className="divider-gold mt-4 max-w-xs" />
+                      <p className="mt-6 text-base leading-relaxed text-ink-soft">
+                        {t("sectionStoryBody")}
+                      </p>
+                    </div>
+                    <div className="order-1 lg:order-2">
+                      <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-[#1F443C]/12 shadow-[var(--shadow-elevated)]">
+                        <div
+                          className="absolute inset-0 bg-gradient-to-br from-[#1F443C]/30 via-[#1F443C]/20 to-[#D3A94C]/20"
+                          aria-hidden
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center p-8">
+                          <span className="font-display text-center text-5xl text-[#1F443C]/25 sm:text-7xl">
+                            ✦
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-20">
+                    <div className="text-center">
+                      <h2 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
+                        {t("sectionSelectionsTitle")}
+                      </h2>
+                      <div className="divider-gold mx-auto mt-4 max-w-xs" />
+                      <p className="mx-auto mt-4 max-w-2xl text-ink-soft">
+                        {t("sectionSelectionsSubtitle")}
+                      </p>
+                    </div>
+                    <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                      {featuredPick.map((p) => (
+                        <ProductCard key={p.id} product={p} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* CTA band */}
+            <section className="surface-dark border-b border-[#D3A94C]/15 py-14 sm:py-16">
+              <div className="mx-auto max-w-7xl px-4 text-center sm:px-6">
+                <h2 className="font-display text-2xl font-semibold text-[#F0F5F3] sm:text-3xl">
+                  {t("ctaBandTitle")}
+                </h2>
+                <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#A8B5AD]">
+                  {t("ctaBandSubtitle")}
+                </p>
+                <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                  {user ? (
+                    <Link
+                      href="/account"
+                      className="btn-primary-solid min-w-[200px]"
+                    >
+                      {t("myProfile")}
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/sign-in"
+                      className="btn-primary-solid min-w-[200px]"
+                    >
+                      {t("signIn")}
+                    </Link>
+                  )}
+                  <a href="#browse" className="btn-outline-light min-w-[200px]">
+                    {t("browseMenu")}
+                  </a>
+                </div>
+              </div>
+            </section>
+
+            {/* Browse / menu */}
+            <section
+              id="browse"
+              className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20"
+            >
+              <div className="text-center">
+                <h2 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
+                  {t("browseMenu")}
+                </h2>
+                <div className="divider-gold mx-auto mt-4 max-w-xs" />
+              </div>
+
+              <div className="relative mx-auto mt-10 max-w-xl">
+                <Search className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8B7355]" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t("searchPlaceholder")}
+                  className="input-premium w-full py-3.5 ps-12 pe-4 text-[15px] shadow-sm"
+                />
+              </div>
+
+              <div className="mt-8 flex flex-wrap justify-center gap-2 sm:gap-3 lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => setActiveCategory(null)}
+                  className={`rounded-lg border px-4 py-2.5 text-xs font-semibold sm:text-sm ${
+                    !activeCategory
+                      ? "border-[#D3A94C] bg-[#0A2923] text-[#FFEC94]"
+                      : "surface-panel border-[#1F443C]/10 text-ink"
+                  }`}
+                >
+                  {t("all")}
+                </button>
+                {categories.map((cat) => (
+                  <CategoryCard
+                    key={cat.id}
+                    category={cat}
+                    isActive={activeCategory === cat.id}
+                    variant="compact"
+                    onClick={() =>
+                      setActiveCategory((prev) =>
+                        prev === cat.id ? null : cat.id
+                      )
+                    }
+                  />
                 ))}
               </div>
-            )}
+              <p className="mt-4 text-center text-xs text-ink-soft/80 lg:hidden">
+                {t("viewCategories")} ↑
+              </p>
+
+              {filtered.length === 0 ? (
+                <p className="py-20 text-center text-ink-soft">
+                  {t("noProducts")}
+                </p>
+              ) : (
+                <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filtered.map((p) => (
+                    <ProductCard key={p.id} product={p} />
+                  ))}
+                </div>
+              )}
+            </section>
           </>
         )}
       </main>
 
+      <SiteFooter />
       <Chatbot />
     </>
   );

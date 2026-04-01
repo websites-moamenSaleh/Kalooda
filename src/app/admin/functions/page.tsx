@@ -382,14 +382,14 @@ export default function FunctionsPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
               <Package className="h-4 w-4 text-primary" />
             </div>
-            <h2 className="text-lg font-semibold text-stone-900">
+            <h2 className="text-lg font-semibold text-admin-ink">
               {t("products")}
             </h2>
           </div>
           {!showForm && (
             <button
               onClick={openNewProduct}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#082018] hover:bg-primary/90 transition-colors"
             >
               <Plus className="h-4 w-4" />
               {t("addProduct")}
@@ -399,29 +399,29 @@ export default function FunctionsPage() {
 
         {/* Product form (add/edit) */}
         {showForm && (
-          <div className="mb-6 rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+          <div className="mb-6 rounded-xl border border-admin-border bg-admin-panel p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-semibold text-stone-900">
+              <h3 className="font-semibold text-admin-ink">
                 {editingId ? t("editProduct") : t("addProduct")}
               </h3>
               <button
                 onClick={closeForm}
-                className="rounded-lg p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600 transition-colors"
+                className="rounded-lg p-1 text-admin-muted hover:bg-[rgba(31, 68, 60,0.06)] hover:text-admin-muted transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Language tabs */}
-            <div className="mb-4 flex gap-1 rounded-lg bg-stone-100 p-1">
+            <div className="mb-4 flex gap-1 rounded-lg bg-[rgba(31, 68, 60,0.06)] p-1">
               {(["en", "ar"] as const).map((lang) => (
                 <button
                   key={lang}
                   onClick={() => setLangTab(lang)}
                   className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                     langTab === lang
-                      ? "bg-white text-stone-900 shadow-sm"
-                      : "text-stone-500 hover:text-stone-700"
+                      ? "bg-[#fffcf8] text-admin-ink shadow-sm"
+                      : "text-admin-muted hover:text-admin-ink"
                   }`}
                 >
                   {lang === "en" ? t("english") : t("arabic")}
@@ -505,7 +505,7 @@ export default function FunctionsPage() {
               />
 
               <div>
-                <label className="mb-1 block text-xs font-medium text-stone-500">
+                <label className="mb-1 block text-xs font-medium text-admin-muted">
                   {t("category")}
                 </label>
                 <select
@@ -513,7 +513,7 @@ export default function FunctionsPage() {
                   onChange={(e) =>
                     updateField("category_id", e.target.value)
                   }
-                  className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="admin-input"
                 >
                   <option value="">{t("selectCategory")}</option>
                   {categories.map((c) => (
@@ -528,14 +528,14 @@ export default function FunctionsPage() {
                 <button
                   type="button"
                   onClick={closeForm}
-                  className="rounded-lg border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors"
+                  className="rounded-lg border border-admin-border px-4 py-2 text-sm font-medium text-admin-muted hover:bg-[rgba(31, 68, 60,0.06)] transition-colors"
                 >
                   {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={saving || !form.name.trim()}
-                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#082018] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? t("saving") : t("saveProduct")}
                 </button>
@@ -545,29 +545,29 @@ export default function FunctionsPage() {
         )}
 
         {/* Products table */}
-        <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-admin-border bg-admin-panel shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-stone-200 bg-stone-50/50 text-start">
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                <tr className="admin-table-head text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("productName")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("price")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("category")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("status")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start w-40">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start w-40">
                     {t("actions")}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-admin-border">
                 {products.map((p) => {
                   const cat = categories.find(
                     (c) => c.id === p.category_id
@@ -575,22 +575,22 @@ export default function FunctionsPage() {
                   return (
                     <tr key={p.id}>
                       <td className="px-4 py-3">
-                        <p className="font-medium text-stone-900">
+                        <p className="font-medium text-admin-ink">
                           {p.name}
                         </p>
                         {p.name_ar && (
                           <p
-                            className="text-xs text-stone-400"
+                            className="text-xs text-admin-muted"
                             dir="rtl"
                           >
                             {p.name_ar}
                           </p>
                         )}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-stone-900">
+                      <td className="px-4 py-3 font-semibold text-admin-ink">
                         ₪{p.price.toFixed(2)}
                       </td>
-                      <td className="px-4 py-3 text-stone-600">
+                      <td className="px-4 py-3 text-admin-muted">
                         {cat ? (locale === "ar" && cat.name_ar ? cat.name_ar : cat.name) : "—"}
                       </td>
                       <td className="px-4 py-3">
@@ -611,7 +611,7 @@ export default function FunctionsPage() {
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => openEditProduct(p)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-stone-200 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-100 transition-colors"
+                            className="inline-flex items-center gap-1 rounded-lg border border-admin-border px-2.5 py-1.5 text-xs font-medium text-admin-ink hover:bg-[rgba(31, 68, 60,0.06)] transition-colors"
                           >
                             <Pencil className="h-3 w-3" />
                             {t("editProduct")}
@@ -632,7 +632,7 @@ export default function FunctionsPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-12 text-center text-stone-400"
+                      className="px-4 py-12 text-center text-admin-muted"
                     >
                       {t("noProductsYet")}
                     </td>
@@ -650,7 +650,7 @@ export default function FunctionsPage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50">
             <Tag className="h-4 w-4 text-amber-600" />
           </div>
-          <h2 className="text-lg font-semibold text-stone-900">
+          <h2 className="text-lg font-semibold text-admin-ink">
             {t("categories")}
           </h2>
         </div>
@@ -660,7 +660,7 @@ export default function FunctionsPage() {
           className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end"
         >
           <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-stone-500">
+            <label className="mb-1 block text-xs font-medium text-admin-muted">
               {t("categoryName")}
             </label>
             <input
@@ -669,11 +669,11 @@ export default function FunctionsPage() {
               onChange={(e) => setNewCategoryName(e.target.value)}
               placeholder={t("categoryNamePlaceholder")}
               required
-              className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-admin-border bg-[#fffcf8] px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </div>
           <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-stone-500">
+            <label className="mb-1 block text-xs font-medium text-admin-muted">
               {t("categoryNameAr")}
             </label>
             <input
@@ -682,42 +682,42 @@ export default function FunctionsPage() {
               onChange={(e) => setNewCategoryNameAr(e.target.value)}
               placeholder={t("categoryNameArPlaceholder")}
               dir="rtl"
-              className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-admin-border bg-[#fffcf8] px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </div>
           <button
             type="submit"
             disabled={addingCategory || !newCategoryName.trim()}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#082018] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="h-4 w-4" />
             {addingCategory ? t("adding") : t("addCategory")}
           </button>
         </form>
 
-        <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-admin-border bg-admin-panel shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-stone-200 bg-stone-50/50 text-start">
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                <tr className="admin-table-head text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("categoryName")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("categoryNameAr")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start w-20" />
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start w-20" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-admin-border">
                 {categories.map((cat) => (
                   <tr key={cat.id}>
-                    <td className="px-4 py-3 font-medium text-stone-900">
+                    <td className="px-4 py-3 font-medium text-admin-ink">
                       {cat.name}
                     </td>
-                    <td className="px-4 py-3 text-stone-600" dir="rtl">
+                    <td className="px-4 py-3 text-admin-muted" dir="rtl">
                       {cat.name_ar || (
-                        <span className="text-stone-400">—</span>
+                        <span className="text-admin-muted">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -735,7 +735,7 @@ export default function FunctionsPage() {
                   <tr>
                     <td
                       colSpan={3}
-                      className="px-4 py-12 text-center text-stone-400"
+                      className="px-4 py-12 text-center text-admin-muted"
                     >
                       {t("noCategories")}
                     </td>
@@ -753,37 +753,37 @@ export default function FunctionsPage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
             <ClipboardList className="h-4 w-4 text-blue-600" />
           </div>
-          <h2 className="text-lg font-semibold text-stone-900">
+          <h2 className="text-lg font-semibold text-admin-ink">
             {t("orders")}
           </h2>
         </div>
 
-        <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-admin-border bg-admin-panel shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-stone-200 bg-stone-50/50 text-start">
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                <tr className="admin-table-head text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("order")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("customer")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("items")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("total")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("status")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start w-24">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start w-24">
                     {t("actions")}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-admin-border">
                 {orders.map((order) => {
                   const colors =
                     statusColors[order.status] ?? statusColors.pending;
@@ -793,13 +793,13 @@ export default function FunctionsPage() {
                     statusTranslationKeys[order.status] ?? "pending";
                   return (
                     <tr key={order.id}>
-                      <td className="px-4 py-3 font-semibold text-stone-900">
+                      <td className="px-4 py-3 font-semibold text-admin-ink">
                         {order.display_id}
                       </td>
-                      <td className="px-4 py-3 text-stone-700">
+                      <td className="px-4 py-3 text-admin-ink">
                         {order.customer_name}
                       </td>
-                      <td className="px-4 py-3 text-stone-600">
+                      <td className="px-4 py-3 text-admin-muted">
                         {order.items
                           .map(
                             (i) =>
@@ -807,7 +807,7 @@ export default function FunctionsPage() {
                           )
                           .join(", ")}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-stone-900">
+                      <td className="px-4 py-3 font-semibold text-admin-ink">
                         ₪{order.total_price.toFixed(2)}
                       </td>
                       <td className="px-4 py-3">
@@ -836,7 +836,7 @@ export default function FunctionsPage() {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-12 text-center text-stone-400"
+                      className="px-4 py-12 text-center text-admin-muted"
                     >
                       {t("noOrders")}
                     </td>
@@ -851,10 +851,10 @@ export default function FunctionsPage() {
       {/* ─── Driver Management ─── */}
       <section className="mt-10">
         <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-100">
-            <Users className="h-4 w-4 text-stone-600" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgba(31, 68, 60,0.06)]">
+            <Users className="h-4 w-4 text-admin-muted" />
           </div>
-          <h2 className="text-lg font-semibold text-stone-900">
+          <h2 className="text-lg font-semibold text-admin-ink">
             {t("drivers")}
           </h2>
         </div>
@@ -864,7 +864,7 @@ export default function FunctionsPage() {
           className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end"
         >
           <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-stone-500">
+            <label className="mb-1 block text-xs font-medium text-admin-muted">
               {t("driverName")}
             </label>
             <input
@@ -873,11 +873,11 @@ export default function FunctionsPage() {
               onChange={(e) => setNewDriverName(e.target.value)}
               placeholder={t("driverNamePlaceholder")}
               required
-              className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-admin-border bg-[#fffcf8] px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </div>
           <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-stone-500">
+            <label className="mb-1 block text-xs font-medium text-admin-muted">
               {t("driverPhone")}
             </label>
             <input
@@ -885,47 +885,47 @@ export default function FunctionsPage() {
               value={newDriverPhone}
               onChange={(e) => setNewDriverPhone(e.target.value)}
               placeholder={t("driverPhonePlaceholder")}
-              className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-admin-border bg-[#fffcf8] px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </div>
           <button
             type="submit"
             disabled={addingDriver || !newDriverName.trim()}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#082018] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="h-4 w-4" />
             {addingDriver ? t("adding") : t("addDriver")}
           </button>
         </form>
 
-        <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-admin-border bg-admin-panel shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-stone-200 bg-stone-50/50 text-start">
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                <tr className="admin-table-head text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("driverName")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start">
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("driverPhone")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-stone-600 text-start w-20" />
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start w-20" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-admin-border">
                 {drivers.map((driver) => (
                   <tr key={driver.id}>
-                    <td className="px-4 py-3 font-medium text-stone-900">
+                    <td className="px-4 py-3 font-medium text-admin-ink">
                       {driver.name}
                     </td>
-                    <td className="px-4 py-3 text-stone-600">
+                    <td className="px-4 py-3 text-admin-muted">
                       {driver.phone ? (
                         <span className="inline-flex items-center gap-1.5">
-                          <Phone className="h-3.5 w-3.5 text-stone-400" />
+                          <Phone className="h-3.5 w-3.5 text-admin-muted" />
                           {driver.phone}
                         </span>
                       ) : (
-                        <span className="text-stone-400">—</span>
+                        <span className="text-admin-muted">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -943,7 +943,7 @@ export default function FunctionsPage() {
                   <tr>
                     <td
                       colSpan={3}
-                      className="px-4 py-12 text-center text-stone-400"
+                      className="px-4 py-12 text-center text-admin-muted"
                     >
                       {t("noDrivers")}
                     </td>
@@ -977,12 +977,11 @@ function Field({
   placeholder?: string;
   textarea?: boolean;
 }) {
-  const cls =
-    "w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary";
+  const cls = "admin-input";
 
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-stone-500">
+      <label className="mb-1 block text-xs font-medium text-admin-muted">
         {label}
       </label>
       {textarea ? (

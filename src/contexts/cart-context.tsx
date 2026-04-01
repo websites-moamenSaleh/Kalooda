@@ -75,6 +75,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartReady, setCartReady] = useState(false);
 
   const itemsRef = useRef(items);
+  // Keep ref aligned with latest items for async cart persistence (debounced).
+  // eslint-disable-next-line react-hooks/refs -- mirror pattern; ref read only in timeouts/async
   itemsRef.current = items;
 
   const userIdRef = useRef<string | null>(null);

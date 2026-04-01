@@ -5,12 +5,33 @@ export const translations = {
     // Header
     admin: "Admin",
     cart: "Cart",
+    navMenu: "Menu",
 
     // Home hero
     heroTitle1: "Fresh Sweets,",
     heroTitle2: "Delivered Fast",
     heroSubtitle:
       "Hand-crafted chocolates, gummies, pastries & more. Order online and get same-day delivery.",
+    browseMenu: "Browse the menu",
+    orderNow: "Order now",
+    viewCategories: "View categories",
+    promoRibbon:
+      "Same-day delivery · Hand-finished desserts · Made to impress",
+    sectionCategoriesTitle: "Explore by category",
+    sectionCategoriesSubtitle:
+      "From silky chocolate to oven-fresh pastries — find your craving.",
+    sectionSelectionsTitle: "Chef’s selections",
+    sectionSelectionsSubtitle:
+      "A curated taste of what our kitchen does best — add to your cart in one tap.",
+    sectionStoryTitle: "Crafted with care",
+    sectionStoryBody:
+      "Every recipe is slow-built for depth: real ingredients, careful timing, and presentation worthy of your table. We bake and finish in small batches so what arrives at your door feels as special as dining out.",
+    ctaBandTitle: "Ready when you are",
+    ctaBandSubtitle:
+      "Sign in to save your details, track orders, and check out faster next time.",
+    footerTagline: "Premium desserts & sweets — delivered same day.",
+    footerExplore: "Explore",
+    footerFinePrint: "© Kalooda. Crafted desserts with hospitality at heart.",
     loadingProducts: "Loading products...",
     searchPlaceholder: "Search sweets...",
     all: "All",
@@ -213,12 +234,33 @@ export const translations = {
     // Header
     admin: "لوحة التحكم",
     cart: "السلة",
+    navMenu: "القائمة",
 
     // Home hero
     heroTitle1: "حلويات طازجة،",
     heroTitle2: "توصيل سريع",
     heroSubtitle:
       "شوكولاتة يدوية الصنع، حلوى، معجنات والمزيد. اطلب أونلاين واحصل على توصيل في نفس اليوم.",
+    browseMenu: "تصفح القائمة",
+    orderNow: "اطلب الآن",
+    viewCategories: "عرض الفئات",
+    promoRibbon:
+      "توصيل في نفس اليوم · حلويات منتهية يدوياً · جاهزة لتبهج مناسبتك",
+    sectionCategoriesTitle: "استكشف حسب الفئة",
+    sectionCategoriesSubtitle:
+      "من الشوكولاتة الناعمة إلى المعجنات الطازجة — اعثر على ما تشتهيه.",
+    sectionSelectionsTitle: "اختيارات الشيف",
+    sectionSelectionsSubtitle:
+      "لمحة مختارة من أبرز ما يقدمه مطبخنا — أضفها لسلتك بنقرة.",
+    sectionStoryTitle: "صُنعت بعناية",
+    sectionStoryBody:
+      "كل وصفة تُبنى ببطء للعمق: مكونات حقيقية وتوقيت دقيق وتقديم يليق بمائدتك. نخبز ونُنهي على دفعات صغيرة ليصلك طلبك بمستوى يضاهي المطاعم.",
+    ctaBandTitle: "نحن جاهزون عندما تكون أنت",
+    ctaBandSubtitle:
+      "سجّل الدخول لحفظ بياناتك وتتبع الطلبات وإتمام الشراء بسرعة لاحقاً.",
+    footerTagline: "حلويات وفاخرة — توصيل في نفس اليوم.",
+    footerExplore: "استكشف",
+    footerFinePrint: "© كالودا. حلويات بروح الضيافة.",
     loadingProducts: "جارٍ تحميل المنتجات...",
     searchPlaceholder: "ابحث عن الحلويات...",
     all: "الكل",
