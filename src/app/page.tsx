@@ -52,19 +52,22 @@ export default function HomePage() {
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         {/* Hero */}
-        <section className="mb-10 text-center">
-          <h1 className="text-4xl font-extrabold tracking-tight text-stone-900 sm:text-5xl">
+        <section className="mb-12 text-center pt-6">
+          <h1
+            className="text-5xl font-bold tracking-tight text-stone-900 sm:text-6xl"
+            style={{ fontFamily: "var(--font-cormorant)" }}
+          >
             {t("heroTitle1")}{" "}
-            <span className="text-primary">{t("heroTitle2")}</span>
+            <span className="text-[#1F443C] italic">{t("heroTitle2")}</span>
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-lg text-stone-500">
+          <p className="mx-auto mt-4 max-w-xl text-base text-stone-500">
             {t("heroSubtitle")}
           </p>
         </section>
 
         {loading ? (
           <div className="flex flex-col items-center py-20 text-stone-400">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="mt-3 text-sm">{t("loadingProducts")}</p>
           </div>
         ) : (
@@ -76,7 +79,7 @@ export default function HomePage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t("searchPlaceholder")}
-                className="w-full rounded-xl border border-stone-200 bg-white py-2.5 ps-10 pe-4 text-sm outline-none placeholder:text-stone-400 focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-sm"
+                className="w-full rounded-xl border border-stone-200 bg-white py-2.5 ps-10 pe-4 text-sm text-stone-800 outline-none placeholder:text-stone-400 focus:border-[#1F443C]/50 focus:ring-2 focus:ring-[#1F443C]/10 shadow-sm"
               />
             </div>
 
@@ -86,8 +89,8 @@ export default function HomePage() {
                 onClick={() => setActiveCategory(null)}
                 className={`rounded-2xl border-2 px-5 py-3 text-sm font-semibold transition-all hover:scale-105 ${
                   !activeCategory
-                    ? "border-primary bg-rose-50 text-primary shadow-md"
-                    : "border-stone-200 bg-white text-stone-700 hover:border-rose-300"
+                    ? "border-[#1F443C] bg-[#1F443C] text-[#D3A94C] shadow-lg"
+                    : "border-stone-200 bg-white text-stone-700 hover:border-[#1F443C]/40 hover:bg-stone-50"
                 }`}
               >
                 {t("all")}

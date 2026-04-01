@@ -25,12 +25,12 @@ export function CategoryCard({ category, isActive, onClick }: CategoryCardProps)
       onClick={onClick}
       className={`flex flex-col items-center gap-2 rounded-2xl border-2 px-5 py-4 transition-all hover:scale-105 ${
         isActive
-          ? "border-primary bg-rose-50 shadow-md"
-          : "border-stone-200 bg-white hover:border-rose-300"
+          ? "border-[#1F443C] bg-[#1F443C] shadow-lg text-white"
+          : "border-stone-200 bg-white text-stone-700 hover:border-[#1F443C]/40 hover:bg-stone-50"
       }`}
     >
-      <span className="text-3xl">{categoryEmoji[category.slug] ?? "🍪"}</span>
-      <span className={`text-sm font-semibold ${isActive ? "text-primary" : "text-stone-700"}`}>
+      <span className="text-3xl">{categoryEmoji[category.slug] ?? "🍰"}</span>
+      <span className={`text-sm font-semibold ${isActive ? "text-[#D3A94C]" : "text-stone-700"}`}>
         {name}
       </span>
     </button>

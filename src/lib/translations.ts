@@ -32,8 +32,8 @@ export const translations = {
 
     // Chatbot
     chatbotGreeting:
-      "Hi! I'm SweetBot 🍬 Ask me about our products, ingredients, or allergies!",
-    sweetBot: "SweetBot",
+      "Hi! I'm KaloodaBot 🍰 Ask me about our cheesecakes, ingredients, or allergies!",
+    sweetBot: "KaloodaBot",
     chatbotSubtitle: "Ask about allergies & ingredients",
     chatbotPlaceholder: "Ask about allergies...",
     chatbotError: "Sorry, something went wrong.",
@@ -240,8 +240,8 @@ export const translations = {
 
     // Chatbot
     chatbotGreeting:
-      "مرحباً! أنا سويت بوت 🍬 اسألني عن منتجاتنا أو المكونات أو الحساسية!",
-    sweetBot: "سويت بوت",
+      "مرحباً! أنا كالودا بوت 🍰 اسألني عن كيك الجبن أو المكونات أو الحساسية!",
+    sweetBot: "كالودا بوت",
     chatbotSubtitle: "اسأل عن الحساسية والمكونات",
     chatbotPlaceholder: "اسأل عن الحساسية...",
     chatbotError: "عذراً، حدث خطأ ما.",

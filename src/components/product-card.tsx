@@ -28,10 +28,10 @@ export function ProductCard({ product }: { product: Product }) {
       : product.description;
 
   return (
-    <div className="group relative flex flex-col rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition-all hover:shadow-lg hover:-translate-y-0.5">
-      <div className="mb-3 flex h-32 items-center justify-center rounded-xl bg-gradient-to-br from-rose-50 to-amber-50">
+    <div className="group relative flex flex-col rounded-2xl border border-stone-200/60 bg-[#FAF7F2] p-4 shadow-md transition-all hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1">
+      <div className="mb-3 flex h-32 items-center justify-center rounded-xl bg-gradient-to-br from-[#F2EBE0] to-[#EAE0D4]">
         <span className="text-6xl drop-shadow-sm">
-          {productEmoji[product.id] ?? "🍬"}
+          {productEmoji[product.id] ?? "🍰"}
         </span>
       </div>
 
@@ -57,12 +57,12 @@ export function ProductCard({ product }: { product: Product }) {
       )}
 
       <div className="mt-auto flex items-center justify-between pt-3">
-        <span className="text-lg font-bold text-primary">
+        <span className="text-lg font-bold text-[#B48F3E]">
           ₪{product.price.toFixed(2)}
         </span>
         <button
           onClick={() => addItem(product)}
-          className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark transition-colors active:scale-95"
+          className="flex items-center gap-1 rounded-lg bg-[#1F443C] px-3 py-1.5 text-sm font-semibold text-[#D3A94C] shadow-sm hover:bg-[#163530] transition-colors active:scale-95"
         >
           <Plus className="h-4 w-4" />
           {t("add")}

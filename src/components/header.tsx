@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   ShoppingCart,
-  Candy,
   LayoutDashboard,
   LogOut,
   LogIn,
@@ -37,16 +37,20 @@ export function Header({ onCartClick }: HeaderProps) {
       : !adminLoading && isAdminRole(adminProfile));
 
   return (
-    <header className="sticky top-0 z-40 border-b border-rose-200 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-[#D3A94C]/20 bg-[#1A3B34]/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
         <Link
           href="/"
-          className="flex min-w-0 max-w-[55%] shrink items-center gap-2 group sm:max-w-none"
+          className="flex min-w-0 max-w-[55%] shrink items-center group sm:max-w-none"
         >
-          <Candy className="h-7 w-7 shrink-0 text-primary group-hover:rotate-12 transition-transform" />
-          <span className="truncate text-xl font-bold tracking-tight text-stone-900">
-            SweetDrop
-          </span>
+          <Image
+            src="/brand/logo-transparent.png"
+            alt="Kalooda"
+            width={140}
+            height={72}
+            className="h-10 w-auto object-contain transition-opacity group-hover:opacity-80"
+            priority
+          />
         </Link>
 
         <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:flex-none sm:gap-3">
@@ -55,7 +59,7 @@ export function Header({ onCartClick }: HeaderProps) {
           {showAdminLink && (
             <Link
               href="/admin"
-              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors sm:px-3"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-[#F5E6C8]/75 hover:text-[#D3A94C] hover:bg-white/5 transition-colors sm:px-3"
             >
               <LayoutDashboard className="h-4 w-4 shrink-0" />
               {t("admin")}
@@ -66,7 +70,7 @@ export function Header({ onCartClick }: HeaderProps) {
             <>
               <Link
                 href="/account"
-                className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors sm:px-3"
+                className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-[#F5E6C8]/75 hover:text-[#D3A94C] hover:bg-white/5 transition-colors sm:px-3"
               >
                 <User className="h-4 w-4 shrink-0" />
                 {t("account")}
@@ -74,7 +78,7 @@ export function Header({ onCartClick }: HeaderProps) {
               <button
                 type="button"
                 onClick={signOut}
-                className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors sm:px-3"
+                className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-[#F5E6C8]/75 hover:text-[#D3A94C] hover:bg-white/5 transition-colors sm:px-3"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
                 {t("signOut")}
@@ -83,7 +87,7 @@ export function Header({ onCartClick }: HeaderProps) {
           ) : !loading ? (
             <Link
               href="/sign-in"
-              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors sm:px-3"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-[#F5E6C8]/75 hover:text-[#D3A94C] hover:bg-white/5 transition-colors sm:px-3"
             >
               <LogIn className="h-4 w-4 shrink-0" />
               {t("signIn")}
@@ -93,12 +97,12 @@ export function Header({ onCartClick }: HeaderProps) {
           <button
             type="button"
             onClick={onCartClick}
-            className="relative flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark transition-colors"
+            className="relative flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#0A2923] shadow-sm hover:bg-primary-dark transition-colors"
           >
             <ShoppingCart className="h-4 w-4" />
             {t("cart")}
             {totalItems > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-stone-900 ltr:-right-2 rtl:-left-2">
+              <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#F5E6C8] text-[11px] font-bold text-[#0A2923] ltr:-right-2 rtl:-left-2">
                 {totalItems}
               </span>
             )}

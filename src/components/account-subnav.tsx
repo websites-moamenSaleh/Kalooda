@@ -12,11 +12,11 @@ export function AccountSubnav() {
     `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
       active
         ? "bg-primary/10 text-primary"
-        : "text-stone-600 hover:bg-stone-100"
+        : "text-[#F5E6C8]/60 hover:bg-white/5 hover:text-[#F5E6C8]"
     }`;
 
   return (
-    <nav className="mb-8 flex flex-wrap gap-2 border-b border-stone-200 pb-4">
+    <nav className="mb-8 flex flex-wrap gap-2 border-b border-[#D3A94C]/20 pb-4">
       <Link href="/account" className={linkCls(pathname === "/account")}>
         {t("myProfile")}
       </Link>

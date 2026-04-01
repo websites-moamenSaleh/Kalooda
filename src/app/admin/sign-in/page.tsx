@@ -2,8 +2,9 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Candy, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAdminAuth } from "@/contexts/admin-auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -61,13 +62,19 @@ function AdminSignInContent() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-stone-100 px-4">
       <div className="mb-8 flex items-center gap-4">
-        <Link href="/" className="flex items-center gap-2">
-          <Candy className="h-7 w-7 text-primary" />
-          <span className="text-xl font-bold text-stone-900">SweetDrop</span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/brand/logo-transparent.png"
+            alt="Kalooda"
+            width={140}
+            height={72}
+            className="h-10 w-auto object-contain"
+            priority
+          />
         </Link>
-        <LanguageSwitcher />
+        <LanguageSwitcher className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-200 transition-colors" />
       </div>
 
       <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-lg">
@@ -113,7 +120,7 @@ function AdminSignInContent() {
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 py-3 text-sm font-bold text-white shadow-sm hover:bg-stone-800 transition-colors disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F443C] py-3 text-sm font-bold text-white shadow-sm hover:bg-[#163530] transition-colors disabled:opacity-50"
           >
             {submitting ? (
               <>
@@ -129,7 +136,7 @@ function AdminSignInContent() {
         <p className="mt-5 text-center text-sm text-stone-500">
           <Link
             href="/sign-in"
-            className="font-semibold text-primary hover:text-primary-dark"
+            className="font-semibold text-[#1F443C] hover:text-[#163530]"
           >
             {t("adminSignInCustomerLink")}
           </Link>
