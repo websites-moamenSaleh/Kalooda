@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fullName: string,
     phone: string
   ): Promise<string | null> => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -130,12 +130,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) return error.message;
 
-    const {
-      data: { user: newUser },
-    } = await supabase.auth.getUser();
-    if (newUser) {
-      const p = await fetchProfile(newUser.id);
+    if (data.session && data.user) {
+      const p = await fetchProfile(data.user.id);
       router.push(postAuthPath(p?.role));
+    } else {
+      router.push("/sign-in?message=confirm-email");
     }
     return null;
   };

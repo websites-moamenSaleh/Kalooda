@@ -32,6 +32,7 @@ function SignInContent() {
   const signUpHref = nextSafe
     ? `/sign-up?next=${encodeURIComponent(nextSafe)}`
     : "/sign-up";
+  const confirmEmail = searchParams.get("message") === "confirm-email";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -74,6 +75,12 @@ function SignInContent() {
           {t("welcomeBack")}
         </h1>
         <p className="mb-6 text-sm text-stone-500">{t("signIn")}</p>
+
+        {confirmEmail && (
+          <p className="mb-4 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
+            {t("confirmEmailMessage")}
+          </p>
+        )}
 
         <div className="flex flex-col gap-3 mb-5">
           <button
