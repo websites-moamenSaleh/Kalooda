@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import { useState } from "react";
 import { Product } from "@/types/database";
 import { useCart } from "@/contexts/cart-context";
 import { useLanguage } from "@/contexts/language-context";
@@ -28,6 +30,7 @@ function isHttpUrl(s: string) {
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
   const { t, locale } = useLanguage();
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   const name =
     locale === "ar" && product.name_ar ? product.name_ar : product.name;
@@ -47,11 +50,17 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="relative aspect-[5/4] overflow-hidden bg-gradient-to-br from-[#EBE0D4] via-[#E5D9CC] to-[#DDD0C2]">
         {showImage ? (
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element -- admin-supplied arbitrary URLs */}
-            <img
+            {/* shimmer shown until image finishes loading */}
+            {!imgLoaded && (
+              <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-[#EBE0D4] via-[#D9CCBE] to-[#EBE0D4] bg-[length:200%_100%]" />
+            )}
+            <Image
               src={product.image_url.trim()}
               alt={name}
-              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className={`object-cover transition-all duration-500 ease-out group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              onLoad={() => setImgLoaded(true)}
             />
             <div
               className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#082018]/50 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
