@@ -18,11 +18,6 @@ export const translations = {
     promoRibbon:
       "Same-day delivery · Hand-finished desserts · Made to impress",
     sectionCategoriesTitle: "Explore by category",
-    sectionCategoriesSubtitle:
-      "From silky chocolate to oven-fresh pastries — find your craving.",
-    sectionStoryTitle: "Crafted with care",
-    sectionStoryBody:
-      "Every recipe is slow-built for depth: real ingredients, careful timing, and presentation worthy of your table. We bake and finish in small batches so what arrives at your door feels as special as dining out.",
     sectionSelectionsTitle: "Chef’s selections",
     sectionSelectionsSubtitle:
       "A curated taste of what our kitchen does best — add to your cart in one tap.",
@@ -253,12 +248,7 @@ export const translations = {
     viewCategories: "عرض الفئات",
     promoRibbon:
       "توصيل في نفس اليوم · حلويات منتهية يدوياً · جاهزة لتبهج مناسبتك",
-    sectionCategoriesTitle: "استكشف حسب الفئة",
-    sectionCategoriesSubtitle:
-      "من الشوكولاتة الناعمة إلى المعجنات الطازجة — اعثر على ما تشتهيه.",
-    sectionStoryTitle: "صُنعت بعناية",
-    sectionStoryBody:
-      "كل وصفة تُبنى ببطء للعمق: مكونات حقيقية وتوقيت دقيق وتقديم يليق بمائدتك. نخبز ونُنهي على دفعات صغيرة ليصلك طلبك بمستوى يضاهي المطاعم.",
+    sectionCategoriesTitle: "تصفح حسب الفئة",
     sectionSelectionsTitle: "اختيارات الشيف",
     sectionSelectionsSubtitle:
       "لمحة مختارة من أبرز ما يقدمه مطبخنا — أضفها لسلتك بنقرة.",

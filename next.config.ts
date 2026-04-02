@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
-/** Private LAN hostnames so `next dev` works from phones/tablets (see allowedDevOrigins). */
+/**
+ * Extra dev origins for cross-origin checks on `/_next/*` (Next 16+).
+ * `localhost` is built in, but `127.0.0.1` / `::1` are not — using those URLs
+ * otherwise loads HTML then 403s dev chunks and the app looks "broken".
+ */
 const privateLanDevOrigins = [
+  "127.0.0.1",
+  "::1",
   "192.168.*.*",
   "10.*.*.*",
   ...Array.from({ length: 16 }, (_, i) => `172.${16 + i}.*.*`),
