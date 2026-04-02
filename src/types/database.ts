@@ -3,7 +3,7 @@ export interface Category {
   name: string;
   name_ar: string | null;
   slug: string;
-  image_url: string;
+  image_url: string | null;
 }
 
 export interface Product {

@@ -2,15 +2,21 @@
 
 # Startup
 
-At the start of every new chat session, run `git pull` in the project root to get the latest changes before doing anything else.
+At the start of every new chat session, sync with the default branch before other work:
+
+1. `git fetch origin`
+2. Merge or rebase **`origin/main`** into your **current** branch (e.g. `git merge origin/main`), or if you are on `main`, `git pull origin main`.
+
+A plain `git pull` on a feature branch only updates that branch’s remote tracking branch — it does **not** bring in latest **`main`**, which is what you need to avoid surprise PR conflicts.
 
 # Pushing Changes
 
 Whenever the user says "push", "push changes", "push to GitHub", or anything similar, always:
-1. Create a new branch (never commit directly to `main`)
-2. Commit the changes to that branch
-3. Push the branch to GitHub
-4. Open a PR using the `gh` CLI (`gh pr create ...`)
+1. `git fetch origin` and merge **`origin/main`** into the working branch; resolve conflicts before continuing.
+2. Create a new branch if you would otherwise commit directly to `main` (never push straight to `main` for feature work).
+3. Commit the changes to that branch
+4. Push the branch to GitHub
+5. Open a PR using the `gh` CLI (`gh pr create ...`)
 
 # MCP Servers
 

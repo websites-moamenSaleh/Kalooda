@@ -11,7 +11,7 @@ export const translations = {
     heroTitle1: "Fresh Sweets,",
     heroTitle2: "Delivered Fast",
     heroSubtitle:
-      "Hand-crafted chocolates, gummies, pastries & more. Order online and get same-day delivery.",
+      "Premium baked cheeses, assorted cold desserts, and more distinctive cakes. Order now with fast delivery.",
     browseMenu: "Browse the menu",
     orderNow: "Order now",
     viewCategories: "View categories",
@@ -20,12 +20,12 @@ export const translations = {
     sectionCategoriesTitle: "Explore by category",
     sectionCategoriesSubtitle:
       "From silky chocolate to oven-fresh pastries — find your craving.",
-    sectionSelectionsTitle: "Chef’s selections",
-    sectionSelectionsSubtitle:
-      "A curated taste of what our kitchen does best — add to your cart in one tap.",
     sectionStoryTitle: "Crafted with care",
     sectionStoryBody:
       "Every recipe is slow-built for depth: real ingredients, careful timing, and presentation worthy of your table. We bake and finish in small batches so what arrives at your door feels as special as dining out.",
+    sectionSelectionsTitle: "Chef’s selections",
+    sectionSelectionsSubtitle:
+      "A curated taste of what our kitchen does best — add to your cart in one tap.",
     ctaBandTitle: "Ready when you are",
     ctaBandSubtitle:
       "Sign in to save your details, track orders, and check out faster next time.",
@@ -147,6 +147,13 @@ export const translations = {
     allergens: "Allergens",
     allergensPlaceholder: "Comma-separated (e.g. dairy, nuts)",
     imageUrl: "Image URL",
+    catalogImage: "Picture",
+    catalogImageHint: "JPEG, PNG, WebP, or GIF. Max 5 MB.",
+    removeCatalogImage: "Remove picture",
+    categoryUpdateFailed: "Failed to update category.",
+    imageUploadFailed: "Picture upload failed.",
+    editCategory: "Edit category",
+    saveCategory: "Save",
     category: "Category",
     selectCategory: "Select category",
     english: "English",
@@ -240,7 +247,7 @@ export const translations = {
     heroTitle1: "حلويات طازجة،",
     heroTitle2: "توصيل سريع",
     heroSubtitle:
-      "شوكولاتة يدوية الصنع، حلوى، معجنات والمزيد. اطلب أونلاين واحصل على توصيل في نفس اليوم.",
+      "أجبان مخبوزة فاخرة، حلويات باردة متنوعة والمزيد من الكعك المميز. اطلب الآن مع توصيل سريع",
     browseMenu: "تصفح القائمة",
     orderNow: "اطلب الآن",
     viewCategories: "عرض الفئات",
@@ -249,12 +256,12 @@ export const translations = {
     sectionCategoriesTitle: "استكشف حسب الفئة",
     sectionCategoriesSubtitle:
       "من الشوكولاتة الناعمة إلى المعجنات الطازجة — اعثر على ما تشتهيه.",
-    sectionSelectionsTitle: "اختيارات الشيف",
-    sectionSelectionsSubtitle:
-      "لمحة مختارة من أبرز ما يقدمه مطبخنا — أضفها لسلتك بنقرة.",
     sectionStoryTitle: "صُنعت بعناية",
     sectionStoryBody:
       "كل وصفة تُبنى ببطء للعمق: مكونات حقيقية وتوقيت دقيق وتقديم يليق بمائدتك. نخبز ونُنهي على دفعات صغيرة ليصلك طلبك بمستوى يضاهي المطاعم.",
+    sectionSelectionsTitle: "اختيارات الشيف",
+    sectionSelectionsSubtitle:
+      "لمحة مختارة من أبرز ما يقدمه مطبخنا — أضفها لسلتك بنقرة.",
     ctaBandTitle: "نحن جاهزون عندما تكون أنت",
     ctaBandSubtitle:
       "سجّل الدخول لحفظ بياناتك وتتبع الطلبات وإتمام الشراء بسرعة لاحقاً.",
@@ -375,6 +382,13 @@ export const translations = {
     allergens: "مسببات الحساسية",
     allergensPlaceholder: "مفصولة بفواصل (مثل: ألبان، مكسرات)",
     imageUrl: "رابط الصورة",
+    catalogImage: "صورة",
+    catalogImageHint: "JPEG أو PNG أو WebP أو GIF. الحد الأقصى 5 ميجابايت.",
+    removeCatalogImage: "إزالة الصورة",
+    categoryUpdateFailed: "فشل في تحديث الفئة.",
+    imageUploadFailed: "فشل رفع الصورة.",
+    editCategory: "تعديل الفئة",
+    saveCategory: "حفظ",
     category: "الفئة",
     selectCategory: "اختر فئة",
     english: "الإنجليزية",

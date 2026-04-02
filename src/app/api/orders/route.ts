@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { requireRole, requireSession, isAuthorized } from "@/lib/require-role";
 
+const ORD_PREFIX = /^ORD-(\d+)$/;
+
+async function nextOrderDisplayId(): Promise<string> {
+  const { data: rows, error } = await supabaseAdmin
+    .from("orders")
+    .select("display_id");
+
+  if (error) throw error;
+
+  let maxSeq = 7720;
+  for (const r of rows ?? []) {
+    const m = ORD_PREFIX.exec(r.display_id ?? "");
+    if (m) maxSeq = Math.max(maxSeq, parseInt(m[1], 10));
+  }
+  return `ORD-${maxSeq + 1}`;
+}
+
 export async function GET(req: NextRequest) {
   const authResult = await requireRole(req, ["admin", "super_admin"]);
   if (!isAuthorized(authResult)) return authResult;
@@ -80,26 +97,37 @@ export async function POST(req: NextRequest) {
       if (updErr) console.error("Profile update on order:", updErr);
     }
 
-    const { count } = await supabaseAdmin
-      .from("orders")
-      .select("*", { count: "exact", head: true });
-    const displayId = `ORD-${7721 + (count ?? 0)}`;
+    let lastError: { code?: string; message: string; details?: string; hint?: string } | null =
+      null;
 
-    const { data, error } = await supabaseAdmin
-      .from("orders")
-      .insert({
-        display_id: displayId,
-        user_id: userId,
-        customer_name: customerName,
-        customer_phone: customerPhone,
-        items: body.items,
-        total_price: body.total_price,
-        status: "pending",
-      })
-      .select()
-      .single();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const displayId = await nextOrderDisplayId();
 
-    if (error) {
+      const insertResult = await supabaseAdmin
+        .from("orders")
+        .insert({
+          display_id: displayId,
+          user_id: userId,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          items: body.items,
+          total_price: body.total_price,
+          status: "pending",
+        })
+        .select()
+        .single();
+
+      const { data: row, error } = insertResult;
+      lastError = error;
+
+      if (!error) {
+        return NextResponse.json(row, { status: 201 });
+      }
+
+      if (error.code === "23505") {
+        continue;
+      }
+
       const blob = `${error.message} ${error.details ?? ""} ${error.hint ?? ""}`;
       const missingUserId =
         error.code === "42703" ||
@@ -117,7 +145,8 @@ export async function POST(req: NextRequest) {
       }
       throw error;
     }
-    return NextResponse.json(data, { status: 201 });
+
+    if (lastError) throw Object.assign(new Error(lastError.message), lastError);
   } catch (err) {
     console.error("Create order error:", err);
     const details =

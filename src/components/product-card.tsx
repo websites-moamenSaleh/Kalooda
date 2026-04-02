@@ -6,6 +6,7 @@ import { Product } from "@/types/database";
 import { useCart } from "@/contexts/cart-context";
 import { useLanguage } from "@/contexts/language-context";
 import { Plus, ShieldAlert } from "lucide-react";
+import { isHttpUrl } from "@/lib/is-http-url";
 
 const productEmoji: Record<string, string> = {
   "prod-1": "🍫",
@@ -17,15 +18,6 @@ const productEmoji: Record<string, string> = {
   "prod-7": "🥮",
   "prod-8": "🍓",
 };
-
-function isHttpUrl(s: string) {
-  try {
-    const u = new URL(s);
-    return u.protocol === "http:" || u.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
