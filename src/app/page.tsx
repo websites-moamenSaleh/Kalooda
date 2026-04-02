@@ -64,6 +64,7 @@ export default function HomePage() {
   return (
     <>
       <Header onCartClick={() => setCartOpen(true)} />
+
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
 
       <main>
