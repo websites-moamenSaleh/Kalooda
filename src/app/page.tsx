@@ -96,6 +96,9 @@ export default function HomePage() {
                 <a href="#browse" className="btn-primary-solid px-8 py-3.5">
                   {t("browseMenu")}
                 </a>
+                <a href="#categories" className="btn-outline-light px-8 py-3.5">
+                  {t("viewCategories")}
+                </a>
                 <button
                   type="button"
                   onClick={() => setCartOpen(true)}
@@ -103,9 +106,6 @@ export default function HomePage() {
                 >
                   {t("orderNow")}
                 </button>
-                <a href="#categories" className="btn-outline-light px-8 py-3.5">
-                  {t("viewCategories")}
-                </a>
               </div>
             </div>
           </div>
@@ -129,9 +129,6 @@ export default function HomePage() {
                     {t("sectionCategoriesTitle")}
                   </h2>
                   <div className="divider-gold mx-auto mt-4 max-w-xs" />
-                  <p className="mt-4 text-ink-soft">
-                    {t("sectionCategoriesSubtitle")}
-                  </p>
                 </div>
                 <div className="mt-12 flex flex-wrap justify-center gap-3 sm:gap-4">
                   <button
@@ -161,50 +158,23 @@ export default function HomePage() {
               </div>
             </section>
 
-            {/* Story + featured */}
+            {/* Featured selections */}
             {showFeaturedBlock && featuredPick.length > 0 && (
               <section className="border-b border-[#1F443C]/8 bg-[#faf6ef] py-16 sm:py-20">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6">
-                  <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-                    <div className="order-2 lg:order-1">
-                      <h2 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
-                        {t("sectionStoryTitle")}
-                      </h2>
-                      <div className="divider-gold mt-4 max-w-xs" />
-                      <p className="mt-6 text-base leading-relaxed text-ink-soft">
-                        {t("sectionStoryBody")}
-                      </p>
-                    </div>
-                    <div className="order-1 lg:order-2">
-                      <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-[#1F443C]/12 shadow-[var(--shadow-elevated)]">
-                        <div
-                          className="absolute inset-0 bg-gradient-to-br from-[#1F443C]/30 via-[#1F443C]/20 to-[#D3A94C]/20"
-                          aria-hidden
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center p-8">
-                          <span className="font-display text-center text-5xl text-[#1F443C]/25 sm:text-7xl">
-                            ✦
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="text-center">
+                    <h2 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
+                      {t("sectionSelectionsTitle")}
+                    </h2>
+                    <div className="divider-gold mx-auto mt-4 max-w-xs" />
+                    <p className="mx-auto mt-4 max-w-2xl text-ink-soft">
+                      {t("sectionSelectionsSubtitle")}
+                    </p>
                   </div>
-
-                  <div className="mt-20">
-                    <div className="text-center">
-                      <h2 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
-                        {t("sectionSelectionsTitle")}
-                      </h2>
-                      <div className="divider-gold mx-auto mt-4 max-w-xs" />
-                      <p className="mx-auto mt-4 max-w-2xl text-ink-soft">
-                        {t("sectionSelectionsSubtitle")}
-                      </p>
-                    </div>
-                    <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                      {featuredPick.map((p) => (
-                        <ProductCard key={p.id} product={p} />
-                      ))}
-                    </div>
+                  <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {featuredPick.map((p) => (
+                      <ProductCard key={p.id} product={p} />
+                    ))}
                   </div>
                 </div>
               </section>

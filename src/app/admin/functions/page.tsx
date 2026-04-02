@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import type { Product, Category, Driver, Order } from "@/types/database";
+import { CatalogImageField } from "@/components/admin/catalog-image-field";
 
 const statusIcons: Record<string, React.ElementType> = {
   pending: Clock,
@@ -82,6 +83,26 @@ function productToForm(p: Product): ProductFormData {
   };
 }
 
+async function uploadCatalogFile(
+  file: File,
+  folder: "categories" | "products"
+): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("folder", folder);
+  const res = await fetch("/api/uploads/catalog", { method: "POST", body: fd });
+  const data = (await res.json().catch(() => ({}))) as { error?: string; url?: string };
+  if (!res.ok) {
+    throw new Error(
+      typeof data.error === "string" ? data.error : "Upload failed"
+    );
+  }
+  if (!data.url || typeof data.url !== "string") {
+    throw new Error("Upload failed");
+  }
+  return data.url;
+}
+
 function formToPayload(form: ProductFormData) {
   return {
     name: form.name,
@@ -121,7 +142,23 @@ export default function FunctionsPage() {
   // --- Categories state ---
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryNameAr, setNewCategoryNameAr] = useState("");
+  const [newCategoryImagePending, setNewCategoryImagePending] =
+    useState<File | null>(null);
   const [addingCategory, setAddingCategory] = useState(false);
+  const [categoryEditOpen, setCategoryEditOpen] = useState(false);
+  const [categoryEditForm, setCategoryEditForm] = useState({
+    id: "",
+    name: "",
+    name_ar: "",
+    image_url: "",
+  });
+  const [categoryEditImagePending, setCategoryEditImagePending] =
+    useState<File | null>(null);
+  const [categoryEditSaving, setCategoryEditSaving] = useState(false);
+
+  const [productImagePending, setProductImagePending] = useState<File | null>(
+    null
+  );
 
   // --- Drivers state ---
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -180,6 +217,7 @@ export default function FunctionsPage() {
   function openNewProduct() {
     setEditingId(null);
     setForm(emptyForm);
+    setProductImagePending(null);
     setLangTab("en");
     setShowForm(true);
   }
@@ -187,6 +225,7 @@ export default function FunctionsPage() {
   function openEditProduct(p: Product) {
     setEditingId(p.id);
     setForm(productToForm(p));
+    setProductImagePending(null);
     setLangTab("en");
     setShowForm(true);
   }
@@ -195,6 +234,7 @@ export default function FunctionsPage() {
     setShowForm(false);
     setEditingId(null);
     setForm(emptyForm);
+    setProductImagePending(null);
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -202,9 +242,22 @@ export default function FunctionsPage() {
     if (!form.name.trim() || saving) return;
     setSaving(true);
 
-    const payload = formToPayload(form);
-
     try {
+      let image_url = form.image_url;
+      if (productImagePending) {
+        try {
+          image_url = await uploadCatalogFile(
+            productImagePending,
+            "products"
+          );
+        } catch {
+          alert(t("imageUploadFailed"));
+          setSaving(false);
+          return;
+        }
+      }
+      const payload = formToPayload({ ...form, image_url });
+
       let res: Response;
       if (editingId) {
         res = await fetch("/api/products", {
@@ -294,23 +347,105 @@ export default function FunctionsPage() {
     if (!newCategoryName.trim() || addingCategory) return;
     setAddingCategory(true);
     try {
+      let image_url: string | null = null;
+      if (newCategoryImagePending) {
+        try {
+          image_url = await uploadCatalogFile(
+            newCategoryImagePending,
+            "categories"
+          );
+        } catch {
+          alert(t("imageUploadFailed"));
+          setAddingCategory(false);
+          return;
+        }
+      }
       const res = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: newCategoryName.trim(),
           name_ar: newCategoryNameAr.trim() || null,
+          image_url,
         }),
       });
       if (!res.ok) throw new Error();
       const category: Category = await res.json();
-      setCategories((prev) => [...prev, category].sort((a, b) => a.name.localeCompare(b.name)));
+      setCategories((prev) =>
+        [...prev, category].sort((a, b) => a.name.localeCompare(b.name))
+      );
       setNewCategoryName("");
       setNewCategoryNameAr("");
+      setNewCategoryImagePending(null);
     } catch {
       alert(t("categoryAddFailed"));
     } finally {
       setAddingCategory(false);
+    }
+  }
+
+  function openCategoryEdit(cat: Category) {
+    setCategoryEditForm({
+      id: cat.id,
+      name: cat.name,
+      name_ar: cat.name_ar ?? "",
+      image_url: cat.image_url ?? "",
+    });
+    setCategoryEditImagePending(null);
+    setCategoryEditOpen(true);
+  }
+
+  function closeCategoryEdit() {
+    setCategoryEditOpen(false);
+    setCategoryEditImagePending(null);
+    setCategoryEditForm({
+      id: "",
+      name: "",
+      name_ar: "",
+      image_url: "",
+    });
+  }
+
+  async function saveCategoryEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!categoryEditForm.id || !categoryEditForm.name.trim()) return;
+    setCategoryEditSaving(true);
+    try {
+      let image_url = categoryEditForm.image_url;
+      if (categoryEditImagePending) {
+        try {
+          image_url = await uploadCatalogFile(
+            categoryEditImagePending,
+            "categories"
+          );
+        } catch {
+          alert(t("imageUploadFailed"));
+          setCategoryEditSaving(false);
+          return;
+        }
+      }
+      const res = await fetch("/api/categories", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: categoryEditForm.id,
+          name: categoryEditForm.name.trim(),
+          name_ar: categoryEditForm.name_ar.trim() || null,
+          image_url,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const updated: Category = await res.json();
+      setCategories((prev) =>
+        prev
+          .map((c) => (c.id === updated.id ? updated : c))
+          .sort((a, b) => a.name.localeCompare(b.name))
+      );
+      closeCategoryEdit();
+    } catch {
+      alert(t("categoryUpdateFailed"));
+    } finally {
+      setCategoryEditSaving(false);
     }
   }
 
@@ -498,10 +633,15 @@ export default function FunctionsPage() {
                 placeholder={t("allergensPlaceholder")}
               />
 
-              <Field
-                label={t("imageUrl")}
-                value={form.image_url}
-                onChange={(v) => updateField("image_url", v)}
+              <CatalogImageField
+                label={t("catalogImage")}
+                storedUrl={form.image_url}
+                pendingFile={productImagePending}
+                onPendingFileChange={setProductImagePending}
+                onClear={() => updateField("image_url", "")}
+                disabled={saving}
+                chooseImageLabel={t("catalogImageHint")}
+                removeImageLabel={t("removeCatalogImage")}
               />
 
               <div>
@@ -657,42 +797,54 @@ export default function FunctionsPage() {
 
         <form
           onSubmit={addCategory}
-          className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end"
+          className="mb-4 flex flex-col gap-3"
         >
-          <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-admin-muted">
-              {t("categoryName")}
-            </label>
-            <input
-              type="text"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              placeholder={t("categoryNamePlaceholder")}
-              required
-              className="w-full rounded-lg border border-admin-border bg-[#fffcf8] px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <label className="mb-1 block text-xs font-medium text-admin-muted">
+                {t("categoryName")}
+              </label>
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder={t("categoryNamePlaceholder")}
+                required
+                className="w-full rounded-lg border border-admin-border bg-[#fffcf8] px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="mb-1 block text-xs font-medium text-admin-muted">
+                {t("categoryNameAr")}
+              </label>
+              <input
+                type="text"
+                value={newCategoryNameAr}
+                onChange={(e) => setNewCategoryNameAr(e.target.value)}
+                placeholder={t("categoryNameArPlaceholder")}
+                dir="rtl"
+                className="w-full rounded-lg border border-admin-border bg-[#fffcf8] px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={addingCategory || !newCategoryName.trim()}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#082018] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="h-4 w-4" />
+              {addingCategory ? t("adding") : t("addCategory")}
+            </button>
           </div>
-          <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-admin-muted">
-              {t("categoryNameAr")}
-            </label>
-            <input
-              type="text"
-              value={newCategoryNameAr}
-              onChange={(e) => setNewCategoryNameAr(e.target.value)}
-              placeholder={t("categoryNameArPlaceholder")}
-              dir="rtl"
-              className="w-full rounded-lg border border-admin-border bg-[#fffcf8] px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={addingCategory || !newCategoryName.trim()}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#082018] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="h-4 w-4" />
-            {addingCategory ? t("adding") : t("addCategory")}
-          </button>
+          <CatalogImageField
+            label={t("catalogImage")}
+            storedUrl=""
+            pendingFile={newCategoryImagePending}
+            onPendingFileChange={setNewCategoryImagePending}
+            onClear={() => {}}
+            disabled={addingCategory}
+            chooseImageLabel={t("catalogImageHint")}
+            removeImageLabel={t("removeCatalogImage")}
+          />
         </form>
 
         <div className="rounded-xl border border-admin-border bg-admin-panel shadow-sm overflow-hidden">
@@ -706,7 +858,7 @@ export default function FunctionsPage() {
                   <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                     {t("categoryNameAr")}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-admin-muted text-start w-20" />
+                  <th className="px-4 py-3 font-semibold text-admin-muted text-start w-44" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-admin-border">
@@ -721,13 +873,24 @@ export default function FunctionsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => removeCategory(cat.id)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        {t("removeCategory")}
-                      </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openCategoryEdit(cat)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-admin-border px-2.5 py-1.5 text-xs font-medium text-admin-ink hover:bg-[rgba(31,68,60,0.06)] transition-colors"
+                        >
+                          <Pencil className="h-3 w-3" />
+                          {t("editCategory")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeCategory(cat.id)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          {t("removeCategory")}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -745,6 +908,99 @@ export default function FunctionsPage() {
             </table>
           </div>
         </div>
+
+        {categoryEditOpen ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            role="dialog"
+            aria-modal
+            aria-labelledby="category-edit-title"
+          >
+            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-admin-border bg-admin-panel p-6 shadow-lg">
+              <div className="mb-4 flex items-center justify-between">
+                <h3
+                  id="category-edit-title"
+                  className="font-semibold text-admin-ink"
+                >
+                  {t("editCategory")}
+                </h3>
+                <button
+                  type="button"
+                  onClick={closeCategoryEdit}
+                  className="rounded-lg p-1 text-admin-muted hover:bg-[rgba(31,68,60,0.06)]"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <form onSubmit={saveCategoryEdit} className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-admin-muted">
+                    {t("categoryName")}
+                  </label>
+                  <input
+                    type="text"
+                    value={categoryEditForm.name}
+                    onChange={(e) =>
+                      setCategoryEditForm((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    required
+                    className="w-full rounded-lg border border-admin-border bg-[#fffcf8] px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-admin-muted">
+                    {t("categoryNameAr")}
+                  </label>
+                  <input
+                    type="text"
+                    value={categoryEditForm.name_ar}
+                    onChange={(e) =>
+                      setCategoryEditForm((prev) => ({
+                        ...prev,
+                        name_ar: e.target.value,
+                      }))
+                    }
+                    dir="rtl"
+                    className="w-full rounded-lg border border-admin-border bg-[#fffcf8] px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <CatalogImageField
+                  label={t("catalogImage")}
+                  storedUrl={categoryEditForm.image_url}
+                  pendingFile={categoryEditImagePending}
+                  onPendingFileChange={setCategoryEditImagePending}
+                  onClear={() =>
+                    setCategoryEditForm((prev) => ({ ...prev, image_url: "" }))
+                  }
+                  disabled={categoryEditSaving}
+                  chooseImageLabel={t("catalogImageHint")}
+                  removeImageLabel={t("removeCatalogImage")}
+                />
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeCategoryEdit}
+                    className="rounded-lg border border-admin-border px-4 py-2 text-sm font-medium text-admin-muted hover:bg-[rgba(31,68,60,0.06)]"
+                  >
+                    {t("cancel")}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={
+                      categoryEditSaving || !categoryEditForm.name.trim()
+                    }
+                    className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#082018] hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {categoryEditSaving ? t("saving") : t("saveCategory")}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {/* ─── Order Management ─── */}

@@ -2,6 +2,7 @@
 
 import { Category } from "@/types/database";
 import { useLanguage } from "@/contexts/language-context";
+import { isHttpUrl } from "@/lib/is-http-url";
 
 interface CategoryCardProps {
   category: Category;
@@ -27,6 +28,8 @@ export function CategoryCard({
   const name =
     locale === "ar" && category.name_ar ? category.name_ar : category.name;
   const emoji = categoryEmoji[category.slug] ?? "🍰";
+  const url = category.image_url?.trim() ?? "";
+  const showImage = url.length > 0 && isHttpUrl(url);
 
   if (variant === "compact") {
     return (
@@ -39,7 +42,16 @@ export function CategoryCard({
             : "surface-panel border-[#1F443C]/10 text-ink hover:border-[#D3A94C]/35"
         }`}
       >
-        <span className="text-lg leading-none">{emoji}</span>
+        {showImage ? (
+          // eslint-disable-next-line @next/next/no-img-element -- category image from storage
+          <img
+            src={url}
+            alt=""
+            className="h-7 w-7 shrink-0 rounded-md object-cover"
+          />
+        ) : (
+          <span className="text-lg leading-none">{emoji}</span>
+        )}
         <span className="max-w-[8rem] truncate sm:max-w-[10rem]">{name}</span>
       </button>
     );
@@ -49,21 +61,40 @@ export function CategoryCard({
     <button
       type="button"
       onClick={onClick}
-      className={`group flex min-w-[7.5rem] flex-col items-center gap-2 rounded-xl border-2 px-5 py-4 transition-all duration-200 sm:min-w-[8.5rem] sm:px-6 sm:py-5 ${
+      className={`group flex w-[7.5rem] flex-col overflow-hidden rounded-xl border-2 p-0 transition-all duration-200 sm:w-[8.5rem] ${
         isActive
           ? "border-[#D3A94C] bg-[#0A2923] text-[#F0F5F3] shadow-[0_10px_32px_rgba(10, 41, 35,0.28)]"
           : "surface-panel border-[#1F443C]/12 text-ink hover:-translate-y-0.5 hover:border-[#D3A94C]/4 hover:shadow-[var(--shadow-card)]"
       }`}
     >
-      <span
-        className={`text-3xl transition-transform duration-200 sm:text-4xl ${
-          isActive ? "" : "group-hover:scale-110"
+      <div
+        className={`relative aspect-square w-full shrink-0 overflow-hidden bg-gradient-to-br from-[#EBE0D4] via-[#E5D9CC] to-[#DDD0C2] ${
+          isActive ? "ring-1 ring-inset ring-[#D3A94C]/25" : ""
         }`}
       >
-        {emoji}
-      </span>
+        {showImage ? (
+          // eslint-disable-next-line @next/next/no-img-element -- category image from storage
+          <img
+            src={url}
+            alt=""
+            className={`h-full w-full object-cover ${
+              isActive
+                ? ""
+                : "transition-transform duration-200 group-hover:scale-105"
+            }`}
+          />
+        ) : (
+          <span
+            className={`flex h-full w-full items-center justify-center text-4xl transition-transform duration-200 sm:text-5xl ${
+              isActive ? "" : "group-hover:scale-110"
+            }`}
+          >
+            {emoji}
+          </span>
+        )}
+      </div>
       <span
-        className={`text-center text-sm font-semibold leading-tight ${
+        className={`px-2 py-2.5 text-center text-sm font-semibold leading-tight sm:px-2.5 sm:py-3 ${
           isActive ? "text-[#FFEC94]" : "text-ink"
         }`}
       >

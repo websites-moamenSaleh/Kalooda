@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, name_ar } = body;
+    const { name, name_ar, image_url } = body;
 
     if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
@@ -47,6 +47,10 @@ export async function POST(req: NextRequest) {
         name: name.trim(),
         name_ar: name_ar?.trim() || null,
         slug,
+        image_url:
+          typeof image_url === "string" && image_url.trim()
+            ? image_url.trim()
+            : null,
       })
       .select()
       .single();
@@ -57,6 +61,69 @@ export async function POST(req: NextRequest) {
     console.error("Create category error:", err);
     return NextResponse.json(
       { error: "Failed to create category" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  const authResult = await requireRole(req, ["admin", "super_admin"]);
+  if (!isAuthorized(authResult)) return authResult;
+
+  try {
+    const body = await req.json();
+    const { id, name, name_ar, image_url } = body;
+
+    if (!id || typeof id !== "string") {
+      return NextResponse.json(
+        { error: "Category id is required" },
+        { status: 400 }
+      );
+    }
+
+    const update: Record<string, unknown> = {};
+    if (name !== undefined) {
+      if (typeof name !== "string" || !name.trim()) {
+        return NextResponse.json(
+          { error: "Category name cannot be empty" },
+          { status: 400 }
+        );
+      }
+      update.name = name.trim();
+    }
+    if (name_ar !== undefined) {
+      update.name_ar =
+        typeof name_ar === "string" && name_ar.trim()
+          ? name_ar.trim()
+          : null;
+    }
+    if (image_url !== undefined) {
+      update.image_url =
+        typeof image_url === "string" && image_url.trim()
+          ? image_url.trim()
+          : null;
+    }
+
+    if (Object.keys(update).length === 0) {
+      return NextResponse.json(
+        { error: "No fields to update" },
+        { status: 400 }
+      );
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("categories")
+      .update(update)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error("Update category error:", err);
+    return NextResponse.json(
+      { error: "Failed to update category" },
       { status: 500 }
     );
   }
