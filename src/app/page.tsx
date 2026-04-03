@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { CategoryCard } from "@/components/category-card";
 import { ProductCard } from "@/components/product-card";
 import { Header } from "@/components/header";
 import { CartDrawer } from "@/components/cart-drawer";
 import { Chatbot } from "@/components/chatbot";
 import { SiteFooter } from "@/components/site-footer";
-import { Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
@@ -81,22 +81,22 @@ export default function HomePage() {
             className="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(211, 169, 76,0.35),transparent),radial-gradient(ellipse_60%_50%_at_100%_50%,rgba(92,40,52,0.2),transparent)]"
             aria-hidden
           />
-          <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:py-28">
+          <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:py-14">
             <div className="mx-auto max-w-3xl text-center">
-              <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#D3A94C]/30 bg-[#D3A94C]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FFEC94]">
-                <Sparkles className="h-3.5 w-3.5" />
-                Kalooda
-              </p>
-              <h1 className="font-display text-4xl font-semibold leading-[1.1] tracking-tight text-[#F0F5F3] sm:text-5xl lg:text-6xl">
-                {t("heroTitle1")}{" "}
-                <span className="text-gradient-gold italic">
-                  {t("heroTitle2")}
-                </span>
+              <h1 className="mb-4 flex justify-center">
+                <Image
+                  src="/brand/logo-transparent.png"
+                  alt="Kalooda"
+                  width={3429}
+                  height={1764}
+                  className="h-auto w-full max-w-[260px] object-contain sm:max-w-[340px] lg:max-w-[400px]"
+                  priority
+                />
               </h1>
-              <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[#A8B5AD] sm:text-lg">
+              <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-[#A8B5AD] sm:text-lg">
                 {t("heroSubtitle")}
               </p>
-              <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <a href="#categories" className="btn-primary-solid px-8 py-3.5">
                   {t("browseMenu")}
                 </a>
@@ -121,10 +121,6 @@ export default function HomePage() {
               <h2 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
                 {t("sectionSelectionsTitle")}
               </h2>
-              <div className="divider-gold mx-auto mt-4 max-w-xs" />
-              <p className="mx-auto mt-4 max-w-2xl text-ink-soft">
-                {t("sectionSelectionsSubtitle")}
-              </p>
             </div>
             <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {loading ? (

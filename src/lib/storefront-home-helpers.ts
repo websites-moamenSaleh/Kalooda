@@ -1,10 +1,10 @@
 import type { Product } from "@/types/database";
 
-/** Number of product cards shown in the Chef's selections homepage section. */
+/** Number of product cards shown in the Top sellers homepage section. */
 export const CHEF_SELECTIONS_COUNT = 5;
 
 /**
- * Returns up to {@link CHEF_SELECTIONS_COUNT} products for the Chef's selections block,
+ * Returns up to {@link CHEF_SELECTIONS_COUNT} products for the Top sellers block,
  * ordered as the current storefront "best sellers."
  *
  * **Temporary fallback (no sales aggregate yet):** The public catalog API does not expose

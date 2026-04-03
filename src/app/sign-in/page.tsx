@@ -97,9 +97,6 @@ function SignInContent() {
             {t("heroSubtitle")}
           </p>
         </div>
-        <p className="relative z-10 text-xs uppercase tracking-[0.2em] text-[#D3A94C]/70">
-          {t("promoRibbon")}
-        </p>
       </div>
 
       <div className="flex flex-col items-center justify-center px-4 py-10 sm:px-8">

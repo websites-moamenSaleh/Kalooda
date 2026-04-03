@@ -15,12 +15,8 @@ export const translations = {
     browseMenu: "Browse the menu",
     orderNow: "Order now",
     viewCategories: "View categories",
-    promoRibbon:
-      "Same-day delivery · Hand-finished desserts · Made to impress",
     sectionMenuTitle: "Menu",
-    sectionSelectionsTitle: "Chef’s selections",
-    sectionSelectionsSubtitle:
-      "A curated taste of what our kitchen does best — add to your cart in one tap.",
+    sectionSelectionsTitle: "Top sellers",
     ctaBandTitle: "Ready when you are",
     ctaBandSubtitle:
       "Sign in to save your details, track orders, and check out faster next time.",
@@ -253,12 +249,8 @@ export const translations = {
     browseMenu: "تصفح القائمة",
     orderNow: "اطلب الآن",
     viewCategories: "عرض الفئات",
-    promoRibbon:
-      "توصيل في نفس اليوم · حلويات منتهية يدوياً · جاهزة لتبهج مناسبتك",
     sectionMenuTitle: "القائمة",
-    sectionSelectionsTitle: "اختيارات الشيف",
-    sectionSelectionsSubtitle:
-      "لمحة مختارة من أبرز ما يقدمه مطبخنا — أضفها لسلتك بنقرة.",
+    sectionSelectionsTitle: "الأكثر مبيعاً",
     ctaBandTitle: "نحن جاهزون عندما تكون أنت",
     ctaBandSubtitle:
       "سجّل الدخول لحفظ بياناتك وتتبع الطلبات وإتمام الشراء بسرعة لاحقاً.",

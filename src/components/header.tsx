@@ -42,12 +42,6 @@ export function Header({ onCartClick }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#D3A94C]/25 bg-gradient-to-b from-[#0A2923] via-[#123A33] to-[#082018] shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
-      <div className="border-b border-white/[0.04] bg-[#082018]/80">
-        <div className="mx-auto flex max-w-7xl items-center justify-center px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.2em] text-[#D3A94C]/90 sm:text-xs">
-          {t("promoRibbon")}
-        </div>
-      </div>
-
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
         <Link
           href="/"
