@@ -68,12 +68,10 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
   function handleReorder() {
     if (!order?.items) return;
     order.items.forEach((item: OrderItem) => {
-      // Build a minimal product shape from order item data
-      addItem({
+      const product = {
         id: item.product_id,
         name: item.product_name,
         price: item.unit_price,
-        // Required Product fields — use safe defaults for reorder
         category_id: "",
         description: "",
         stock_quantity: 99,
@@ -84,7 +82,11 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
         description_ar: null,
         ingredients_ar: null,
         unavailable_today: false,
-      });
+      };
+      // addItem increments by 1 each call — call it quantity times
+      for (let i = 0; i < item.quantity; i++) {
+        addItem(product);
+      }
     });
     setReordered(true);
     onClose();
