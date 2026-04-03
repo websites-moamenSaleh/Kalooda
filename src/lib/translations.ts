@@ -17,7 +17,7 @@ export const translations = {
     viewCategories: "View categories",
     promoRibbon:
       "Same-day delivery · Hand-finished desserts · Made to impress",
-    sectionCategoriesTitle: "Explore by category",
+    sectionMenuTitle: "Menu",
     sectionSelectionsTitle: "Chef’s selections",
     sectionSelectionsSubtitle:
       "A curated taste of what our kitchen does best — add to your cart in one tap.",
@@ -31,6 +31,8 @@ export const translations = {
     searchPlaceholder: "Search sweets...",
     all: "All",
     noProducts: "No products found. Try a different search or category.",
+    menuSelectCategory:
+      "Select a category above to see products from that part of the menu.",
 
     // Product card
     add: "Add",
@@ -248,7 +250,7 @@ export const translations = {
     viewCategories: "عرض الفئات",
     promoRibbon:
       "توصيل في نفس اليوم · حلويات منتهية يدوياً · جاهزة لتبهج مناسبتك",
-    sectionCategoriesTitle: "تصفح حسب الفئة",
+    sectionMenuTitle: "القائمة",
     sectionSelectionsTitle: "اختيارات الشيف",
     sectionSelectionsSubtitle:
       "لمحة مختارة من أبرز ما يقدمه مطبخنا — أضفها لسلتك بنقرة.",
@@ -262,6 +264,8 @@ export const translations = {
     searchPlaceholder: "ابحث عن الحلويات...",
     all: "الكل",
     noProducts: "لم يتم العثور على منتجات. جرّب بحثاً أو فئة مختلفة.",
+    menuSelectCategory:
+      "اختر فئة أعلاه لعرض منتجات ذلك الجزء من القائمة.",
 
     // Product card
     add: "أضف",

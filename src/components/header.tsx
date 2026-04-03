@@ -191,7 +191,7 @@ export function Header({ onCartClick }: HeaderProps) {
                 </Link>
               ) : null}
               <Link
-                href="/#browse"
+                href="/#categories"
                 onClick={closeMobile}
                 className={
                   navLinkClass +

@@ -41,7 +41,7 @@ export function SiteFooter() {
             <ul className="mt-4 space-y-3 text-sm">
               <li>
                 <Link
-                  href="/#browse"
+                  href="/#categories"
                   className="text-ink-soft hover:text-primary-dark transition-colors"
                 >
                   {t("browseMenu")}
