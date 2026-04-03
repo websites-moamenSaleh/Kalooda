@@ -5,6 +5,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { Header } from "@/components/header";
 import { CartDrawer } from "@/components/cart-drawer";
 import { AccountSubnav } from "@/components/account-subnav";
+import { OrderDetailModal } from "@/components/order-detail-modal";
 import type { Order } from "@/types/database";
 import type { TranslationKey } from "@/lib/translations";
 import { ArrowLeft, Loader2, ClipboardList } from "lucide-react";
@@ -22,6 +23,7 @@ export default function AccountOrdersPage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   useCartDrawerEvent(setCartOpen);
 
@@ -50,6 +52,10 @@ export default function AccountOrdersPage() {
     <>
       <Header onCartClick={() => setCartOpen(true)} />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+      <OrderDetailModal
+        orderId={selectedOrderId}
+        onClose={() => setSelectedOrderId(null)}
+      />
 
       <main className="mx-auto max-w-lg px-4 py-10 sm:py-14">
         <Link
@@ -82,7 +88,8 @@ export default function AccountOrdersPage() {
             {orders.map((o) => (
               <li
                 key={o.id}
-                className="surface-panel rounded-xl border border-[#1F443C]/10 p-5 transition-shadow hover:shadow-[var(--shadow-card)]"
+                onClick={() => setSelectedOrderId(o.id)}
+                className="surface-panel rounded-xl border border-[#1F443C]/10 p-5 transition-shadow hover:shadow-[var(--shadow-card)] cursor-pointer hover:border-[#1F443C]/25"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>

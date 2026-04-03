@@ -29,11 +29,25 @@ Whenever the user says "push", "push changes", "push to GitHub", or anything sim
 
 # MCP Servers
 
+## Google Drive
+
+A Google Drive MCP is connected via `mcp__gdrive__*` tools.
+
+**Kalooda Project folder** (ID: `1iTxRbSysblrslKFWzozPCGVUleCw7bmN`) is the shared folder used for this project. The user uploads assets (images, files) here from their phone during remote sessions.
+
+### Reading images from Drive
+The Drive MCP cannot download binary files. To read an image uploaded to Drive:
+1. Get the file ID from `mcp__gdrive__listFolderContents`
+2. Fetch it via: `https://lh3.googleusercontent.com/d/{FILE_ID}`
+3. The file is saved locally by WebFetch; use the `Read` tool on the saved path to view it as an image
+
+> The Kalooda Project folder must remain **publicly shared** for this to work.
+
 ## Supabase
 A Supabase MCP is connected and available via `mcp__supabase__*` tools. Use it for all database operations (querying, migrations, schema inspection, etc.).
 
-**CRITICAL: Never use any delete operations on Supabase.** This means:
-- Do NOT call `mcp__supabase__delete_branch`
-- Do NOT run `DELETE FROM ...` SQL via `mcp__supabase__execute_sql`
-- Do NOT run `DROP TABLE`, `DROP SCHEMA`, `TRUNCATE`, or any destructive SQL
-- If a task seems to require deletion, stop and ask the user first
+**Delete operations are allowed only when explicitly requested by the user.** This means:
+- Do NOT call `mcp__supabase__delete_branch` unless the user explicitly asks
+- Do NOT run `DELETE FROM ...` SQL via `mcp__supabase__execute_sql` unless the user explicitly asks
+- Do NOT run `DROP TABLE`, `DROP SCHEMA`, `TRUNCATE`, or any destructive SQL unless the user explicitly asks
+- When in doubt, confirm with the user before proceeding

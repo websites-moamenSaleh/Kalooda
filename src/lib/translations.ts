@@ -96,6 +96,11 @@ export const translations = {
     orderHistoryTitle: "Order history",
     orderHistoryEmpty: "You have no orders yet.",
     viewOrderHistory: "View order history",
+    orderDetails: "Order details",
+    reorder: "Reorder",
+    unitPrice: "Unit price",
+    qty: "Qty",
+    subtotal: "Subtotal",
 
     // Admin
     adminDashboard: "Admin Dashboard",
@@ -328,6 +333,11 @@ export const translations = {
     orderHistoryTitle: "سجل الطلبات",
     orderHistoryEmpty: "لا توجد طلبات بعد.",
     viewOrderHistory: "عرض سجل الطلبات",
+    orderDetails: "تفاصيل الطلب",
+    reorder: "إعادة الطلب",
+    unitPrice: "سعر الوحدة",
+    qty: "الكمية",
+    subtotal: "المجموع الفرعي",
 
     // Admin
     adminDashboard: "لوحة التحكم",
