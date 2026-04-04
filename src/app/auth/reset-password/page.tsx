@@ -35,8 +35,8 @@ export default function ResetPasswordPage() {
     );
 
     // Also check if a session already exists (page reload after token consumed)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setReady(true);
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) setReady(true);
     });
 
     // If no recovery event after 3 s, the link is invalid/expired
