@@ -27,7 +27,7 @@ export default function ResetPasswordPage() {
     // Listen for PASSWORD_RECOVERY event — fired when Supabase detects the
     // recovery token in the hash and establishes a temporary session.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event) => {
+      (event: string) => {
         if (event === "PASSWORD_RECOVERY") {
           setReady(true);
         }
