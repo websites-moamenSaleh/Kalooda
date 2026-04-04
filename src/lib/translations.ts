@@ -232,6 +232,21 @@ export const translations = {
     adminSignInNoAccess: "This account does not have admin access.",
     adminSignInCustomerLink: "Customer shop sign in",
 
+    // Password reset
+    resetPasswordTitle: "Set new password",
+    resetPasswordSubtitle: "Enter your new password below.",
+    newPassword: "New Password",
+    newPasswordPlaceholder: "Enter new password",
+    confirmPassword: "Confirm Password",
+    confirmPasswordPlaceholder: "Repeat new password",
+    resetPasswordSubmit: "Update Password",
+    resetPasswordSubmitting: "Updating...",
+    resetPasswordSuccess: "Password updated! Redirecting to sign in...",
+    resetPasswordMismatch: "Passwords do not match.",
+    resetPasswordTooShort: "Password must be at least 6 characters.",
+    resetPasswordError: "Failed to update password. The link may have expired.",
+    resetPasswordInvalidLink: "This link is invalid or has expired. Please request a new password reset.",
+
     // Language
     switchLanguage: "العربية",
   },
@@ -464,6 +479,21 @@ export const translations = {
     adminSignInSubtitle: "الوصول إلى لوحة التحكم للموظفين",
     adminSignInNoAccess: "هذا الحساب ليس لديه صلاحية الإدارة.",
     adminSignInCustomerLink: "تسجيل دخول متجر العملاء",
+
+    // Password reset
+    resetPasswordTitle: "تعيين كلمة مرور جديدة",
+    resetPasswordSubtitle: "أدخل كلمة المرور الجديدة أدناه.",
+    newPassword: "كلمة المرور الجديدة",
+    newPasswordPlaceholder: "أدخل كلمة المرور الجديدة",
+    confirmPassword: "تأكيد كلمة المرور",
+    confirmPasswordPlaceholder: "أعد كلمة المرور الجديدة",
+    resetPasswordSubmit: "تحديث كلمة المرور",
+    resetPasswordSubmitting: "جارٍ التحديث...",
+    resetPasswordSuccess: "تم تحديث كلمة المرور! جارٍ التحويل لتسجيل الدخول...",
+    resetPasswordMismatch: "كلمتا المرور غير متطابقتين.",
+    resetPasswordTooShort: "يجب أن تكون كلمة المرور 6 أحرف على الأقل.",
+    resetPasswordError: "فشل تحديث كلمة المرور. قد يكون الرابط منتهي الصلاحية.",
+    resetPasswordInvalidLink: "هذا الرابط غير صالح أو منتهي الصلاحية. يرجى طلب إعادة تعيين كلمة المرور مجدداً.",
 
     // Language
     switchLanguage: "English",
