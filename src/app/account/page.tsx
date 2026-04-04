@@ -7,7 +7,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { Header } from "@/components/header";
 import { CartDrawer } from "@/components/cart-drawer";
 import { AccountSubnav } from "@/components/account-subnav";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
 
@@ -120,6 +120,16 @@ export default function AccountPage() {
               {saving ? t("saving") : t("saveProfile")}
             </button>
           </form>
+
+          <div className="mt-4">
+            <Link
+              href="/auth/forgot-password"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#1F443C]/12 bg-white py-3.5 text-sm font-semibold text-ink-soft transition-colors hover:border-[#1F443C]/25 hover:text-ink"
+            >
+              <KeyRound className="h-4 w-4" />
+              {t("changePassword")}
+            </Link>
+          </div>
         )}
       </main>
     </>

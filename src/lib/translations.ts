@@ -233,6 +233,14 @@ export const translations = {
     adminSignInCustomerLink: "Customer shop sign in",
 
     // Password reset
+    forgotPassword: "Forgot password?",
+    forgotPasswordTitle: "Reset your password",
+    forgotPasswordSubtitle: "Enter your email and we'll send you a reset link.",
+    sendResetLink: "Send reset link",
+    sendingResetLink: "Sending...",
+    resetLinkSent: "Check your email — a reset link is on its way.",
+    resetLinkError: "Could not send reset link. Please try again.",
+    changePassword: "Change Password",
     resetPasswordTitle: "Set new password",
     resetPasswordSubtitle: "Enter your new password below.",
     newPassword: "New Password",
@@ -481,6 +489,14 @@ export const translations = {
     adminSignInCustomerLink: "تسجيل دخول متجر العملاء",
 
     // Password reset
+    forgotPassword: "نسيت كلمة المرور؟",
+    forgotPasswordTitle: "إعادة تعيين كلمة المرور",
+    forgotPasswordSubtitle: "أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين.",
+    sendResetLink: "إرسال رابط الإعادة",
+    sendingResetLink: "جارٍ الإرسال...",
+    resetLinkSent: "تحقق من بريدك الإلكتروني — رابط الإعادة في طريقه إليك.",
+    resetLinkError: "تعذر إرسال رابط الإعادة. حاول مرة أخرى.",
+    changePassword: "تغيير كلمة المرور",
     resetPasswordTitle: "تعيين كلمة مرور جديدة",
     resetPasswordSubtitle: "أدخل كلمة المرور الجديدة أدناه.",
     newPassword: "كلمة المرور الجديدة",

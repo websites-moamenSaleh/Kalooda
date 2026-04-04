@@ -182,9 +182,17 @@ function SignInContent() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                {t("password")}
-              </label>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  {t("password")}
+                </label>
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-xs text-ink-soft hover:text-primary-dark hover:underline"
+                >
+                  {t("forgotPassword")}
+                </Link>
+              </div>
               <input
                 type="password"
                 required
