@@ -28,12 +28,6 @@ export default function ForgotPasswordPage() {
 
     const supabase = getSupabaseCustomerBrowser();
 
-    // If user is already logged in, use updateUser directly — no email needed
-    if (user) {
-      // Sign them out first so the reset link works cleanly
-      await supabase.auth.signOut();
-    }
-
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email,
       { redirectTo: `${window.location.origin}/auth/reset-password` }
