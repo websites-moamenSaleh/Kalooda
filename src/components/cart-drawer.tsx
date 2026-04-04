@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 import { useLanguage } from "@/contexts/language-context";
@@ -74,13 +75,27 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                   key={item.product.id}
                   className="flex flex-col gap-4 rounded-xl border border-[#1f443c]/10 bg-white/85 p-4 shadow-sm sm:flex-row sm:items-center"
                 >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-ink">
-                      {item.product.name}
-                    </p>
-                    <p className="mt-1 text-xs text-ink-soft/75">
-                      ₪{item.product.price.toFixed(2)} {t("each")}
-                    </p>
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {item.product.image_url ? (
+                      <Image
+                        src={item.product.image_url}
+                        alt={item.product.name}
+                        width={48}
+                        height={48}
+                        sizes="48px"
+                        className="rounded-lg object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-lg bg-[#1f443c]/8 shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-ink">
+                        {item.product.name}
+                      </p>
+                      <p className="mt-1 text-xs text-ink-soft/75">
+                        ₪{item.product.price.toFixed(2)} {t("each")}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between gap-3 sm:justify-end">
                     <div className="flex items-center gap-1 rounded-lg border border-[#1f443c]/12 bg-[#faf6ef] p-1">

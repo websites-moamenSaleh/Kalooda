@@ -5,6 +5,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { useCart } from "@/contexts/cart-context";
 import type { Order, OrderItem } from "@/types/database";
 import type { TranslationKey } from "@/lib/translations";
+import Image from "next/image";
 import { X, Loader2, ShoppingBag } from "lucide-react";
 
 const STATUS_KEY: Record<Order["status"], TranslationKey> = {
@@ -77,7 +78,7 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
         stock_quantity: 99,
         ingredients: "",
         allergens: [],
-        image_url: "",
+        image_url: item.image_url ?? "",
         name_ar: null,
         description_ar: null,
         ingredients_ar: null,
@@ -167,10 +168,26 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
                     {order.items.map((item: OrderItem, i: number) => (
                       <tr key={i}>
                         <td className="px-4 py-3 text-ink">
-                          <p>{item.product_name}</p>
-                          <p className="text-xs text-ink-soft">
-                            ₪{item.unit_price.toFixed(2)} / {t("unitPrice").toLowerCase()}
-                          </p>
+                          <div className="flex items-center gap-3">
+                            {item.image_url ? (
+                              <Image
+                                src={item.image_url}
+                                alt={item.product_name}
+                                width={40}
+                                height={40}
+                                sizes="40px"
+                                className="rounded-lg object-cover shrink-0"
+                              />
+                            ) : (
+                              <div className="h-10 w-10 rounded-lg bg-[#1F443C]/8 shrink-0" />
+                            )}
+                            <div>
+                              <p>{item.product_name}</p>
+                              <p className="text-xs text-ink-soft">
+                                ₪{item.unit_price.toFixed(2)} / {t("unitPrice").toLowerCase()}
+                              </p>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-3 py-3 text-center text-ink-soft">
                           {item.quantity}

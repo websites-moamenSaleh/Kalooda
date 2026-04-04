@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
 import { Header } from "@/components/header";
 import { CartDrawer } from "@/components/cart-drawer";
+import Image from "next/image";
 import { CheckCircle, ArrowLeft, Loader2, ClipboardList } from "lucide-react";
 import Link from "next/link";
 import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
@@ -159,10 +160,24 @@ export default function CheckoutPage() {
                     key={item.product.id}
                     className="flex items-center justify-between gap-4 py-3 text-sm first:pt-0"
                   >
-                    <span className="text-ink-soft">
-                      {item.product.name} × {item.quantity}
-                    </span>
-                    <span className="font-semibold text-ink">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {item.product.image_url ? (
+                        <Image
+                          src={item.product.image_url}
+                          alt={item.product.name}
+                          width={40}
+                          height={40}
+                          sizes="40px"
+                          className="rounded-lg object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-lg bg-[#1F443C]/8 shrink-0" />
+                      )}
+                      <span className="text-ink-soft">
+                        {item.product.name} × {item.quantity}
+                      </span>
+                    </div>
+                    <span className="font-semibold text-ink shrink-0">
                       ₪{(item.product.price * item.quantity).toFixed(2)}
                     </span>
                   </li>

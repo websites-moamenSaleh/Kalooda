@@ -47,6 +47,7 @@ export interface OrderItem {
   product_name: string;
   quantity: number;
   unit_price: number;
+  image_url?: string | null;
 }
 
 export interface Delivery {
