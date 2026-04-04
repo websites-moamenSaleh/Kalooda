@@ -76,6 +76,7 @@ export default function AccountPage() {
             <Loader2 className="h-9 w-9 animate-spin text-primary" />
           </div>
         ) : (
+          <>
           <form onSubmit={handleSave} className="space-y-5">
             <div className="surface-panel rounded-xl border border-[#1F443C]/10 p-5 sm:p-6">
               <div>
@@ -130,6 +131,7 @@ export default function AccountPage() {
               {t("changePassword")}
             </Link>
           </div>
+          </>
         )}
       </main>
     </>
