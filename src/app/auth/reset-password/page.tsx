@@ -18,36 +18,44 @@ export default function ResetPasswordPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Supabase implicit flow: token is in the URL hash.
-  // The Supabase client picks it up automatically on initialisation when
-  // detectSessionInUrl is true (the default). We just need to wait for it.
   useEffect(() => {
     const supabase = getSupabaseCustomerBrowser();
 
-    // Listen for PASSWORD_RECOVERY event — fired when Supabase detects the
-    // recovery token in the hash and establishes a temporary session.
+    // Parse hash fragment manually — Supabase implicit flow puts the token here.
+    // The singleton client may have already consumed it before onAuthStateChange
+    // is registered, so we read and apply it explicitly.
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const type = params.get("type");
+
+    if (accessToken && refreshToken && type === "recovery") {
+      const applySession = async () => {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (sessionError) {
+          setInvalid(true);
+        } else {
+          setReady(true);
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+      };
+      void applySession();
+      return;
+    }
+
+    // Fallback: listen for PASSWORD_RECOVERY (e.g. PKCE flow)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event: string) => {
-        if (event === "PASSWORD_RECOVERY") {
-          setReady(true);
-        }
+        if (event === "PASSWORD_RECOVERY") setReady(true);
       }
     );
 
-    // Also check if a session already exists (page reload after token consumed)
-    const checkSession = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData.session) setReady(true);
-    };
-    void checkSession();
-
-    // If no recovery event after 3 s, the link is invalid/expired
-    const timeout = setTimeout(() => {
-      setReady((r) => {
-        if (!r) setInvalid(true);
-        return r;
-      });
-    }, 3000);
+    // No token in hash — mark invalid after short delay
+    const timeout = setTimeout(() => setInvalid(true), 2000);
 
     return () => {
       subscription.unsubscribe();
@@ -87,14 +95,14 @@ export default function ResetPasswordPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#f5f0e6] px-4 py-12">
       <div className="w-full max-w-sm">
-        {/* Logo */}
         <div className="mb-8 flex justify-center">
           <Image
-            src="/logo.png"
+            src="/brand/logo-transparent.png"
             alt="Kalooda"
-            width={72}
-            height={72}
-            className="rounded-2xl"
+            width={160}
+            height={82}
+            className="h-10 w-auto object-contain"
+            priority
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
         </div>
