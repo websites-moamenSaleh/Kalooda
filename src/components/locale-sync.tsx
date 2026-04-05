@@ -38,7 +38,7 @@ export function LocaleSync() {
       .from("profiles")
       .update({ preferred_language: locale })
       .eq("id", profile.id)
-      .then(({ error }) => {
+      .then(({ error }: { error: unknown }) => {
         if (error) console.error("Failed to save locale preference:", error);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
