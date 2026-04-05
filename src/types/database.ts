@@ -45,6 +45,7 @@ export interface CartItemRow {
 export interface OrderItem {
   product_id: string;
   product_name: string;
+  product_name_ar?: string | null;
   quantity: number;
   unit_price: number;
   image_url?: string | null;
