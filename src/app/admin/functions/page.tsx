@@ -1059,7 +1059,7 @@ export default function FunctionsPage() {
                         {order.items
                           .map(
                             (i) =>
-                              `${i.product_name} (x${i.quantity})`
+                              `${locale === "ar" && i.product_name_ar ? i.product_name_ar : i.product_name} (x${i.quantity})`
                           )
                           .join(", ")}
                       </td>

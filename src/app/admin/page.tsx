@@ -322,7 +322,7 @@ export default function AdminDashboard() {
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-admin-ink">
-                  {product.name}
+                  {locale === "ar" && product.name_ar ? product.name_ar : product.name}
                 </p>
                 <p className="text-xs text-admin-muted">
                   ₪{product.price.toFixed(2)}

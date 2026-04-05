@@ -14,7 +14,7 @@ interface CartDrawerProps {
 
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, totalPrice } = useCart();
-  const { t, dir } = useLanguage();
+  const { t, dir, locale } = useLanguage();
   const { user } = useAuth();
 
   const checkoutHref = user
@@ -90,7 +90,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                     )}
                     <div className="min-w-0">
                       <p className="font-semibold text-ink">
-                        {item.product.name}
+                        {locale === "ar" && item.product.name_ar ? item.product.name_ar : item.product.name}
                       </p>
                       <p className="mt-1 text-xs text-ink-soft/75">
                         ₪{item.product.price.toFixed(2)} {t("each")}

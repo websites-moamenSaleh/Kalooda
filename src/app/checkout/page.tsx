@@ -13,7 +13,7 @@ import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart, clearRemoteCart, cartReady } = useCart();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { profile, refreshProfile } = useAuth();
   const [cartOpen, setCartOpen] = useState(false);
   const [name, setName] = useState("");
@@ -175,7 +175,7 @@ export default function CheckoutPage() {
                         <div className="h-10 w-10 rounded-lg bg-[#1F443C]/8 shrink-0" />
                       )}
                       <span className="text-ink-soft">
-                        {item.product.name} × {item.quantity}
+                        {locale === "ar" && item.product.name_ar ? item.product.name_ar : item.product.name} × {item.quantity}
                       </span>
                     </div>
                     <span className="font-semibold text-ink shrink-0">
