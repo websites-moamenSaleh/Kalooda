@@ -13,7 +13,7 @@ import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
 
 export default function AccountPage() {
   const { user, profile, refreshProfile, loading } = useAuth();
-  const { t } = useLanguage();
+  const { t, locale, setLocale } = useLanguage();
   const [cartOpen, setCartOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -110,6 +110,35 @@ export default function AccountPage() {
                   className="input-premium"
                   placeholder={t("phonePlaceholder")}
                 />
+              </div>
+              <div className="mt-5">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  {t("language")}
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLocale("en")}
+                    className={`flex-1 rounded-lg border py-2.5 text-sm font-semibold transition-colors ${
+                      locale === "en"
+                        ? "border-primary bg-primary/10 text-primary-dark"
+                        : "border-[#1F443C]/12 bg-white text-ink-soft hover:border-[#1F443C]/25"
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLocale("ar")}
+                    className={`flex-1 rounded-lg border py-2.5 text-sm font-semibold transition-colors ${
+                      locale === "ar"
+                        ? "border-primary bg-primary/10 text-primary-dark"
+                        : "border-[#1F443C]/12 bg-white text-ink-soft hover:border-[#1F443C]/25"
+                    }`}
+                  >
+                    العربية
+                  </button>
+                </div>
               </div>
             </div>
             <button
