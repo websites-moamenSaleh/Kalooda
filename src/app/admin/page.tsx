@@ -35,7 +35,7 @@ const statusTranslationKeys: Record<
 };
 
 export default function AdminDashboard() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -257,7 +257,7 @@ export default function AdminDashboard() {
                     <td className="px-4 py-3 text-admin-muted">
                       {order.items
                         .map(
-                          (i) => `${i.product_name} (x${i.quantity})`
+                          (i) => `${locale === "ar" && i.product_name_ar ? i.product_name_ar : i.product_name} (x${i.quantity})`
                         )
                         .join(", ")}
                     </td>
