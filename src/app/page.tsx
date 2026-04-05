@@ -54,8 +54,8 @@ export default function HomePage() {
   );
 
   const menuCategoryProducts = useMemo(
-    () => getProductsForMenuCategory(available, menuCategoryId),
-    [available, menuCategoryId]
+    () => getProductsForMenuCategory(products, menuCategoryId),
+    [products, menuCategoryId]
   );
 
   function handleMenuCategorySelect(categoryId: string) {

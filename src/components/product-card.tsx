@@ -34,12 +34,24 @@ export function ProductCard({ product }: { product: Product }) {
   const emoji = productEmoji[product.id] ?? "🍰";
   const showImage =
     product.image_url && isHttpUrl(product.image_url.trim());
+  const unavailable = product.unavailable_today;
 
   return (
     <article
-      className="group surface-panel flex flex-col overflow-hidden rounded-xl border border-[#1F443C]/10 transition-all duration-300 hover:-translate-y-1 hover:border-[#D3A94C]/25 hover:shadow-[var(--shadow-elevated)]"
+      className={`group surface-panel flex flex-col overflow-hidden rounded-xl border transition-all duration-300 ${
+        unavailable
+          ? "border-[#1F443C]/10 opacity-75"
+          : "border-[#1F443C]/10 hover:-translate-y-1 hover:border-[#D3A94C]/25 hover:shadow-[var(--shadow-elevated)]"
+      }`}
     >
       <div className="relative aspect-[5/4] overflow-hidden bg-gradient-to-br from-[#EBE0D4] via-[#E5D9CC] to-[#DDD0C2]">
+        {unavailable && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40">
+            <span className="rounded-full bg-[#0A2923]/90 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[#FFEC94]">
+              {t("unavailableToday")}
+            </span>
+          </div>
+        )}
         {showImage ? (
           <>
             {/* shimmer shown until image finishes loading */}
@@ -111,14 +123,20 @@ export function ProductCard({ product }: { product: Product }) {
               ₪{product.price.toFixed(2)}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => addItem(product)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#0A2923] px-4 py-2.5 text-sm font-bold text-[#FFEC94] shadow-md transition-all hover:bg-[#082018] hover:shadow-lg active:scale-[0.97]"
-          >
-            <Plus className="h-4 w-4" />
-            {t("add")}
-          </button>
+          {unavailable ? (
+            <span className="inline-flex shrink-0 items-center rounded-lg border border-[#1F443C]/15 bg-[#1F443C]/5 px-3 py-2.5 text-xs font-semibold text-ink-soft">
+              {t("unavailableToday")}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => addItem(product)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#0A2923] px-4 py-2.5 text-sm font-bold text-[#FFEC94] shadow-md transition-all hover:bg-[#082018] hover:shadow-lg active:scale-[0.97]"
+            >
+              <Plus className="h-4 w-4" />
+              {t("add")}
+            </button>
+          )}
         </div>
       </div>
     </article>
