@@ -20,7 +20,7 @@ interface Props {
 }
 
 export function OrderDetailModal({ orderId, onClose }: Props) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { addItem } = useCart();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
@@ -79,7 +79,7 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
         ingredients: "",
         allergens: [],
         image_url: item.image_url ?? "",
-        name_ar: null,
+        name_ar: item.product_name_ar ?? null,
         description_ar: null,
         ingredients_ar: null,
         unavailable_today: false,
@@ -182,7 +182,7 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
                               <div className="h-10 w-10 rounded-lg bg-[#1F443C]/8 shrink-0" />
                             )}
                             <div>
-                              <p>{item.product_name}</p>
+                              <p>{locale === "ar" && item.product_name_ar ? item.product_name_ar : item.product_name}</p>
                               <p className="text-xs text-ink-soft">
                                 ₪{item.unit_price.toFixed(2)} / {t("unitPrice").toLowerCase()}
                               </p>
