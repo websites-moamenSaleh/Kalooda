@@ -44,16 +44,17 @@ Open [http://localhost:3000](http://localhost:3000) for the storefront, and [htt
 ## Mock Mode vs Live Mode
 
 - **Mock mode** (default): Uses in-memory data from `src/data/mock.ts`. The admin dashboard polls every 3 seconds for updates.
-- **Live mode**: Connect Supabase for persistent storage and real-time updates via Postgres changes. Run `supabase/migrations/001_initial_schema.sql` to create tables and seed data.
+- **Live mode**: Connect Supabase for persistent storage and real-time updates via Postgres changes. Apply all files in `supabase/migrations/` with `npm run db push` (requires [Supabase CLI](https://supabase.com/docs/guides/cli) and `npx supabase link`).
 
 ## Database Schema
 
-Run the migration at `supabase/migrations/001_initial_schema.sql` against your Supabase project:
+Ordered SQL migrations in `supabase/migrations/` define the schema (categories, products, orders, deliveries, drivers, profiles, cart, RLS, storage buckets, etc.). Push them to your linked project:
 
-- **categories** — Product categories (Chocolates, Gummies, etc.)
-- **products** — Items with price, ingredients, and allergens array
-- **orders** — Customer orders with status tracking (pending → assigned → out_for_delivery → delivered)
-- **deliveries** — Driver acceptance records linked to orders
+```bash
+npm run db push
+```
+
+EU region / Tokyo → Frankfurt cutover is documented in [docs/supabase-frankfurt-migration.md](docs/supabase-frankfurt-migration.md).
 
 ## Delivery Loop
 
