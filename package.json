@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:push": "npx supabase db push",
-    "migrate:supabase-region": "node scripts/migrate-supabase-region.mjs"
+    "migrate:supabase-region": "node scripts/migrate-supabase-region.mjs",
+    "rewrite:image-urls": "node scripts/rewrite-tokyo-image-urls.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",

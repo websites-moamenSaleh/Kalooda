@@ -1,5 +1,6 @@
 -- Run once in Frankfurt project: SQL Editor
 -- Fixes category/product image_url still pointing at Tokyo after row copy.
+-- Or from repo (uses .env.local): npm run rewrite:image-urls
 
 update public.categories
 set image_url = replace(
