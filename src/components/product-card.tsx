@@ -102,7 +102,10 @@ export function ProductCard({ product }: { product: Product }) {
 
         {product.allergens.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {product.allergens.map((a) => (
+            {(locale === "ar" && product.allergens_ar?.length
+              ? product.allergens_ar
+              : product.allergens
+            ).map((a) => (
               <span
                 key={a}
                 className="inline-flex items-center gap-1 rounded-md border border-[#946E2A]/25 bg-[#FFF8E6] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#946E2A]"

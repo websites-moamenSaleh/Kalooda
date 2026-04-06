@@ -78,6 +78,7 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
         stock_quantity: 99,
         ingredients: "",
         allergens: [],
+        allergens_ar: null,
         image_url: item.image_url ?? "",
         name_ar: item.product_name_ar ?? null,
         description_ar: null,

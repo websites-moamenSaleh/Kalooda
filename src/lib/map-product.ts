@@ -16,6 +16,9 @@ export function mapProductRow(row: Record<string, unknown>): Product {
     allergens: Array.isArray(row.allergens)
       ? (row.allergens as string[])
       : [],
+    allergens_ar: Array.isArray(row.allergens_ar)
+      ? (row.allergens_ar as string[])
+      : null,
     image_url: String(row.image_url ?? ""),
     name_ar: row.name_ar != null ? String(row.name_ar) : null,
     description_ar:
