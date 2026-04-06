@@ -166,6 +166,16 @@ export default function FunctionsPage() {
   const [newDriverPhone, setNewDriverPhone] = useState("");
   const [addingDriver, setAddingDriver] = useState(false);
 
+  const [categoryDeleteErrors, setCategoryDeleteErrors] = useState<
+    Record<string, string>
+  >({});
+  const [driverDeleteErrors, setDriverDeleteErrors] = useState<
+    Record<string, string>
+  >({});
+  const [availabilityErrors, setAvailabilityErrors] = useState<
+    Record<string, string>
+  >({});
+
   const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch("/api/products");
@@ -307,16 +317,31 @@ export default function FunctionsPage() {
 
   async function toggleAvailability(product: Product) {
     const next = !product.unavailable_today;
+    const msg = t("availabilityUpdateFailed");
+
+    setAvailabilityErrors((prev) => {
+      const next = { ...prev };
+      delete next[product.id];
+      return next;
+    });
+
     setProducts((prev) =>
       prev.map((p) =>
         p.id === product.id ? { ...p, unavailable_today: next } : p
       )
     );
+
     try {
-      await fetch(`/api/products/${product.id}/availability`, {
+      const res = await fetch(`/api/products/${product.id}/availability`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ unavailable_today: next }),
+      });
+      if (!res.ok) throw new Error("availability failed");
+      setAvailabilityErrors((prev) => {
+        const next = { ...prev };
+        delete next[product.id];
+        return next;
       });
     } catch {
       setProducts((prev) =>
@@ -324,6 +349,7 @@ export default function FunctionsPage() {
           p.id === product.id ? { ...p, unavailable_today: !next } : p
         )
       );
+      setAvailabilityErrors((prev) => ({ ...prev, [product.id]: msg }));
     }
   }
 
@@ -451,6 +477,11 @@ export default function FunctionsPage() {
 
   async function removeCategory(id: string) {
     if (!confirm(t("confirmDeleteCategory"))) return;
+    setCategoryDeleteErrors((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
     try {
       const res = await fetch("/api/categories", {
         method: "DELETE",
@@ -459,8 +490,16 @@ export default function FunctionsPage() {
       });
       if (!res.ok) throw new Error();
       setCategories((prev) => prev.filter((c) => c.id !== id));
+      setCategoryDeleteErrors((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     } catch {
-      console.error("Failed to remove category");
+      setCategoryDeleteErrors((prev) => ({
+        ...prev,
+        [id]: t("categoryDeleteFailed"),
+      }));
     }
   }
 
@@ -491,6 +530,11 @@ export default function FunctionsPage() {
   }
 
   async function removeDriver(id: string) {
+    setDriverDeleteErrors((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
     try {
       const res = await fetch("/api/drivers", {
         method: "DELETE",
@@ -499,8 +543,16 @@ export default function FunctionsPage() {
       });
       if (!res.ok) throw new Error();
       setDrivers((prev) => prev.filter((d) => d.id !== id));
+      setDriverDeleteErrors((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     } catch {
-      console.error("Failed to remove driver");
+      setDriverDeleteErrors((prev) => ({
+        ...prev,
+        [id]: t("driverDeleteFailed"),
+      }));
     }
   }
 
@@ -733,19 +785,27 @@ export default function FunctionsPage() {
                       <td className="px-4 py-3 text-admin-muted">
                         {cat ? (locale === "ar" && cat.name_ar ? cat.name_ar : cat.name) : "—"}
                       </td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => toggleAvailability(p)}
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
-                            p.unavailable_today
-                              ? "bg-red-100 text-red-700 hover:bg-red-200"
-                              : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                          }`}
-                        >
-                          {p.unavailable_today
-                            ? t("unavailableToday")
-                            : t("available")}
-                        </button>
+                      <td className="px-4 py-3 align-top">
+                        <div className="flex flex-col gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => void toggleAvailability(p)}
+                            className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
+                              p.unavailable_today
+                                ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                            }`}
+                          >
+                            {p.unavailable_today
+                              ? t("unavailableToday")
+                              : t("available")}
+                          </button>
+                          {availabilityErrors[p.id] ? (
+                            <p className="max-w-[14rem] text-xs font-medium text-red-600">
+                              {availabilityErrors[p.id]}
+                            </p>
+                          ) : null}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
@@ -872,24 +932,31 @@ export default function FunctionsPage() {
                         <span className="text-admin-muted">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openCategoryEdit(cat)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-admin-border px-2.5 py-1.5 text-xs font-medium text-admin-ink hover:bg-[rgba(31,68,60,0.06)] transition-colors"
-                        >
-                          <Pencil className="h-3 w-3" />
-                          {t("editCategory")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeCategory(cat.id)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          {t("removeCategory")}
-                        </button>
+                    <td className="px-4 py-3 align-top">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openCategoryEdit(cat)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-admin-border px-2.5 py-1.5 text-xs font-medium text-admin-ink hover:bg-[rgba(31,68,60,0.06)] transition-colors"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            {t("editCategory")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void removeCategory(cat.id)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            {t("removeCategory")}
+                          </button>
+                        </div>
+                        {categoryDeleteErrors[cat.id] ? (
+                          <p className="text-xs font-medium text-red-600">
+                            {categoryDeleteErrors[cat.id]}
+                          </p>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -1184,14 +1251,22 @@ export default function FunctionsPage() {
                         <span className="text-admin-muted">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => removeDriver(driver.id)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        {t("removeDriver")}
-                      </button>
+                    <td className="px-4 py-3 align-top">
+                      <div className="flex flex-col gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => void removeDriver(driver.id)}
+                          className="inline-flex w-fit items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          {t("removeDriver")}
+                        </button>
+                        {driverDeleteErrors[driver.id] ? (
+                          <p className="text-xs font-medium text-red-600">
+                            {driverDeleteErrors[driver.id]}
+                          </p>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}

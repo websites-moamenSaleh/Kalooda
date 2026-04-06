@@ -40,44 +40,86 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRetryingLoad, setIsRetryingLoad] = useState(false);
+  const [ordersFetchFailed, setOrdersFetchFailed] = useState(false);
+  const [productsFetchFailed, setProductsFetchFailed] = useState(false);
+  const [driversFetchFailed, setDriversFetchFailed] = useState(false);
+  const [availabilityErrors, setAvailabilityErrors] = useState<
+    Record<string, string>
+  >({});
   const [flashId, setFlashId] = useState<string | null>(null);
 
-  const fetchOrders = useCallback(async () => {
+  const loadOrders = useCallback(async () => {
     try {
       const res = await fetch("/api/orders");
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !Array.isArray(data)) {
+        setOrdersFetchFailed(true);
+        return;
+      }
       setOrders(data);
-    } catch (err) {
-      console.error("Failed to fetch orders:", err);
-    } finally {
-      setLoading(false);
+      setOrdersFetchFailed(false);
+    } catch {
+      setOrdersFetchFailed(true);
     }
   }, []);
 
-  const fetchProducts = useCallback(async () => {
+  const loadProducts = useCallback(async () => {
     try {
       const res = await fetch("/api/products");
-      const data = await res.json();
-      if (Array.isArray(data)) setProducts(data);
-    } catch (err) {
-      console.error("Failed to fetch products:", err);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !Array.isArray(data)) {
+        setProductsFetchFailed(true);
+        return;
+      }
+      setProducts(data);
+      setProductsFetchFailed(false);
+    } catch {
+      setProductsFetchFailed(true);
     }
   }, []);
 
-  const fetchDrivers = useCallback(async () => {
+  const loadDrivers = useCallback(async () => {
     try {
       const res = await fetch("/api/drivers");
-      const data = await res.json();
-      if (Array.isArray(data)) setDrivers(data);
-    } catch (err) {
-      console.error("Failed to fetch drivers:", err);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !Array.isArray(data)) {
+        setDriversFetchFailed(true);
+        return;
+      }
+      setDrivers(data);
+      setDriversFetchFailed(false);
+    } catch {
+      setDriversFetchFailed(true);
     }
   }, []);
 
+  const runAllFetches = useCallback(async () => {
+    await Promise.all([loadOrders(), loadProducts(), loadDrivers()]);
+  }, [loadOrders, loadProducts, loadDrivers]);
+
+  const handleHeaderRefresh = useCallback(async () => {
+    setLoading(true);
+    await runAllFetches();
+    setLoading(false);
+  }, [runAllFetches]);
+
+  const handleRetryBanner = useCallback(async () => {
+    setIsRetryingLoad(true);
+    setOrdersFetchFailed(false);
+    setProductsFetchFailed(false);
+    setDriversFetchFailed(false);
+    await runAllFetches();
+    setIsRetryingLoad(false);
+  }, [runAllFetches]);
+
   useEffect(() => {
-    fetchOrders();
-    fetchProducts();
-    fetchDrivers();
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      await runAllFetches();
+      if (!cancelled) setLoading(false);
+    })();
 
     const supabase = getSupabaseAdminBrowser();
     const channel = supabase
@@ -104,9 +146,10 @@ export default function AdminDashboard() {
       .subscribe();
 
     return () => {
+      cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [fetchOrders, fetchProducts, fetchDrivers]);
+  }, [runAllFetches]);
 
   async function updateStatus(orderId: string, newStatus: string) {
     try {
@@ -131,16 +174,31 @@ export default function AdminDashboard() {
 
   async function toggleAvailability(product: Product) {
     const next = !product.unavailable_today;
+    const msg = t("availabilityUpdateFailed");
+
+    setAvailabilityErrors((prev) => {
+      const next = { ...prev };
+      delete next[product.id];
+      return next;
+    });
+
     setProducts((prev) =>
       prev.map((p) =>
         p.id === product.id ? { ...p, unavailable_today: next } : p
       )
     );
+
     try {
-      await fetch(`/api/products/${product.id}/availability`, {
+      const res = await fetch(`/api/products/${product.id}/availability`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ unavailable_today: next }),
+      });
+      if (!res.ok) throw new Error("availability failed");
+      setAvailabilityErrors((prev) => {
+        const next = { ...prev };
+        delete next[product.id];
+        return next;
       });
     } catch {
       setProducts((prev) =>
@@ -148,10 +206,16 @@ export default function AdminDashboard() {
           p.id === product.id ? { ...p, unavailable_today: !next } : p
         )
       );
+      setAvailabilityErrors((prev) => ({ ...prev, [product.id]: msg }));
     }
   }
 
   const statusKeys = ["pending", "preparing", "out_for_delivery"] as const;
+  const showLoadBanner =
+    ordersFetchFailed ||
+    productsFetchFailed ||
+    driversFetchFailed ||
+    isRetryingLoad;
 
   return (
     <>
@@ -162,19 +226,40 @@ export default function AdminDashboard() {
         </h1>
         <button
           type="button"
-          onClick={() => {
-            setLoading(true);
-            fetchOrders();
-            fetchProducts();
-            fetchDrivers();
-          }}
-          className="rounded-lg border border-admin-border bg-admin-panel p-2 text-admin-muted transition-colors hover:bg-[rgba(31, 68, 60,0.05)]"
+          onClick={() => void handleHeaderRefresh()}
+          disabled={loading}
+          className="rounded-lg border border-admin-border bg-admin-panel p-2 text-admin-muted transition-colors hover:bg-[rgba(31, 68, 60,0.05)] disabled:opacity-50"
         >
           <RefreshCw
             className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
           />
         </button>
       </div>
+
+      {showLoadBanner ? (
+        <div
+          className="mb-6 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between"
+          role="alert"
+        >
+          {isRetryingLoad ? (
+            <div className="flex items-center gap-2 font-medium">
+              <RefreshCw className="h-4 w-4 shrink-0 animate-spin" />
+              {t("retryingLoad")}
+            </div>
+          ) : (
+            <>
+              <p className="font-medium">{t("adminDashboardLoadFailed")}</p>
+              <button
+                type="button"
+                onClick={() => void handleRetryBanner()}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-100"
+              >
+                {t("retryLoad")}
+              </button>
+            </>
+          )}
+        </div>
+      ) : null}
 
       {/* Stats */}
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -290,7 +375,17 @@ export default function AdminDashboard() {
                   </tr>
                 );
               })}
-              {orders.length === 0 && !loading && (
+              {orders.length === 0 && !loading && ordersFetchFailed && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-4 py-12 text-center text-red-600"
+                  >
+                    {t("ordersLoadFailed")}
+                  </td>
+                </tr>
+              )}
+              {orders.length === 0 && !loading && !ordersFetchFailed && (
                 <tr>
                   <td
                     colSpan={6}
@@ -314,35 +409,48 @@ export default function AdminDashboard() {
           {products.map((product) => (
             <div
               key={product.id}
-              className={`flex items-center justify-between rounded-xl border p-4 shadow-sm transition-colors ${
+              className={`flex flex-col gap-2 rounded-xl border p-4 shadow-sm transition-colors ${
                 product.unavailable_today
                   ? "border-red-200 bg-red-50/80"
                   : "border-admin-border bg-admin-panel"
               }`}
             >
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-admin-ink">
-                  {locale === "ar" && product.name_ar ? product.name_ar : product.name}
-                </p>
-                <p className="text-xs text-admin-muted">
-                  ₪{product.price.toFixed(2)}
-                </p>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-admin-ink">
+                    {locale === "ar" && product.name_ar ? product.name_ar : product.name}
+                  </p>
+                  <p className="text-xs text-admin-muted">
+                    ₪{product.price.toFixed(2)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void toggleAvailability(product)}
+                  className={`ms-1 shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    product.unavailable_today
+                      ? "bg-red-100 text-red-700 hover:bg-red-200"
+                      : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                  }`}
+                >
+                  {product.unavailable_today
+                    ? t("unavailableToday")
+                    : t("available")}
+                </button>
               </div>
-              <button
-                onClick={() => toggleAvailability(product)}
-                className={`ms-3 shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  product.unavailable_today
-                    ? "bg-red-100 text-red-700 hover:bg-red-200"
-                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                }`}
-              >
-                {product.unavailable_today
-                  ? t("unavailableToday")
-                  : t("available")}
-              </button>
+              {availabilityErrors[product.id] ? (
+                <p className="text-xs font-medium text-red-600">
+                  {availabilityErrors[product.id]}
+                </p>
+              ) : null}
             </div>
           ))}
-          {products.length === 0 && (
+          {products.length === 0 && !loading && productsFetchFailed && (
+            <p className="col-span-full py-8 text-center text-red-600">
+              {t("productsLoadFailed")}
+            </p>
+          )}
+          {products.length === 0 && !loading && !productsFetchFailed && (
             <p className="col-span-full py-8 text-center text-admin-muted">
               {t("noProductsYet")}
             </p>
@@ -391,7 +499,17 @@ export default function AdminDashboard() {
                     </td>
                   </tr>
                 ))}
-                {drivers.length === 0 && (
+                {drivers.length === 0 && !loading && driversFetchFailed && (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      className="px-4 py-12 text-center text-red-600"
+                    >
+                      {t("driversLoadFailed")}
+                    </td>
+                  </tr>
+                )}
+                {drivers.length === 0 && !loading && !driversFetchFailed && (
                   <tr>
                     <td
                       colSpan={2}

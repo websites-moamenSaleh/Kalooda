@@ -126,6 +126,17 @@ export const translations = {
     markUnavailable: "Mark Unavailable",
     markAvailable: "Mark Available",
     noProductsYet: "No products yet.",
+    adminDashboardLoadFailed:
+      "Some dashboard data could not be loaded. Check your connection and try again.",
+    retryLoad: "Retry",
+    retryingLoad: "Retrying…",
+    ordersLoadFailed: "Could not load orders.",
+    productsLoadFailed: "Could not load products.",
+    driversLoadFailed: "Could not load drivers.",
+    availabilityUpdateFailed:
+      "Could not update availability. Your change was reverted — please try again.",
+    categoryDeleteFailed: "Could not remove this category. Please try again.",
+    driverDeleteFailed: "Could not remove this driver. Please try again.",
 
     // Functions — Product management
     products: "Products",
@@ -383,6 +394,17 @@ export const translations = {
     markUnavailable: "تعليق المنتج",
     markAvailable: "إتاحة المنتج",
     noProductsYet: "لا توجد منتجات بعد.",
+    adminDashboardLoadFailed:
+      "تعذر تحميل بعض بيانات لوحة التحكم. تحقق من الاتصال وحاول مرة أخرى.",
+    retryLoad: "إعادة المحاولة",
+    retryingLoad: "جارٍ إعادة المحاولة…",
+    ordersLoadFailed: "تعذر تحميل الطلبات.",
+    productsLoadFailed: "تعذر تحميل المنتجات.",
+    driversLoadFailed: "تعذر تحميل السائقين.",
+    availabilityUpdateFailed:
+      "تعذر تحديث التوفر. تم التراجع عن التغيير — يرجى المحاولة مرة أخرى.",
+    categoryDeleteFailed: "تعذر إزالة هذه الفئة. حاول مرة أخرى.",
+    driverDeleteFailed: "تعذر إزالة هذا السائق. حاول مرة أخرى.",
 
     // Functions — Product management
     products: "المنتجات",
