@@ -52,6 +52,7 @@ interface ProductFormData {
   price: string;
   stock_quantity: string;
   allergens: string;
+  allergens_ar: string;
   image_url: string;
   category_id: string;
 }
@@ -66,6 +67,7 @@ const emptyForm: ProductFormData = {
   price: "",
   stock_quantity: "",
   allergens: "",
+  allergens_ar: "",
   image_url: "",
   category_id: "",
 };
@@ -81,6 +83,7 @@ function productToForm(p: Product): ProductFormData {
     price: String(p.price),
     stock_quantity: String(p.stock_quantity),
     allergens: p.allergens.join(", "),
+    allergens_ar: (p.allergens_ar ?? []).join(", "),
     image_url: p.image_url ?? "",
     category_id: p.category_id ?? "",
   };
@@ -117,10 +120,10 @@ function formToPayload(form: ProductFormData) {
     price: Number(form.price) || 0,
     stock_quantity: Number(form.stock_quantity) || 0,
     allergens: form.allergens
-      ? form.allergens
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
+      ? form.allergens.split(",").map((s) => s.trim()).filter(Boolean)
+      : [],
+    allergens_ar: form.allergens_ar
+      ? form.allergens_ar.split(",").map((s) => s.trim()).filter(Boolean)
       : [],
     image_url: form.image_url || null,
     category_id: form.category_id || null,
@@ -798,6 +801,13 @@ export default function FunctionsPage() {
                 value={form.allergens}
                 onChange={(v) => updateField("allergens", v)}
                 placeholder={t("allergensPlaceholder")}
+              />
+
+              <Field
+                label={t("allergensAr")}
+                value={form.allergens_ar}
+                onChange={(v) => updateField("allergens_ar", v)}
+                placeholder={t("allergensArPlaceholder")}
               />
 
               <CatalogImageField

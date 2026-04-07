@@ -19,6 +19,7 @@ export interface Product {
   name_ar: string | null;
   description_ar: string | null;
   ingredients_ar: string | null;
+  allergens_ar: string[] | null;
   unavailable_today: boolean;
 }
 
