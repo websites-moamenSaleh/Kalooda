@@ -1,4 +1,5 @@
-import type { Product } from "@/types/database";
+import type { CartItem, Product } from "@/types/database";
+import type { StorefrontCatalogBroadcastPayload } from "@/lib/storefront-catalog-types";
 
 /** Payload shape from Supabase `postgres_changes` on `products`. */
 export type ProductsPostgresChangePayload = {
@@ -30,5 +31,49 @@ export function mergeProductChangeIntoList(
 
   return [...prev, row].sort((a, b) =>
     a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+  );
+}
+
+/** Map server broadcast payload to the same shape as `postgres_changes` for shared merge logic. */
+export function broadcastPayloadToPostgresShape(
+  data: StorefrontCatalogBroadcastPayload
+): ProductsPostgresChangePayload | null {
+  if (data.action === "DELETE") {
+    const id = data.id ?? data.product?.id;
+    if (!id) return null;
+    return { eventType: "DELETE", new: null, old: { id } };
+  }
+  const row = data.product;
+  if (!row?.id) return null;
+  return {
+    eventType: data.action === "INSERT" ? "INSERT" : "UPDATE",
+    new: row as unknown as Record<string, unknown>,
+    old: null,
+  };
+}
+
+/** Apply a `products` row change to cart line items (merge or drop if unavailable / deleted). */
+export function applyProductChangeToCartItems(
+  prev: CartItem[],
+  payload: ProductsPostgresChangePayload
+): CartItem[] {
+  if (payload.eventType === "DELETE") {
+    const id = (payload.old as { id?: string })?.id;
+    if (!id || !prev.some((i) => i.product.id === id)) return prev;
+    return prev.filter((i) => i.product.id !== id);
+  }
+
+  const row = payload.new as Product | null;
+  if (!row?.id) return prev;
+  const existing = prev.find((i) => i.product.id === row.id);
+  if (!existing) return prev;
+
+  const mergedProduct = { ...existing.product, ...row };
+  if (mergedProduct.unavailable_today) {
+    return prev.filter((i) => i.product.id !== row.id);
+  }
+
+  return prev.map((i) =>
+    i.product.id === row.id ? { ...i, product: mergedProduct } : i
   );
 }

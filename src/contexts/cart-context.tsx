@@ -11,8 +11,12 @@ import {
 } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { GUEST_CART_KEY } from "@/lib/guest-cart-constants";
-import { getSupabaseCustomerBrowser } from "@/lib/supabase-client-customer";
 import type { Product, CartItem } from "@/types/database";
+import {
+  applyProductChangeToCartItems,
+  broadcastPayloadToPostgresShape,
+} from "@/lib/realtime-products";
+import { subscribeStorefrontCatalog } from "@/lib/storefront-catalog-realtime";
 
 interface CartContextType {
   items: CartItem[];
@@ -288,56 +292,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [authLoading, user?.id, clearDebounce]);
 
   useEffect(() => {
-    const supabase = getSupabaseCustomerBrowser();
-    const channel = supabase
-      .channel("cart-products-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "products" },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (payload: any) => {
-          if (payload.eventType === "DELETE") {
-            const id = (payload.old as { id?: string })?.id;
-            if (!id) return;
-            setItems((prev) => {
-              if (!prev.some((i) => i.product.id === id)) return prev;
-              const next = prev.filter((i) => i.product.id !== id);
-              itemsRef.current = next;
-              queueMicrotask(() => schedulePersist());
-              return next;
-            });
-            return;
-          }
+    return subscribeStorefrontCatalog((event) => {
+      const payload =
+        event.type === "postgres"
+          ? event.payload
+          : broadcastPayloadToPostgresShape(event.data);
+      if (!payload) return;
 
-          const row = payload.new as Product;
-          if (!row?.id) return;
-
-          setItems((prev) => {
-            const idx = prev.findIndex((i) => i.product.id === row.id);
-            if (idx === -1) return prev;
-
-            const mergedProduct = { ...prev[idx].product, ...row };
-            if (mergedProduct.unavailable_today) {
-              const next = prev.filter((i) => i.product.id !== row.id);
-              itemsRef.current = next;
-              queueMicrotask(() => schedulePersist());
-              return next;
-            }
-
-            const next = prev.map((i) =>
-              i.product.id === row.id ? { ...i, product: mergedProduct } : i
-            );
-            itemsRef.current = next;
-            queueMicrotask(() => schedulePersist());
-            return next;
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      setItems((prev) => {
+        const next = applyProductChangeToCartItems(prev, payload);
+        if (next === prev) return prev;
+        itemsRef.current = next;
+        queueMicrotask(() => schedulePersist());
+        return next;
+      });
+    });
   }, [schedulePersist]);
 
   const addItem = useCallback(

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { requireRole, isAuthorized } from "@/lib/require-role";
+import { broadcastStorefrontCatalog } from "@/lib/storefront-catalog-broadcast";
+import type { Product } from "@/types/database";
 
 export async function PATCH(
   req: NextRequest,
@@ -21,6 +23,10 @@ export async function PATCH(
       .single();
 
     if (error) throw error;
+    void broadcastStorefrontCatalog({
+      action: "UPDATE",
+      product: data as Product,
+    });
     return NextResponse.json(data);
   } catch (err) {
     console.error("Toggle availability error:", err);

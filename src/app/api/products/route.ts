@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { requireRole, isAuthorized } from "@/lib/require-role";
+import { broadcastStorefrontCatalog } from "@/lib/storefront-catalog-broadcast";
+import type { Product } from "@/types/database";
 
 export async function GET() {
   try {
@@ -66,6 +68,10 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) throw error;
+    void broadcastStorefrontCatalog({
+      action: "INSERT",
+      product: data as Product,
+    });
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     console.error("Create product error:", err);
@@ -120,6 +126,10 @@ export async function PUT(req: NextRequest) {
       .single();
 
     if (error) throw error;
+    void broadcastStorefrontCatalog({
+      action: "UPDATE",
+      product: data as Product,
+    });
     return NextResponse.json(data);
   } catch (err) {
     console.error("Update product error:", err);
@@ -150,6 +160,7 @@ export async function DELETE(req: NextRequest) {
       .eq("id", id);
 
     if (error) throw error;
+    void broadcastStorefrontCatalog({ action: "DELETE", id });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Delete product error:", err);
