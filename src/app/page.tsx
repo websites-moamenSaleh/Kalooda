@@ -18,6 +18,8 @@ import {
   CHEF_SELECTIONS_COUNT,
 } from "@/lib/storefront-home-helpers";
 import type { Category, Product } from "@/types/database";
+import { getSupabaseCustomerBrowser } from "@/lib/supabase-client-customer";
+import { mergeProductChangeIntoList } from "@/lib/realtime-products";
 
 export default function HomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -31,16 +33,44 @@ export default function HomePage() {
   useCartDrawerEvent(setCartOpen);
 
   useEffect(() => {
+    const supabase = getSupabaseCustomerBrowser();
+    const channel = supabase
+      .channel("storefront-products-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
+          setProducts((prev) =>
+            mergeProductChangeIntoList(prev, {
+              eventType: payload.eventType,
+              new: payload.new,
+              old: payload.old,
+            })
+          );
+        }
+      )
+      .subscribe();
+
+    let cancelled = false;
     Promise.all([
       fetch("/api/categories").then((r) => r.json()),
       fetch("/api/products").then((r) => r.json()),
     ])
       .then(([cats, prods]) => {
+        if (cancelled) return;
         setCategories(cats);
         setProducts(prods);
       })
       .catch((err) => console.error("Failed to load data:", err))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const available = useMemo(
