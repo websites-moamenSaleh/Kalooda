@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/language-context";
+import { useAuth } from "@/contexts/auth-context";
 import { Header } from "@/components/header";
 import { CartDrawer } from "@/components/cart-drawer";
 import { AccountSubnav } from "@/components/account-subnav";
@@ -11,10 +12,15 @@ import { ArrowLeft, Loader2, ClipboardList } from "lucide-react";
 import Link from "next/link";
 import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
 import type { OrderStatus } from "@/lib/order-status";
-import { orderStatusTranslationKey } from "@/lib/order-status";
+import {
+  orderStatusBadgeColors,
+  orderStatusTranslationKey,
+} from "@/lib/order-status";
+import { getSupabaseCustomerBrowser } from "@/lib/supabase-client-customer";
 
 export default function AccountOrdersPage() {
   const { t } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
   const [cartOpen, setCartOpen] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,8 +46,59 @@ export default function AccountOrdersPage() {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user?.id) {
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
+
+    const supabase = getSupabaseCustomerBrowser();
+    const channel = supabase
+      .channel("customer-orders-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
+          if (payload.eventType === "DELETE") {
+            const deletedId = (payload.old as { id?: string })?.id;
+            if (!deletedId) return;
+            setOrders((prev) => prev.filter((o) => o.id !== deletedId));
+            setSelectedOrderId((prev) =>
+              prev === deletedId ? null : prev
+            );
+            return;
+          }
+
+          const updated = payload.new as Order;
+          if (!updated?.id) return;
+
+          setOrders((prev) => {
+            const exists = prev.find((o) => o.id === updated.id);
+            if (exists) {
+              return prev.map((o) =>
+                o.id === updated.id ? { ...o, ...updated } : o
+              );
+            }
+            return [updated, ...prev];
+          });
+        }
+      )
+      .subscribe();
+
     void fetchOrders();
-  }, [fetchOrders]);
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [authLoading, user?.id, fetchOrders]);
+
+  const listOrderForModal =
+    selectedOrderId != null
+      ? (orders.find((o) => o.id === selectedOrderId) ?? null)
+      : null;
 
   return (
     <>
@@ -49,6 +106,7 @@ export default function AccountOrdersPage() {
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       <OrderDetailModal
         orderId={selectedOrderId}
+        listOrder={listOrderForModal}
         onClose={() => setSelectedOrderId(null)}
       />
 
@@ -69,7 +127,7 @@ export default function AccountOrdersPage() {
           <AccountSubnav />
         </div>
 
-        {loading ? (
+        {authLoading || loading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="h-9 w-9 animate-spin text-primary" />
           </div>
@@ -80,35 +138,42 @@ export default function AccountOrdersPage() {
           </div>
         ) : (
           <ul className="mt-8 space-y-4">
-            {orders.map((o) => (
-              <li
-                key={o.id}
-                onClick={() => setSelectedOrderId(o.id)}
-                className="surface-panel rounded-xl border border-[#1F443C]/10 p-5 transition-shadow hover:shadow-[var(--shadow-card)] cursor-pointer hover:border-[#1F443C]/25"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-display text-lg font-semibold text-ink">
-                      {o.display_id}
-                    </p>
-                    <p className="mt-1 text-xs text-ink-soft">
-                      {new Date(o.created_at).toLocaleString()}
-                    </p>
+            {orders.map((o) => {
+              const colors =
+                orderStatusBadgeColors[o.status as OrderStatus] ??
+                orderStatusBadgeColors.pending;
+              return (
+                <li
+                  key={o.id}
+                  onClick={() => setSelectedOrderId(o.id)}
+                  className="surface-panel rounded-xl border border-[#1F443C]/10 p-5 transition-shadow hover:shadow-[var(--shadow-card)] cursor-pointer hover:border-[#1F443C]/25"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-display text-lg font-semibold text-ink">
+                        {o.display_id}
+                      </p>
+                      <p className="mt-1 text-xs text-ink-soft">
+                        {new Date(o.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <span
+                      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold ${colors.bg} ${colors.color}`}
+                    >
+                      {t(
+                        orderStatusTranslationKey({
+                          status: o.status as OrderStatus,
+                          fulfillment_type: o.fulfillment_type,
+                        })
+                      )}
+                    </span>
                   </div>
-                  <span className="shrink-0 rounded-full border border-[#D3A94C]/30 bg-[#FFF8E6] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#946E2A]">
-                    {t(
-                      orderStatusTranslationKey({
-                        status: o.status as OrderStatus,
-                        fulfillment_type: o.fulfillment_type,
-                      })
-                    )}
-                  </span>
-                </div>
-                <p className="mt-4 font-display text-xl font-bold text-primary-dark">
-                  ₪{Number(o.total_price).toFixed(2)}
-                </p>
-              </li>
-            ))}
+                  <p className="mt-4 font-display text-xl font-bold text-primary-dark">
+                    ₪{Number(o.total_price).toFixed(2)}
+                  </p>
+                </li>
+              );
+            })}
           </ul>
         )}
       </main>

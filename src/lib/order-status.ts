@@ -10,6 +10,18 @@ export const ORDER_STATUSES = [
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
+/** Tailwind classes for status pills (shared by admin dashboard and customer UI). */
+export type OrderStatusBadgeColors = { color: string; bg: string };
+
+export const orderStatusBadgeColors: Record<OrderStatus, OrderStatusBadgeColors> =
+  {
+    pending: { color: "text-amber-700", bg: "bg-amber-100" },
+    preparing: { color: "text-blue-700", bg: "bg-blue-100" },
+    out_for_delivery: { color: "text-purple-700", bg: "bg-purple-100" },
+    ready_for_pickup: { color: "text-teal-800", bg: "bg-teal-100" },
+    completed: { color: "text-emerald-800", bg: "bg-emerald-100" },
+  };
+
 export type FulfillmentType = "delivery" | "pickup";
 
 const DELIVERY_FLOW: OrderStatus[] = [

@@ -7,14 +7,23 @@ import type { Order, OrderItem } from "@/types/database";
 import Image from "next/image";
 import { X, Loader2, ShoppingBag } from "lucide-react";
 import type { OrderStatus } from "@/lib/order-status";
-import { orderStatusTranslationKey } from "@/lib/order-status";
+import {
+  orderStatusBadgeColors,
+  orderStatusTranslationKey,
+} from "@/lib/order-status";
 
 interface Props {
   orderId: string | null;
+  /** Live row from My Orders when open; keeps status in sync with Realtime. */
+  listOrder?: Order | null;
   onClose: () => void;
 }
 
-export function OrderDetailModal({ orderId, onClose }: Props) {
+export function OrderDetailModal({
+  orderId,
+  listOrder = null,
+  onClose,
+}: Props) {
   const { t, locale } = useLanguage();
   const { addItem } = useCart();
   const [order, setOrder] = useState<Order | null>(null);
@@ -61,9 +70,24 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
 
   if (!orderId) return null;
 
+  const displayOrder =
+    order && listOrder && listOrder.id === order.id
+      ? {
+          ...order,
+          status: listOrder.status,
+          fulfillment_type: listOrder.fulfillment_type,
+        }
+      : order;
+
+  const statusPill =
+    displayOrder != null
+      ? (orderStatusBadgeColors[displayOrder.status as OrderStatus] ??
+        orderStatusBadgeColors.pending)
+      : orderStatusBadgeColors.pending;
+
   function handleReorder() {
-    if (!order?.items) return;
-    order.items.forEach((item: OrderItem) => {
+    if (!displayOrder?.items) return;
+    displayOrder.items.forEach((item: OrderItem) => {
       const product = {
         id: item.product_id,
         name: item.product_name,
@@ -123,7 +147,7 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : !order ? (
+          ) : !displayOrder ? (
             <p className="py-12 text-center text-ink-soft">
               {t("loadingOrder")}
             </p>
@@ -133,17 +157,19 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
               <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
                 <div>
                   <p className="font-display text-xl font-semibold text-ink">
-                    {order.display_id}
+                    {displayOrder.display_id}
                   </p>
                   <p className="mt-0.5 text-xs text-ink-soft">
-                    {new Date(order.created_at).toLocaleString()}
+                    {new Date(displayOrder.created_at).toLocaleString()}
                   </p>
                 </div>
-                <span className="shrink-0 rounded-full border border-[#D3A94C]/30 bg-[#FFF8E6] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#946E2A]">
+                <span
+                  className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusPill.bg} ${statusPill.color}`}
+                >
                   {t(
                     orderStatusTranslationKey({
-                      status: order.status as OrderStatus,
-                      fulfillment_type: order.fulfillment_type,
+                      status: displayOrder.status as OrderStatus,
+                      fulfillment_type: displayOrder.fulfillment_type,
                     })
                   )}
                 </span>
@@ -152,22 +178,23 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
               <div className="mb-5 space-y-2 rounded-xl border border-[#1F443C]/10 bg-[#1F443C]/[0.03] px-4 py-3 text-sm">
                 <p className="text-ink-soft">
                   <span className="font-semibold text-ink">{t("adminFulfillment")}:</span>{" "}
-                  {(order.fulfillment_type ?? "delivery") === "pickup"
+                  {(displayOrder.fulfillment_type ?? "delivery") === "pickup"
                     ? t("fulfillmentPickup")
                     : t("fulfillmentDelivery")}
                 </p>
-                {(order.fulfillment_type ?? "delivery") === "delivery" &&
-                order.delivery_address ? (
+                {(displayOrder.fulfillment_type ?? "delivery") === "delivery" &&
+                displayOrder.delivery_address ? (
                   <p className="text-ink-soft">
                     <span className="font-semibold text-ink">{t("adminDeliveryAddress")}:</span>{" "}
-                    {order.delivery_address}
+                    {displayOrder.delivery_address}
                   </p>
                 ) : null}
                 <p className="text-ink-soft">
                   <span className="font-semibold text-ink">{t("adminPaymentMethod")}:</span>{" "}
-                  {(order.payment_method ?? "cash_on_delivery") === "cash_on_delivery"
+                  {(displayOrder.payment_method ?? "cash_on_delivery") ===
+                  "cash_on_delivery"
                     ? t("cashOnDelivery")
-                    : order.payment_method}
+                    : displayOrder.payment_method}
                 </p>
               </div>
 
@@ -188,7 +215,7 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1F443C]/8">
-                    {order.items.map((item: OrderItem, i: number) => (
+                    {displayOrder.items.map((item: OrderItem, i: number) => (
                       <tr key={i}>
                         <td className="px-4 py-3 text-ink">
                           <div className="flex items-center gap-3">
@@ -228,7 +255,7 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
               <div className="mt-4 flex items-center justify-between border-t border-[#1F443C]/12 pt-4">
                 <span className="font-semibold text-ink">{t("total")}</span>
                 <span className="font-display text-2xl font-bold text-primary-dark">
-                  ₪{Number(order.total_price).toFixed(2)}
+                  ₪{Number(displayOrder.total_price).toFixed(2)}
                 </span>
               </div>
             </>
@@ -236,7 +263,7 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        {order && !loading && (
+        {displayOrder && !loading && (
           <div className="shrink-0 px-6 py-4 border-t border-[#1F443C]/10">
             <button
               onClick={handleReorder}
