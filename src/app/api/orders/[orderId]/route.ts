@@ -70,28 +70,3 @@ export async function GET(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ orderId: string }> }
-) {
-  const authResult = await requireRole(req, ["admin", "super_admin"]);
-  if (!isAuthorized(authResult)) return authResult;
-
-  try {
-    const { orderId } = await params;
-
-    const { error } = await supabaseAdmin
-      .from("orders")
-      .delete()
-      .eq("id", orderId);
-
-    if (error) throw error;
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("Delete order error:", err);
-    return NextResponse.json(
-      { error: "Failed to delete order" },
-      { status: 500 }
-    );
-  }
-}

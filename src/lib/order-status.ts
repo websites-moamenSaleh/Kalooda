@@ -49,19 +49,19 @@ export function isValidStatusForFulfillment(
   return orderStatusFlow(fulfillment).includes(status);
 }
 
-/** Admin: forward-only along the fulfillment chain; no edits after completed. */
+/** Admin: forward-only along the fulfillment chain; no edits after completed or cancelled. */
 export function canAdminSetStatus(params: {
-  from: OrderStatus;
+  from: OrderStatus | "cancelled";
   to: OrderStatus;
   fulfillment: FulfillmentType;
 }): boolean {
   const { from, to, fulfillment } = params;
-  if (from === "completed") return false;
+  if (from === "completed" || (from as string) === "cancelled") return false;
   if (from === to) return true;
   if (!isValidStatusForFulfillment(to, fulfillment)) return false;
 
   const flow = orderStatusFlow(fulfillment);
-  const iFrom = flow.indexOf(from);
+  const iFrom = flow.indexOf(from as OrderStatus);
   const iTo = flow.indexOf(to);
 
   if (iFrom === -1) {
@@ -79,15 +79,15 @@ export function canTokenSetStatus(
 }
 
 export function adminSelectableStatuses(params: {
-  current: OrderStatus;
+  current: OrderStatus | "cancelled";
   fulfillment: FulfillmentType;
 }): OrderStatus[] {
   const { current, fulfillment } = params;
-  const flow = orderStatusFlow(fulfillment);
-  const i = flow.indexOf(current);
-  if (current === "completed") {
-    return ["completed"];
+  if (current === "completed" || (current as string) === "cancelled") {
+    return [current as OrderStatus];
   }
+  const flow = orderStatusFlow(fulfillment);
+  const i = flow.indexOf(current as OrderStatus);
   if (i === -1) {
     return [...flow];
   }

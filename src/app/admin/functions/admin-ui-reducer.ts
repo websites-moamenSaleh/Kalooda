@@ -1,14 +1,12 @@
 export type PendingDelete =
   | { kind: "product"; id: string }
-  | { kind: "order"; id: string }
   | { kind: "category"; id: string };
 
 export type ErrorMapsKey =
   | "availabilityErrors"
   | "categoryDeleteErrors"
   | "driverDeleteErrors"
-  | "productDeleteErrors"
-  | "orderDeleteErrors";
+  | "productDeleteErrors";
 
 export type AdminUiState = {
   pendingDelete: PendingDelete | null;
@@ -21,7 +19,6 @@ export type AdminUiState = {
   categoryDeleteErrors: Record<string, string>;
   driverDeleteErrors: Record<string, string>;
   productDeleteErrors: Record<string, string>;
-  orderDeleteErrors: Record<string, string>;
 };
 
 export const initialAdminUiState: AdminUiState = {
@@ -35,7 +32,6 @@ export const initialAdminUiState: AdminUiState = {
   categoryDeleteErrors: {},
   driverDeleteErrors: {},
   productDeleteErrors: {},
-  orderDeleteErrors: {},
 };
 
 function withoutId(
