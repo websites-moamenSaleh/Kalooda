@@ -480,7 +480,7 @@ export const translations = {
     driversLoadFailed: "تعذر تحميل السائقين.",
     customersLoadFailed: "تعذر تحميل العملاء.",
     loadMore: "تحميل المزيد",
-    customers: "العملاء",
+    customers: "زبائن",
     noCustomers: "لا يوجد عملاء بعد.",
     availabilityUpdateFailed:
       "تعذر تحديث التوفر. تم التراجع عن التغيير — يرجى المحاولة مرة أخرى.",
