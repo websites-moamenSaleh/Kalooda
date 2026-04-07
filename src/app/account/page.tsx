@@ -22,6 +22,7 @@ export default function AccountPage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [saving, setSaving] = useState(false);
   const [profileMessage, setProfileMessage] = useState<ProfileMessage>(null);
   const profileNameInputRef = useRef<HTMLInputElement>(null);
@@ -34,6 +35,7 @@ export default function AccountPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate form fields when profile loads
     setName(profile.full_name ?? "");
     setPhone(profile.phone ?? "");
+    setDeliveryAddress(profile.delivery_address ?? "");
   }, [profile]);
 
   async function handleSave(e: React.FormEvent) {
@@ -57,11 +59,13 @@ export default function AccountPage() {
 
     setSaving(true);
     const supabase = getSupabaseCustomerBrowser();
+    const trimmedAddr = deliveryAddress.trim();
     const { error } = await supabase
       .from("profiles")
       .update({
         full_name: name.trim() || null,
         phone: phone.trim() || null,
+        delivery_address: trimmedAddr ? trimmedAddr : null,
       })
       .eq("id", user.id);
     setSaving(false);
@@ -155,6 +159,22 @@ export default function AccountPage() {
                   }}
                   className="input-premium"
                   placeholder={t("phonePlaceholder")}
+                />
+              </div>
+              <div className="mt-5">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  {t("accountDeliveryAddress")}
+                </label>
+                <textarea
+                  value={deliveryAddress}
+                  onChange={(e) => {
+                    setProfileMessage(null);
+                    setDeliveryAddress(e.target.value);
+                  }}
+                  rows={3}
+                  className="input-premium min-h-[5rem] resize-y"
+                  placeholder={t("accountDeliveryAddressPlaceholder")}
+                  autoComplete="street-address"
                 />
               </div>
               <div className="mt-5">

@@ -304,6 +304,15 @@ export default function AdminDashboard() {
                   {t("customer")}
                 </th>
                 <th className="px-4 py-3 font-semibold text-admin-muted text-start">
+                  {t("adminFulfillment")}
+                </th>
+                <th className="px-4 py-3 font-semibold text-admin-muted text-start max-w-[12rem]">
+                  {t("adminDeliveryAddress")}
+                </th>
+                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
+                  {t("adminPaymentMethod")}
+                </th>
+                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
                   {t("items")}
                 </th>
                 <th className="px-4 py-3 font-semibold text-admin-muted text-start">
@@ -338,6 +347,23 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-4 py-3 text-admin-ink">
                       {order.customer_name}
+                    </td>
+                    <td className="px-4 py-3 text-admin-muted">
+                      {(order.fulfillment_type ?? "delivery") === "pickup"
+                        ? t("fulfillmentPickup")
+                        : t("fulfillmentDelivery")}
+                    </td>
+                    <td className="px-4 py-3 text-admin-muted max-w-[12rem] whitespace-pre-wrap break-words">
+                      {(order.fulfillment_type ?? "delivery") === "delivery" &&
+                      order.delivery_address
+                        ? order.delivery_address
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-admin-muted">
+                      {(order.payment_method ?? "cash_on_delivery") ===
+                      "cash_on_delivery"
+                        ? t("cashOnDelivery")
+                        : order.payment_method}
                     </td>
                     <td className="px-4 py-3 text-admin-muted">
                       {order.items
@@ -378,7 +404,7 @@ export default function AdminDashboard() {
               {orders.length === 0 && !loading && ordersFetchFailed && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={9}
                     className="px-4 py-12 text-center text-red-600"
                   >
                     {t("ordersLoadFailed")}
@@ -388,7 +414,7 @@ export default function AdminDashboard() {
               {orders.length === 0 && !loading && !ordersFetchFailed && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={9}
                     className="px-4 py-12 text-center text-admin-muted"
                   >
                     {t("noOrders")}

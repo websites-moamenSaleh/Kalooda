@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { requireRole, requireSession, isAuthorized } from "@/lib/require-role";
+import {
+  createOrderBodySchema,
+  ORDER_VALIDATION_ERROR,
+} from "@/lib/order-create-body";
 
 const ORD_PREFIX = /^ORD-(\d+)$/;
 
@@ -47,7 +51,19 @@ export async function POST(req: NextRequest) {
   const { userId } = authResult;
 
   try {
-    const body = await req.json();
+    const rawBody = await req.json();
+    const parsedBody = createOrderBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        {
+          error: "Invalid order request",
+          code: ORDER_VALIDATION_ERROR,
+          issues: parsedBody.error.flatten(),
+        },
+        { status: 400 }
+      );
+    }
+    const body = parsedBody.data;
 
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
@@ -69,7 +85,9 @@ export async function POST(req: NextRequest) {
     const nameFromBody =
       typeof body.customer_name === "string" ? body.customer_name.trim() : "";
     const phoneFromBody =
-      typeof body.customer_phone === "string" ? body.customer_phone.trim() : "";
+      typeof body.customer_phone === "string"
+        ? body.customer_phone.trim()
+        : "";
 
     const customerName =
       nameFromBody || profile?.full_name?.trim() || "";
@@ -113,6 +131,9 @@ export async function POST(req: NextRequest) {
           items: body.items,
           total_price: body.total_price,
           status: "pending",
+          fulfillment_type: body.fulfillment_type,
+          delivery_address: body.delivery_address,
+          payment_method: body.payment_method,
         })
         .select()
         .single();
@@ -121,6 +142,17 @@ export async function POST(req: NextRequest) {
       lastError = error;
 
       if (!error) {
+        if (
+          body.save_address_to_profile &&
+          body.fulfillment_type === "delivery" &&
+          body.delivery_address
+        ) {
+          const { error: addrErr } = await supabaseAdmin
+            .from("profiles")
+            .update({ delivery_address: body.delivery_address })
+            .eq("id", userId);
+          if (addrErr) console.error("Profile delivery_address on order:", addrErr);
+        }
         return NextResponse.json(row, { status: 201 });
       }
 
@@ -129,19 +161,46 @@ export async function POST(req: NextRequest) {
       }
 
       const blob = `${error.message} ${error.details ?? ""} ${error.hint ?? ""}`;
-      const missingUserId =
+      const schemaRelated =
         error.code === "42703" ||
         (/user_id/i.test(blob) && /orders/i.test(blob)) ||
         /schema cache/i.test(blob);
-      if (missingUserId) {
-        return NextResponse.json(
-          {
-            error:
-              "Database is missing column orders.user_id. Apply Supabase migrations (see supabase/migrations/20260401000000_orders_user_id.sql), then retry.",
-            code: "SCHEMA_OUTDATED",
-          },
-          { status: 503 }
-        );
+      if (schemaRelated) {
+        if (/user_id/i.test(blob) && /orders/i.test(blob)) {
+          return NextResponse.json(
+            {
+              error:
+                "Database is missing column orders.user_id. Apply Supabase migrations (see supabase/migrations/20260401000000_orders_user_id.sql), then retry.",
+              code: "SCHEMA_OUTDATED",
+            },
+            { status: 503 }
+          );
+        }
+        if (
+          /fulfillment_type/i.test(blob) ||
+          (/delivery_address/i.test(blob) && /orders/i.test(blob)) ||
+          (/payment_method/i.test(blob) && /orders/i.test(blob))
+        ) {
+          return NextResponse.json(
+            {
+              error:
+                "Database is missing checkout columns on orders. Apply Supabase migrations (see supabase/migrations/20260408000000_orders_checkout_fulfillment.sql), then retry.",
+              code: "SCHEMA_OUTDATED",
+            },
+            { status: 503 }
+          );
+        }
+        // Match previous behavior for ambiguous undefined-column / cache errors
+        if (error.code === "42703" || /schema cache/i.test(blob)) {
+          return NextResponse.json(
+            {
+              error:
+                "Database is missing column orders.user_id. Apply Supabase migrations (see supabase/migrations/20260401000000_orders_user_id.sql), then retry.",
+              code: "SCHEMA_OUTDATED",
+            },
+            { status: 503 }
+          );
+        }
       }
       throw error;
     }

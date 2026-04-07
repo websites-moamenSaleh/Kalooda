@@ -7,10 +7,11 @@ import { useAuth } from "@/contexts/auth-context";
 import { Header } from "@/components/header";
 import { CartDrawer } from "@/components/cart-drawer";
 import Image from "next/image";
-import { CheckCircle, ArrowLeft, Loader2, ClipboardList } from "lucide-react";
+import { CheckCircle, ArrowLeft, Loader2, ClipboardList, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
 import { InlineBanner } from "@/components/inline-banner";
+import { ORDER_VALIDATION_ERROR } from "@/lib/order-validation-constants";
 
 type CheckoutBanner =
   | null
@@ -24,11 +25,17 @@ export default function CheckoutPage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [fulfillmentType, setFulfillmentType] = useState<"delivery" | "pickup">(
+    "delivery"
+  );
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [saveAddressToProfile, setSaveAddressToProfile] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [checkoutBanner, setCheckoutBanner] = useState<CheckoutBanner>(null);
   const checkoutNameInputRef = useRef<HTMLInputElement>(null);
   const checkoutPhoneInputRef = useRef<HTMLInputElement>(null);
+  const deliveryAddressRef = useRef<HTMLTextAreaElement>(null);
 
   useCartDrawerEvent(setCartOpen);
 
@@ -39,6 +46,11 @@ export default function CheckoutPage() {
     if (profile?.full_name) setName(profile.full_name);
     if (profile?.phone) setPhone(profile.phone);
   }, [profile?.full_name, profile?.phone]);
+
+  useEffect(() => {
+    const saved = profile?.delivery_address?.trim();
+    if (saved) setDeliveryAddress(saved);
+  }, [profile?.delivery_address]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -61,6 +73,15 @@ export default function CheckoutPage() {
       }
     }
 
+    if (fulfillmentType === "delivery" && !deliveryAddress.trim()) {
+      setCheckoutBanner({
+        type: "error",
+        message: t("addressRequiredCheckout"),
+      });
+      requestAnimationFrame(() => deliveryAddressRef.current?.focus());
+      return;
+    }
+
     setSubmitting(true);
 
     const customerName = profileComplete
@@ -77,6 +98,12 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           customer_name: customerName,
           customer_phone: customerPhone,
+          fulfillment_type: fulfillmentType,
+          delivery_address:
+            fulfillmentType === "delivery" ? deliveryAddress.trim() : null,
+          payment_method: "cash_on_delivery",
+          save_address_to_profile:
+            fulfillmentType === "delivery" && saveAddressToProfile,
           items: items.map((i) => ({
             product_id: i.product.id,
             product_name: i.product.name,
@@ -94,6 +121,10 @@ export default function CheckoutPage() {
       }
       if (res.status === 400 && data?.code === "PROFILE_INCOMPLETE") {
         setCheckoutBanner({ type: "error", message: t("profileIncompleteCheckout") });
+        return;
+      }
+      if (res.status === 400 && data?.code === ORDER_VALIDATION_ERROR) {
+        setCheckoutBanner({ type: "error", message: t("orderInvalidRequest") });
         return;
       }
       if (res.status === 503 && data?.code === "SCHEMA_OUTDATED") {
@@ -237,9 +268,113 @@ export default function CheckoutPage() {
                   <p>{checkoutBanner.message}</p>
                 </InlineBanner>
               ) : null}
+
+              <fieldset className="space-y-3">
+                <legend className="mb-1.5 block w-full text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  {t("fulfillmentSection")}
+                </legend>
+                <div
+                  className="flex gap-2"
+                  role="radiogroup"
+                  aria-label={t("fulfillmentSection")}
+                >
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={fulfillmentType === "delivery"}
+                    onClick={() => {
+                      setCheckoutBanner(null);
+                      setFulfillmentType("delivery");
+                    }}
+                    className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
+                      fulfillmentType === "delivery"
+                        ? "border-primary bg-primary/10 text-primary-dark"
+                        : "border-[#1F443C]/12 bg-white text-ink-soft hover:border-[#1F443C]/25"
+                    }`}
+                  >
+                    {t("fulfillmentDelivery")}
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={fulfillmentType === "pickup"}
+                    onClick={() => {
+                      setCheckoutBanner(null);
+                      setFulfillmentType("pickup");
+                    }}
+                    className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
+                      fulfillmentType === "pickup"
+                        ? "border-primary bg-primary/10 text-primary-dark"
+                        : "border-[#1F443C]/12 bg-white text-ink-soft hover:border-[#1F443C]/25"
+                    }`}
+                  >
+                    {t("fulfillmentPickup")}
+                  </button>
+                </div>
+              </fieldset>
+
+              {fulfillmentType === "pickup" ? (
+                <div className="surface-panel flex gap-3 rounded-xl border border-[#1F443C]/10 p-4 text-sm text-ink-soft">
+                  <MapPin className="h-5 w-5 shrink-0 text-primary-dark" aria-hidden />
+                  <div>
+                    <p className="font-semibold text-ink">{t("pickupLocationTitle")}</p>
+                    <p className="mt-1 leading-relaxed">{t("pickupLocationAddress")}</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label
+                      htmlFor="checkout-delivery-address"
+                      className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft"
+                    >
+                      {t("deliveryAddressLabel")}
+                    </label>
+                    <textarea
+                      id="checkout-delivery-address"
+                      ref={deliveryAddressRef}
+                      value={deliveryAddress}
+                      onChange={(e) => {
+                        setCheckoutBanner(null);
+                        setDeliveryAddress(e.target.value);
+                      }}
+                      rows={3}
+                      className="input-premium min-h-[5rem] resize-y"
+                      placeholder={t("deliveryAddressPlaceholder")}
+                      autoComplete="street-address"
+                    />
+                  </div>
+                  <label className="flex cursor-pointer items-start gap-3 text-sm text-ink">
+                    <input
+                      type="checkbox"
+                      checked={saveAddressToProfile}
+                      onChange={(e) => setSaveAddressToProfile(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-[#1F443C]/25 text-primary focus:ring-primary"
+                    />
+                    <span>{t("saveAddressToProfile")}</span>
+                  </label>
+                </>
+              )}
+
+              <fieldset className="space-y-2">
+                <legend className="mb-1.5 block w-full text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  {t("paymentSection")}
+                </legend>
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#1F443C]/12 bg-white px-4 py-3 text-sm font-medium text-ink">
+                  <input
+                    type="radio"
+                    name="payment_method"
+                    checked
+                    readOnly
+                    className="h-4 w-4 text-primary"
+                  />
+                  {t("cashOnDelivery")}
+                </label>
+              </fieldset>
+
               {profileComplete ? (
                 <div className="surface-panel rounded-xl border border-[#1F443C]/10 p-5 text-sm">
-                  <p className="font-semibold text-ink">{t("deliveryContact")}</p>
+                  <p className="font-semibold text-ink">{t("orderContact")}</p>
                   <p className="mt-2 text-ink-soft">
                     {profile!.full_name}
                     <br />

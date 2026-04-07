@@ -149,6 +149,28 @@ export function OrderDetailModal({ orderId, onClose }: Props) {
                 </span>
               </div>
 
+              <div className="mb-5 space-y-2 rounded-xl border border-[#1F443C]/10 bg-[#1F443C]/[0.03] px-4 py-3 text-sm">
+                <p className="text-ink-soft">
+                  <span className="font-semibold text-ink">{t("adminFulfillment")}:</span>{" "}
+                  {(order.fulfillment_type ?? "delivery") === "pickup"
+                    ? t("fulfillmentPickup")
+                    : t("fulfillmentDelivery")}
+                </p>
+                {(order.fulfillment_type ?? "delivery") === "delivery" &&
+                order.delivery_address ? (
+                  <p className="text-ink-soft">
+                    <span className="font-semibold text-ink">{t("adminDeliveryAddress")}:</span>{" "}
+                    {order.delivery_address}
+                  </p>
+                ) : null}
+                <p className="text-ink-soft">
+                  <span className="font-semibold text-ink">{t("adminPaymentMethod")}:</span>{" "}
+                  {(order.payment_method ?? "cash_on_delivery") === "cash_on_delivery"
+                    ? t("cashOnDelivery")
+                    : order.payment_method}
+                </p>
+              </div>
+
               {/* Items table */}
               <div className="rounded-xl border border-[#1F443C]/10 overflow-hidden">
                 <table className="w-full text-sm">

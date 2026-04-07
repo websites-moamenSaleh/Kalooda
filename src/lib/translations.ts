@@ -74,13 +74,31 @@ export const translations = {
     placingOrder: "Placing Order...",
     orderFailed: "Failed to place order. Please try again.",
     orderSchemaOutdated:
-      "The database needs updating: run Supabase migrations (add orders.user_id). See supabase/migrations/.",
+      "The database needs updating: run Supabase migrations (orders.user_id and checkout columns). See supabase/migrations/.",
     profileIncompleteCheckout:
       "Add your name and phone in the form or in your account to place an order.",
     deliveryContact: "Delivery contact",
+    orderContact: "Contact",
     editInAccount: "Edit in account",
     checkoutProfileHint:
       "We will save these details to your profile for your next order.",
+    fulfillmentSection: "How do you want to receive your order?",
+    fulfillmentDelivery: "Delivery",
+    fulfillmentPickup: "Pickup",
+    deliveryAddressLabel: "Delivery address",
+    deliveryAddressPlaceholder:
+      "Street, building, city, and any directions for the driver",
+    addressRequiredCheckout: "Please enter a delivery address.",
+    pickupLocationTitle: "Pickup location",
+    pickupLocationAddress:
+      "Kalooda — Main store: Al-Bireh, Omar Al-Mukhtar Street. Please bring your order number. For hours, check your confirmation message or call us.",
+    saveAddressToProfile: "Save this address to my profile",
+    paymentSection: "Payment method",
+    cashOnDelivery: "Cash on delivery",
+    orderInvalidRequest: "Check your order details and try again.",
+    adminFulfillment: "Fulfillment",
+    adminDeliveryAddress: "Address",
+    adminPaymentMethod: "Payment",
 
     // Account
     account: "Account",
@@ -92,6 +110,9 @@ export const translations = {
     profileValidationNamePhoneRequired:
       "Please enter your full name and phone number to save your profile.",
     profileSaveFailedToast: "Could not save profile.",
+    accountDeliveryAddress: "Address",
+    accountDeliveryAddressPlaceholder:
+      "Street, building, city (optional — used to prefill checkout)",
     orderHistoryTitle: "Order history",
     orderHistoryEmpty: "You have no orders yet.",
     viewOrderHistory: "View order history",
@@ -353,13 +374,31 @@ export const translations = {
     placingOrder: "جارٍ تأكيد الطلب...",
     orderFailed: "فشل تقديم الطلب. يرجى المحاولة مرة أخرى.",
     orderSchemaOutdated:
-      "قاعدة البيانات تحتاج تحديثاً: شغّل ترحيلات Supabase (إضافة orders.user_id). راجع مجلد supabase/migrations/.",
+      "قاعدة البيانات تحتاج تحديثاً: شغّل ترحيلات Supabase (orders.user_id وأعمدة إتمام الطلب). راجع مجلد supabase/migrations/.",
     profileIncompleteCheckout:
       "أضف اسمك ورقم هاتفك في النموذج أو في حسابك لإتمام الطلب.",
     deliveryContact: "بيانات التوصيل",
+    orderContact: "التواصل",
     editInAccount: "تعديل من الحساب",
     checkoutProfileHint:
       "سنحفظ هذه البيانات في ملفك للطلبات القادمة.",
+    fulfillmentSection: "كيف تريد استلام طلبك؟",
+    fulfillmentDelivery: "توصيل",
+    fulfillmentPickup: "استلام من المتجر",
+    deliveryAddressLabel: "عنوان التوصيل",
+    deliveryAddressPlaceholder:
+      "الشارع، المبنى، المدينة، وأي إرشادات للسائق",
+    addressRequiredCheckout: "يرجى إدخال عنوان التوصيل.",
+    pickupLocationTitle: "مكان الاستلام",
+    pickupLocationAddress:
+      "كالودا — المتجر الرئيسي: البيرة، شارع عمر المختار. يرجى إحضار رقم الطلب. لساعات العمل راجع رسالة التأكيد أو اتصل بنا.",
+    saveAddressToProfile: "احفظ هذا العنوان في ملفي",
+    paymentSection: "طريقة الدفع",
+    cashOnDelivery: "الدفع عند الاستلام (نقداً)",
+    orderInvalidRequest: "تحقق من تفاصيل الطلب وحاول مرة أخرى.",
+    adminFulfillment: "طريقة الاستلام",
+    adminDeliveryAddress: "العنوان",
+    adminPaymentMethod: "الدفع",
 
     // Account
     account: "الحساب",
@@ -371,6 +410,9 @@ export const translations = {
     profileValidationNamePhoneRequired:
       "يرجى إدخال اسمك الكامل ورقم هاتفك لحفظ الملف الشخصي.",
     profileSaveFailedToast: "تعذر حفظ الملف الشخصي.",
+    accountDeliveryAddress: "العنوان",
+    accountDeliveryAddressPlaceholder:
+      "الشارع، المبنى، المدينة (اختياري — لملء إتمام الطلب تلقائياً)",
     orderHistoryTitle: "سجل الطلبات",
     orderHistoryEmpty: "لا توجد طلبات بعد.",
     viewOrderHistory: "عرض سجل الطلبات",

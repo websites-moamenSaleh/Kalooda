@@ -34,6 +34,10 @@ export interface Order {
   status: "pending" | "preparing" | "out_for_delivery";
   created_at: string;
   delivery_token: string;
+  /** Present after checkout fulfillment migration; treat missing as delivery. */
+  fulfillment_type?: "delivery" | "pickup";
+  delivery_address?: string | null;
+  payment_method?: "cash_on_delivery";
 }
 
 export interface CartItemRow {

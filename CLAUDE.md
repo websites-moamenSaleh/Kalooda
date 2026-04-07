@@ -26,6 +26,7 @@ Whenever the user says "push", "push changes", "push to GitHub", or anything sim
    - If the push implements **substantive work** that **no open issue** describes, create an issue (`gh issue create`) whose title and body match what the code actually does, and link the PR in the body. Close it when the work is done (e.g. after merge) or leave it open as the canonical task for that PR—pick whichever keeps the tracker honest.
 
    Goal: the issue tracker reflects reality after every push—no silent fixes, no stale “open” for completed work, and no undocumented shipped changes.
+7. When an issue that appears in **`docs/github-issue-execution-order.md`** is **completed** (closed as done or verified shipped), **update that file** in the same change-set when practical: mark it done, adjust waves, refresh the mermaid diagram, and bump its **Last updated** date—so the local execution order stays aligned with the tracker.
 
 # MCP Servers
 
