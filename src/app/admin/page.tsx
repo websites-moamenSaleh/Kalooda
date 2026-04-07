@@ -1,20 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   RefreshCw,
   Clock,
   Truck,
   Package,
-  Users,
-  Phone,
   CheckCircle,
   Store,
+  Phone,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { getSupabaseAdminBrowser } from "@/lib/supabase-client-admin";
-import type { Order, Product, Driver } from "@/types/database";
-import type { TranslationKey } from "@/lib/translations";
+import type { Order } from "@/types/database";
+import type { Profile } from "@/types/profile";
 import {
   ORDER_STATUSES,
   type OrderStatus,
@@ -22,6 +21,10 @@ import {
   adminSelectableStatuses,
   orderStatusTranslationKey,
 } from "@/lib/order-status";
+
+const PAGE_SIZE = 10;
+
+type AdminTab = "orders" | "customers";
 
 const statusIcons: Record<string, React.ElementType> = {
   pending: Clock,
@@ -39,32 +42,31 @@ const statusColors: Record<string, { color: string; bg: string }> = {
   completed: { color: "text-emerald-800", bg: "bg-emerald-100" },
 };
 
-function adminStatLabelKey(status: OrderStatus): TranslationKey {
-  if (status === "completed") return "adminOrdersFilterCompleted";
-  return orderStatusTranslationKey({
-    status,
-    fulfillment_type: "delivery",
-  });
-}
-
-type OrderListFilter = "all" | "active" | "completed";
+const DEFAULT_ACTIVE_STATUSES = new Set<OrderStatus>(
+  ORDER_STATUSES.filter((s) => s !== "completed")
+);
 
 export default function AdminDashboard() {
   const { t, locale } = useLanguage();
+
+  const [activeTab, setActiveTab] = useState<AdminTab>("orders");
+
+  // --- Orders ---
   const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isRetryingLoad, setIsRetryingLoad] = useState(false);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersFetchFailed, setOrdersFetchFailed] = useState(false);
-  const [productsFetchFailed, setProductsFetchFailed] = useState(false);
-  const [driversFetchFailed, setDriversFetchFailed] = useState(false);
-  const [availabilityErrors, setAvailabilityErrors] = useState<
-    Record<string, string>
-  >({});
   const [flashId, setFlashId] = useState<string | null>(null);
-  const [orderListFilter, setOrderListFilter] =
-    useState<OrderListFilter>("all");
+  const [activeStatuses, setActiveStatuses] = useState<Set<OrderStatus>>(
+    new Set(DEFAULT_ACTIVE_STATUSES)
+  );
+  const [ordersVisible, setOrdersVisible] = useState(PAGE_SIZE);
+
+  // --- Customers ---
+  const [customers, setCustomers] = useState<Profile[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customersFetchFailed, setCustomersFetchFailed] = useState(false);
+  const customersLoaded = useRef(false);
+  const [customersVisible, setCustomersVisible] = useState(PAGE_SIZE);
 
   const loadOrders = useCallback(async () => {
     try {
@@ -81,61 +83,37 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  const loadProducts = useCallback(async () => {
+  const loadCustomers = useCallback(async () => {
+    if (customersLoaded.current) return;
+    setCustomersLoading(true);
+    setCustomersFetchFailed(false);
     try {
-      const res = await fetch("/api/products");
+      const res = await fetch("/api/admin/customers");
       const data = await res.json().catch(() => null);
       if (!res.ok || !Array.isArray(data)) {
-        setProductsFetchFailed(true);
+        setCustomersFetchFailed(true);
         return;
       }
-      setProducts(data);
-      setProductsFetchFailed(false);
+      setCustomers(data);
+      customersLoaded.current = true;
     } catch {
-      setProductsFetchFailed(true);
+      setCustomersFetchFailed(true);
+    } finally {
+      setCustomersLoading(false);
     }
   }, []);
 
-  const loadDrivers = useCallback(async () => {
-    try {
-      const res = await fetch("/api/drivers");
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !Array.isArray(data)) {
-        setDriversFetchFailed(true);
-        return;
-      }
-      setDrivers(data);
-      setDriversFetchFailed(false);
-    } catch {
-      setDriversFetchFailed(true);
-    }
-  }, []);
-
-  const runAllFetches = useCallback(async () => {
-    await Promise.all([loadOrders(), loadProducts(), loadDrivers()]);
-  }, [loadOrders, loadProducts, loadDrivers]);
-
-  const handleHeaderRefresh = useCallback(async () => {
-    setLoading(true);
-    await runAllFetches();
-    setLoading(false);
-  }, [runAllFetches]);
-
-  const handleRetryBanner = useCallback(async () => {
-    setIsRetryingLoad(true);
-    setOrdersFetchFailed(false);
-    setProductsFetchFailed(false);
-    setDriversFetchFailed(false);
-    await runAllFetches();
-    setIsRetryingLoad(false);
-  }, [runAllFetches]);
+  function handleTabChange(tab: AdminTab) {
+    setActiveTab(tab);
+    if (tab === "customers") void loadCustomers();
+  }
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      setLoading(true);
-      await runAllFetches();
-      if (!cancelled) setLoading(false);
+      setOrdersLoading(true);
+      await loadOrders();
+      if (!cancelled) setOrdersLoading(false);
     })();
 
     const supabase = getSupabaseAdminBrowser();
@@ -166,7 +144,7 @@ export default function AdminDashboard() {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [runAllFetches]);
+  }, [loadOrders]);
 
   async function updateStatus(orderId: string, newStatus: string) {
     try {
@@ -185,457 +163,396 @@ export default function AdminDashboard() {
       );
       setFlashId(orderId);
       setTimeout(() => setFlashId(null), 3000);
-    } catch (err) {
-      console.error("Failed to update status:", err);
+    } catch {
       await loadOrders();
     }
   }
 
-  const filteredOrders = useMemo(() => {
-    if (orderListFilter === "all") return orders;
-    if (orderListFilter === "completed") {
-      return orders.filter((o) => o.status === "completed");
-    }
-    return orders.filter((o) => o.status !== "completed");
-  }, [orders, orderListFilter]);
-
-  async function toggleAvailability(product: Product) {
-    const next = !product.unavailable_today;
-    const msg = t("availabilityUpdateFailed");
-
-    setAvailabilityErrors((prev) => {
-      const next = { ...prev };
-      delete next[product.id];
+  function toggleStatus(status: OrderStatus) {
+    setActiveStatuses((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) {
+        next.delete(status);
+      } else {
+        next.add(status);
+      }
       return next;
     });
-
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === product.id ? { ...p, unavailable_today: next } : p
-      )
-    );
-
-    try {
-      const res = await fetch(`/api/products/${product.id}/availability`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ unavailable_today: next }),
-      });
-      if (!res.ok) throw new Error("availability failed");
-      setAvailabilityErrors((prev) => {
-        const next = { ...prev };
-        delete next[product.id];
-        return next;
-      });
-    } catch {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === product.id ? { ...p, unavailable_today: !next } : p
-        )
-      );
-      setAvailabilityErrors((prev) => ({ ...prev, [product.id]: msg }));
-    }
   }
 
-  const showLoadBanner =
-    ordersFetchFailed ||
-    productsFetchFailed ||
-    driversFetchFailed ||
-    isRetryingLoad;
+  const filteredOrders = orders.filter((o) =>
+    activeStatuses.has(o.status as OrderStatus)
+  );
+  const visibleOrders = filteredOrders.slice(0, ordersVisible);
+  const visibleCustomers = customers.slice(0, customersVisible);
 
   return (
     <>
-      {/* Refresh button */}
+      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-bold text-admin-ink">
           {t("adminDashboard")}
         </h1>
-        <button
-          type="button"
-          onClick={() => void handleHeaderRefresh()}
-          disabled={loading}
-          className="rounded-lg border border-admin-border bg-admin-panel p-2 text-admin-muted transition-colors hover:bg-[rgba(31, 68, 60,0.05)] disabled:opacity-50"
-        >
-          <RefreshCw
-            className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-          />
-        </button>
+        {activeTab === "orders" && (
+          <button
+            type="button"
+            onClick={() => void loadOrders()}
+            disabled={ordersLoading}
+            className="rounded-lg border border-admin-border bg-admin-panel p-2 text-admin-muted transition-colors hover:bg-[rgba(31,68,60,0.05)] disabled:opacity-50"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${ordersLoading ? "animate-spin" : ""}`}
+            />
+          </button>
+        )}
       </div>
 
-      {showLoadBanner ? (
-        <div
-          className="mb-6 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between"
-          role="alert"
-        >
-          {isRetryingLoad ? (
-            <div className="flex items-center gap-2 font-medium">
-              <RefreshCw className="h-4 w-4 shrink-0 animate-spin" />
-              {t("retryingLoad")}
-            </div>
-          ) : (
-            <>
-              <p className="font-medium">{t("adminDashboardLoadFailed")}</p>
+      {/* Tab nav */}
+      <div className="mb-6 flex w-fit gap-1 rounded-xl border border-admin-border bg-admin-panel p-1">
+        {(["orders", "customers"] as AdminTab[]).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => handleTabChange(tab)}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+              activeTab === tab
+                ? "bg-admin-ink text-white"
+                : "text-admin-muted hover:bg-[rgba(31,68,60,0.05)] hover:text-admin-ink"
+            }`}
+          >
+            {tab === "orders" ? t("orders") : t("customers")}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Orders tab ── */}
+      {activeTab === "orders" && (
+        <div>
+          {/* Per-status filter pills */}
+          <div className="mb-4 flex flex-wrap gap-2">
+            {ORDER_STATUSES.map((status) => {
+              const Icon = statusIcons[status];
+              const colors = statusColors[status];
+              const isActive = activeStatuses.has(status);
+              const tKey = orderStatusTranslationKey({
+                status,
+                fulfillment_type: "delivery",
+              });
+              const count = orders.filter((o) => o.status === status).length;
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => toggleStatus(status)}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    isActive
+                      ? `${colors.bg} ${colors.color} border-transparent`
+                      : "border-admin-border bg-admin-panel text-admin-muted hover:bg-[rgba(31,68,60,0.05)]"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {t(tKey)}
+                  <span
+                    className={`ms-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                      isActive ? "bg-white/40" : "bg-[rgba(31,68,60,0.06)]"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Error banner */}
+          {ordersFetchFailed && (
+            <div className="mb-4 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between">
+              <p className="font-medium">{t("ordersLoadFailed")}</p>
               <button
                 type="button"
-                onClick={() => void handleRetryBanner()}
+                onClick={() => void loadOrders()}
                 className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-100"
               >
                 {t("retryLoad")}
               </button>
-            </>
-          )}
-        </div>
-      ) : null}
-
-      {/* Stats */}
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {ORDER_STATUSES.map((key) => {
-          const count = orders.filter((o) => o.status === key).length;
-          const Icon = statusIcons[key];
-          const colors = statusColors[key];
-          const statKey = adminStatLabelKey(key);
-          return (
-            <div
-              key={key}
-              className="rounded-xl border border-admin-border bg-admin-panel p-5 shadow-sm"
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg border border-admin-border ${colors.bg}`}
-                >
-                  <Icon className={`h-4 w-4 ${colors.color}`} />
-                </div>
-                <span className="text-sm font-semibold text-admin-muted">
-                  {t(statKey)}
-                </span>
-              </div>
-              <p className="mt-3 font-display text-3xl font-bold text-admin-ink">
-                {count}
-              </p>
             </div>
-          );
-        })}
-      </div>
+          )}
 
-      {/* Orders table */}
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <p className="text-sm font-semibold text-admin-muted">
-          {t("adminOrdersFilterLabel")}
-        </p>
-        <div
-          className="flex flex-wrap gap-2"
-          role="group"
-          aria-label={t("adminOrdersFilterLabel")}
-        >
-          {(["all", "active", "completed"] as OrderListFilter[]).map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setOrderListFilter(f)}
-              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                orderListFilter === f
-                  ? "border-admin-ink bg-admin-ink text-white"
-                  : "border-admin-border bg-admin-panel text-admin-ink hover:bg-[rgba(31,68,60,0.05)]"
-              }`}
-            >
-              {f === "all"
-                ? t("adminOrdersFilterAll")
-                : f === "active"
-                  ? t("adminOrdersFilterActive")
-                  : t("adminOrdersFilterCompleted")}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-panel shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="admin-table-head text-start">
-                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
-                  {t("order")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
-                  {t("customer")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
-                  {t("adminFulfillment")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-admin-muted text-start max-w-[12rem]">
-                  {t("adminDeliveryAddress")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
-                  {t("adminPaymentMethod")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
-                  {t("items")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
-                  {t("total")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
-                  {t("status")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-admin-muted text-start">
-                  {t("actions")}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-admin-border">
-              {filteredOrders.map((order) => {
-                const fulfillment: FulfillmentType =
-                  (order.fulfillment_type ?? "delivery") === "pickup"
-                    ? "pickup"
-                    : "delivery";
-                const colors =
-                  statusColors[order.status] ?? statusColors.pending;
-                const Icon = statusIcons[order.status] ?? Clock;
-                const tKey = orderStatusTranslationKey({
-                  status: order.status as OrderStatus,
-                  fulfillment_type: order.fulfillment_type,
-                });
-                const selectable = adminSelectableStatuses({
-                  current: order.status as OrderStatus,
-                  fulfillment: fulfillment,
-                });
-                return (
-                  <tr
-                    key={order.id}
-                    className={`transition-colors ${
-                      flashId === order.id
-                        ? "pulse-green bg-emerald-50"
-                        : ""
-                    }`}
-                  >
-                    <td className="px-4 py-3 font-semibold text-admin-ink">
-                      {order.display_id}
-                    </td>
-                    <td className="px-4 py-3 text-admin-ink">
-                      {order.customer_name}
-                    </td>
-                    <td className="px-4 py-3 text-admin-muted">
-                      {(order.fulfillment_type ?? "delivery") === "pickup"
-                        ? t("fulfillmentPickup")
-                        : t("fulfillmentDelivery")}
-                    </td>
-                    <td className="px-4 py-3 text-admin-muted max-w-[12rem] whitespace-pre-wrap break-words">
-                      {(order.fulfillment_type ?? "delivery") === "delivery" &&
-                      order.delivery_address
-                        ? order.delivery_address
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-admin-muted">
-                      {(order.payment_method ?? "cash_on_delivery") ===
-                      "cash_on_delivery"
-                        ? t("cashOnDelivery")
-                        : order.payment_method}
-                    </td>
-                    <td className="px-4 py-3 text-admin-muted">
-                      {order.items
-                        .map(
-                          (i) => `${locale === "ar" && i.product_name_ar ? i.product_name_ar : i.product_name} (x${i.quantity})`
-                        )
-                        .join(", ")}
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-admin-ink">
-                      ₪{order.total_price.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${colors.bg} ${colors.color}`}
-                      >
-                        <Icon className="h-3 w-3" />
-                        {t(tKey)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <select
-                        value={order.status}
-                        disabled={order.status === "completed"}
-                        onChange={(e) =>
-                          void updateStatus(order.id, e.target.value)
-                        }
-                        className="admin-input max-w-[13rem] px-2 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-70"
-                      >
-                        {selectable.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {t(
-                              orderStatusTranslationKey({
-                                status: opt,
-                                fulfillment_type: order.fulfillment_type,
-                              })
-                            )}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
+          {/* Orders table */}
+          <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-panel shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="admin-table-head text-start">
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("order")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("customer")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("adminFulfillment")}
+                    </th>
+                    <th className="max-w-[12rem] px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("adminDeliveryAddress")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("adminPaymentMethod")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("items")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("total")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("status")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("actions")}
+                    </th>
                   </tr>
-                );
-              })}
-              {orders.length === 0 && !loading && ordersFetchFailed && (
-                <tr>
-                  <td
-                    colSpan={9}
-                    className="px-4 py-12 text-center text-red-600"
-                  >
-                    {t("ordersLoadFailed")}
-                  </td>
-                </tr>
-              )}
-              {orders.length === 0 && !loading && !ordersFetchFailed && (
-                <tr>
-                  <td
-                    colSpan={9}
-                    className="px-4 py-12 text-center text-admin-muted"
-                  >
-                    {t("noOrders")}
-                  </td>
-                </tr>
-              )}
-              {orders.length > 0 &&
-                filteredOrders.length === 0 &&
-                !loading &&
-                !ordersFetchFailed && (
-                  <tr>
-                    <td
-                      colSpan={9}
-                      className="px-4 py-12 text-center text-admin-muted"
-                    >
-                      {orderListFilter === "completed"
-                        ? t("adminNoCompletedOrders")
-                        : t("adminNoActiveOrders")}
-                    </td>
-                  </tr>
-                )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Product availability toggles */}
-      <div className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold text-admin-ink">
-          {t("productAvailability")}
-        </h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className={`flex flex-col gap-2 rounded-xl border p-4 shadow-sm transition-colors ${
-                product.unavailable_today
-                  ? "border-red-200 bg-red-50/80"
-                  : "border-admin-border bg-admin-panel"
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-admin-ink">
-                    {locale === "ar" && product.name_ar ? product.name_ar : product.name}
-                  </p>
-                  <p className="text-xs text-admin-muted">
-                    ₪{product.price.toFixed(2)}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void toggleAvailability(product)}
-                  className={`ms-1 shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    product.unavailable_today
-                      ? "bg-red-100 text-red-700 hover:bg-red-200"
-                      : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                  }`}
-                >
-                  {product.unavailable_today
-                    ? t("unavailableToday")
-                    : t("available")}
-                </button>
-              </div>
-              {availabilityErrors[product.id] ? (
-                <p className="text-xs font-medium text-red-600">
-                  {availabilityErrors[product.id]}
-                </p>
-              ) : null}
+                </thead>
+                <tbody className="divide-y divide-admin-border">
+                  {visibleOrders.map((order) => {
+                    const fulfillment: FulfillmentType =
+                      (order.fulfillment_type ?? "delivery") === "pickup"
+                        ? "pickup"
+                        : "delivery";
+                    const colors =
+                      statusColors[order.status] ?? statusColors.pending;
+                    const Icon = statusIcons[order.status] ?? Clock;
+                    const tKey = orderStatusTranslationKey({
+                      status: order.status as OrderStatus,
+                      fulfillment_type: order.fulfillment_type,
+                    });
+                    const selectable = adminSelectableStatuses({
+                      current: order.status as OrderStatus,
+                      fulfillment,
+                    });
+                    return (
+                      <tr
+                        key={order.id}
+                        className={`transition-colors ${
+                          flashId === order.id ? "pulse-green bg-emerald-50" : ""
+                        }`}
+                      >
+                        <td className="px-4 py-3 font-semibold text-admin-ink">
+                          {order.display_id}
+                        </td>
+                        <td className="px-4 py-3 text-admin-ink">
+                          {order.customer_name}
+                        </td>
+                        <td className="px-4 py-3 text-admin-muted">
+                          {(order.fulfillment_type ?? "delivery") === "pickup"
+                            ? t("fulfillmentPickup")
+                            : t("fulfillmentDelivery")}
+                        </td>
+                        <td className="max-w-[12rem] whitespace-pre-wrap break-words px-4 py-3 text-admin-muted">
+                          {(order.fulfillment_type ?? "delivery") ===
+                            "delivery" && order.delivery_address
+                            ? order.delivery_address
+                            : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-admin-muted">
+                          {(order.payment_method ?? "cash_on_delivery") ===
+                          "cash_on_delivery"
+                            ? t("cashOnDelivery")
+                            : order.payment_method}
+                        </td>
+                        <td className="px-4 py-3 text-admin-muted">
+                          {order.items
+                            .map(
+                              (i) =>
+                                `${locale === "ar" && i.product_name_ar ? i.product_name_ar : i.product_name} (x${i.quantity})`
+                            )
+                            .join(", ")}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-admin-ink">
+                          ₪{order.total_price.toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${colors.bg} ${colors.color}`}
+                          >
+                            <Icon className="h-3 w-3" />
+                            {t(tKey)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={order.status}
+                            disabled={order.status === "completed"}
+                            onChange={(e) =>
+                              void updateStatus(order.id, e.target.value)
+                            }
+                            className="admin-input max-w-[13rem] px-2 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-70"
+                          >
+                            {selectable.map((opt) => (
+                              <option key={opt} value={opt}>
+                                {t(
+                                  orderStatusTranslationKey({
+                                    status: opt,
+                                    fulfillment_type: order.fulfillment_type,
+                                  })
+                                )}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {ordersLoading && (
+                    <tr>
+                      <td
+                        colSpan={9}
+                        className="px-4 py-12 text-center text-admin-muted"
+                      >
+                        <RefreshCw className="mx-auto h-5 w-5 animate-spin opacity-50" />
+                      </td>
+                    </tr>
+                  )}
+                  {!ordersLoading &&
+                    orders.length === 0 &&
+                    !ordersFetchFailed && (
+                      <tr>
+                        <td
+                          colSpan={9}
+                          className="px-4 py-12 text-center text-admin-muted"
+                        >
+                          {t("noOrders")}
+                        </td>
+                      </tr>
+                    )}
+                  {!ordersLoading &&
+                    orders.length > 0 &&
+                    filteredOrders.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={9}
+                          className="px-4 py-12 text-center text-admin-muted"
+                        >
+                          {t("adminNoActiveOrders")}
+                        </td>
+                      </tr>
+                    )}
+                </tbody>
+              </table>
             </div>
-          ))}
-          {products.length === 0 && !loading && productsFetchFailed && (
-            <p className="col-span-full py-8 text-center text-red-600">
-              {t("productsLoadFailed")}
-            </p>
-          )}
-          {products.length === 0 && !loading && !productsFetchFailed && (
-            <p className="col-span-full py-8 text-center text-admin-muted">
-              {t("noProductsYet")}
-            </p>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* Read-only drivers list */}
-      <div className="mt-8">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-admin-border bg-admin-panel">
-            <Users className="h-4 w-4 text-admin-muted" />
-          </div>
-          <h2 className="text-lg font-semibold text-admin-ink">
-            {t("drivers")}
-          </h2>
+          {/* Load More */}
+          {filteredOrders.length > ordersVisible && (
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setOrdersVisible((v) => v + PAGE_SIZE)}
+                className="rounded-lg border border-admin-border bg-admin-panel px-5 py-2 text-sm font-semibold text-admin-ink transition-colors hover:bg-[rgba(31,68,60,0.05)]"
+              >
+                {t("loadMore")}
+              </button>
+            </div>
+          )}
         </div>
-        <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-panel shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="admin-table-head text-start">
-                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
-                    {t("driverName")}
-                  </th>
-                  <th className="px-4 py-3 font-semibold text-admin-muted text-start">
-                    {t("driverPhone")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-admin-border">
-                {drivers.map((driver) => (
-                  <tr key={driver.id}>
-                    <td className="px-4 py-3 font-medium text-admin-ink">
-                      {driver.name}
-                    </td>
-                    <td className="px-4 py-3 text-admin-muted">
-                      {driver.phone ? (
-                        <span className="inline-flex items-center gap-1.5">
-                          <Phone className="h-3.5 w-3.5 text-admin-muted/60" />
-                          {driver.phone}
-                        </span>
-                      ) : (
-                        <span className="text-admin-muted/50">—</span>
-                      )}
-                    </td>
+      )}
+
+      {/* ── Customers tab ── */}
+      {activeTab === "customers" && (
+        <div>
+          {customersFetchFailed && (
+            <div className="mb-4 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between">
+              <p className="font-medium">{t("customersLoadFailed")}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  customersLoaded.current = false;
+                  void loadCustomers();
+                }}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-100"
+              >
+                {t("retryLoad")}
+              </button>
+            </div>
+          )}
+
+          <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-panel shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="admin-table-head text-start">
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("name")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("phone")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("language")}
+                    </th>
                   </tr>
-                ))}
-                {drivers.length === 0 && !loading && driversFetchFailed && (
-                  <tr>
-                    <td
-                      colSpan={2}
-                      className="px-4 py-12 text-center text-red-600"
-                    >
-                      {t("driversLoadFailed")}
-                    </td>
-                  </tr>
-                )}
-                {drivers.length === 0 && !loading && !driversFetchFailed && (
-                  <tr>
-                    <td
-                      colSpan={2}
-                      className="px-4 py-12 text-center text-admin-muted"
-                    >
-                      {t("noDrivers")}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-admin-border">
+                  {visibleCustomers.map((c) => (
+                    <tr key={c.id}>
+                      <td className="px-4 py-3 font-medium text-admin-ink">
+                        {c.full_name || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-admin-muted">
+                        {c.phone ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Phone className="h-3.5 w-3.5 text-admin-muted/60" />
+                            {c.phone}
+                          </span>
+                        ) : (
+                          <span className="text-admin-muted/50">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-admin-muted">
+                        {c.preferred_language ?? "—"}
+                      </td>
+                    </tr>
+                  ))}
+                  {customersLoading && (
+                    <tr>
+                      <td
+                        colSpan={3}
+                        className="px-4 py-12 text-center text-admin-muted"
+                      >
+                        <RefreshCw className="mx-auto h-5 w-5 animate-spin opacity-50" />
+                      </td>
+                    </tr>
+                  )}
+                  {!customersLoading &&
+                    customers.length === 0 &&
+                    !customersFetchFailed && (
+                      <tr>
+                        <td
+                          colSpan={3}
+                          className="px-4 py-12 text-center text-admin-muted"
+                        >
+                          {t("noCustomers")}
+                        </td>
+                      </tr>
+                    )}
+                </tbody>
+              </table>
+            </div>
           </div>
+
+          {customers.length > customersVisible && (
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setCustomersVisible((v) => v + PAGE_SIZE)}
+                className="rounded-lg border border-admin-border bg-admin-panel px-5 py-2 text-sm font-semibold text-admin-ink transition-colors hover:bg-[rgba(31,68,60,0.05)]"
+              >
+                {t("loadMore")}
+              </button>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </>
   );
 }

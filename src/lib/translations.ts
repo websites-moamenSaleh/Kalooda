@@ -165,6 +165,10 @@ export const translations = {
     ordersLoadFailed: "Could not load orders.",
     productsLoadFailed: "Could not load products.",
     driversLoadFailed: "Could not load drivers.",
+    customersLoadFailed: "Could not load customers.",
+    loadMore: "Load more",
+    customers: "Customers",
+    noCustomers: "No customers yet.",
     availabilityUpdateFailed:
       "Could not update availability. Your change was reverted — please try again.",
     categoryDeleteFailed: "Could not remove this category. Please try again.",
@@ -474,6 +478,10 @@ export const translations = {
     ordersLoadFailed: "تعذر تحميل الطلبات.",
     productsLoadFailed: "تعذر تحميل المنتجات.",
     driversLoadFailed: "تعذر تحميل السائقين.",
+    customersLoadFailed: "تعذر تحميل العملاء.",
+    loadMore: "تحميل المزيد",
+    customers: "العملاء",
+    noCustomers: "لا يوجد عملاء بعد.",
     availabilityUpdateFailed:
       "تعذر تحديث التوفر. تم التراجع عن التغيير — يرجى المحاولة مرة أخرى.",
     categoryDeleteFailed: "تعذر إزالة هذه الفئة. حاول مرة أخرى.",
