@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { requireSession, isAuthorized } from "@/lib/require-role";
 import { mapProductRow } from "@/lib/map-product";
 import type { CartItem } from "@/types/database";
+import { applyEffectivePricing } from "@/lib/sale-pricing";
 
 export async function GET(req: NextRequest) {
   const authResult = await requireSession(req);
@@ -27,7 +28,8 @@ export async function GET(req: NextRequest) {
         .select("*")
         .in("id", productIds);
       if (pErr) throw pErr;
-      for (const p of products ?? []) {
+      const pricedProducts = await applyEffectivePricing((products ?? []) as Array<{ id: string; price: number }>);
+      for (const p of pricedProducts ?? []) {
         productById.set(String((p as { id: string }).id), p as Record<string, unknown>);
       }
     }

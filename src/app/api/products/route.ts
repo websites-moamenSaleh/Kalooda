@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { requireRole, isAuthorized } from "@/lib/require-role";
 import { broadcastStorefrontCatalog } from "@/lib/storefront-catalog-broadcast";
 import type { Product } from "@/types/database";
+import { applyEffectivePricing } from "@/lib/sale-pricing";
 
 export async function GET() {
   try {
@@ -12,7 +13,8 @@ export async function GET() {
       .order("name");
 
     if (error) throw error;
-    return NextResponse.json(data);
+    const priced = await applyEffectivePricing((data ?? []) as Product[]);
+    return NextResponse.json(priced);
   } catch (err) {
     console.error("Fetch products error:", err);
     return NextResponse.json(

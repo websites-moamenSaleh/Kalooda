@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
 import { InlineBanner } from "@/components/inline-banner";
 import { ORDER_VALIDATION_ERROR } from "@/lib/order-validation-constants";
+import { getProductEffectivePrice } from "@/lib/product-pricing";
 
 type CheckoutBanner =
   | null
@@ -110,7 +111,7 @@ export default function CheckoutPage() {
             product_name: i.product.name,
             product_name_ar: i.product.name_ar ?? null,
             quantity: i.quantity,
-            unit_price: i.product.price,
+            unit_price: getProductEffectivePrice(i.product),
           })),
           total_price: totalPrice,
         }),
@@ -272,7 +273,7 @@ export default function CheckoutPage() {
                       </span>
                     </div>
                     <span className="font-semibold text-ink shrink-0">
-                      ₪{(item.product.price * item.quantity).toFixed(2)}
+                      ₪{(getProductEffectivePrice(item.product) * item.quantity).toFixed(2)}
                     </span>
                   </li>
                 ))}

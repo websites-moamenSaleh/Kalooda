@@ -3,6 +3,8 @@ import type { Product } from "@/types/database";
 /** Normalize a Supabase `products` row (snake_case, numeric fields) to `Product`. */
 export function mapProductRow(row: Record<string, unknown>): Product {
   const price = row.price;
+  const basePriceRaw = row.base_price;
+  const effectivePriceRaw = row.effective_price;
   return {
     id: String(row.id),
     category_id: String(row.category_id ?? ""),
@@ -23,5 +25,21 @@ export function mapProductRow(row: Record<string, unknown>): Product {
     ingredients_ar:
       row.ingredients_ar != null ? String(row.ingredients_ar) : null,
     unavailable_today: Boolean(row.unavailable_today),
+    base_price:
+      basePriceRaw == null
+        ? undefined
+        : typeof basePriceRaw === "number"
+          ? basePriceRaw
+          : Number(basePriceRaw),
+    effective_price:
+      effectivePriceRaw == null
+        ? undefined
+        : typeof effectivePriceRaw === "number"
+          ? effectivePriceRaw
+          : Number(effectivePriceRaw),
+    active_sale:
+      row.active_sale && typeof row.active_sale === "object"
+        ? (row.active_sale as Product["active_sale"])
+        : null,
   };
 }

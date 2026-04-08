@@ -11,6 +11,8 @@ import {
   Package,
   Tag,
   RefreshCw,
+  Percent,
+  Search,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import type { Product, Category, Driver } from "@/types/database";
@@ -21,7 +23,25 @@ import { adminUiReducer, initialAdminUiState } from "./admin-ui-reducer";
 
 const PAGE_SIZE = 10;
 
-type FunctionsTab = "products" | "categories" | "drivers";
+type FunctionsTab = "products" | "categories" | "drivers" | "sales";
+
+type SaleDiscountType = "amount" | "percentage";
+type SaleProductMapping = {
+  product_id: string;
+  override_value: number | null;
+  override_type: SaleDiscountType | null;
+  products?: { name?: string | null; name_ar?: string | null } | null;
+};
+type SaleRecord = {
+  id: string;
+  name: string;
+  start_at: string;
+  end_at: string;
+  ended_at: string | null;
+  default_value: number;
+  default_type: SaleDiscountType;
+  sale_products: SaleProductMapping[];
+};
 
 interface ProductFormData {
   name: string;
@@ -149,6 +169,26 @@ export default function FunctionsPage() {
   const [driversVisible, setDriversVisible] = useState(PAGE_SIZE);
   const [driversLoading, setDriversLoading] = useState(false);
 
+  // --- Sales state ---
+  const [sales, setSales] = useState<SaleRecord[]>([]);
+  const [salesSearch, setSalesSearch] = useState("");
+  const [salesLoading, setSalesLoading] = useState(false);
+  const [saleModalOpen, setSaleModalOpen] = useState(false);
+  const [saleEditId, setSaleEditId] = useState<string | null>(null);
+  const [saleName, setSaleName] = useState("");
+  const [saleStartAt, setSaleStartAt] = useState("");
+  const [saleEndAt, setSaleEndAt] = useState("");
+  const [saleDefaultType, setSaleDefaultType] = useState<SaleDiscountType>("percentage");
+  const [saleDefaultValue, setSaleDefaultValue] = useState("");
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [productSearch, setProductSearch] = useState("");
+  const [productCategoryFilter, setProductCategoryFilter] = useState("");
+  const [saleOverrides, setSaleOverrides] = useState<
+    Record<string, { type: SaleDiscountType; value: string }>
+  >({});
+  const [saleFormError, setSaleFormError] = useState<string | null>(null);
+  const [saleSaving, setSaleSaving] = useState(false);
+
   const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch("/api/products");
@@ -185,10 +225,26 @@ export default function FunctionsPage() {
     }
   }, []);
 
+  const fetchSales = useCallback(async (query = "") => {
+    setSalesLoading(true);
+    try {
+      const res = await fetch(
+        query ? `/api/sales?q=${encodeURIComponent(query)}` : "/api/sales"
+      );
+      const data = await res.json();
+      if (Array.isArray(data)) setSales(data);
+    } catch (err) {
+      console.error("Failed to fetch sales:", err);
+    } finally {
+      setSalesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-  }, [fetchProducts, fetchCategories]);
+    void fetchSales();
+  }, [fetchProducts, fetchCategories, fetchSales]);
 
   function handleTabChange(tab: FunctionsTab) {
     setActiveTab(tab);
@@ -477,6 +533,122 @@ export default function FunctionsPage() {
     }
   }
 
+  // --- Sales handlers ---
+  function resetSaleForm() {
+    setSaleEditId(null);
+    setSaleName("");
+    setSaleStartAt("");
+    setSaleEndAt("");
+    setSaleDefaultType("percentage");
+    setSaleDefaultValue("");
+    setSelectedProductIds([]);
+    setSaleOverrides({});
+    setProductSearch("");
+    setProductCategoryFilter("");
+    setSaleFormError(null);
+  }
+
+  function openNewSale() {
+    resetSaleForm();
+    setSaleModalOpen(true);
+  }
+
+  function openEditSale(sale: SaleRecord) {
+    setSaleEditId(sale.id);
+    setSaleName(sale.name);
+    setSaleStartAt(toDateTimeLocalFromIso(sale.start_at));
+    setSaleEndAt(toDateTimeLocalFromIso(sale.end_at));
+    setSaleDefaultType(sale.default_type);
+    setSaleDefaultValue(String(sale.default_value));
+    const productIds = sale.sale_products?.map((mapping) => mapping.product_id) ?? [];
+    setSelectedProductIds(productIds);
+    const overrides: Record<string, { type: SaleDiscountType; value: string }> = {};
+    for (const mapping of sale.sale_products ?? []) {
+      if (mapping.override_type && mapping.override_value !== null) {
+        overrides[mapping.product_id] = {
+          type: mapping.override_type,
+          value: String(mapping.override_value),
+        };
+      }
+    }
+    setSaleOverrides(overrides);
+    setSaleFormError(null);
+    setSaleModalOpen(true);
+  }
+
+  async function handleSaveSale(e: React.FormEvent) {
+    e.preventDefault();
+    if (saleSaving) return;
+    setSaleFormError(null);
+
+    if (!saleName.trim() || !saleStartAt || !saleEndAt || !saleDefaultValue.trim()) {
+      setSaleFormError(t("saleRequiredFields"));
+      return;
+    }
+
+    if (selectedProductIds.length === 0) {
+      setSaleFormError(t("saleSelectProductRequired"));
+      return;
+    }
+
+    const payload = {
+      name: saleName.trim(),
+      start_at: new Date(saleStartAt).toISOString(),
+      end_at: new Date(saleEndAt).toISOString(),
+      default_type: saleDefaultType,
+      default_value: Number(saleDefaultValue) || 0,
+      products: selectedProductIds.map((product_id) => {
+        const override = saleOverrides[product_id];
+        return {
+          product_id,
+          override_type: override?.type ?? null,
+          override_value:
+            override?.value !== undefined && override.value !== ""
+              ? Number(override.value)
+              : null,
+        };
+      }),
+    };
+
+    setSaleSaving(true);
+    try {
+      const res = await fetch("/api/sales", {
+        method: saleEditId ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(saleEditId ? { id: saleEditId, ...payload } : payload),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSaleFormError(
+          typeof json.error === "string" ? json.error : t("saleSaveFailed")
+        );
+        return;
+      }
+      setSaleModalOpen(false);
+      resetSaleForm();
+      await fetchSales(salesSearch.trim());
+    } catch {
+      setSaleFormError(t("saleSaveFailed"));
+    } finally {
+      setSaleSaving(false);
+    }
+  }
+
+  async function endSale(sale: SaleRecord) {
+    const nowIso = new Date().toISOString();
+    try {
+      const res = await fetch("/api/sales", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: sale.id, end_at: nowIso }),
+      });
+      if (!res.ok) throw new Error();
+      await fetchSales(salesSearch.trim());
+    } catch {
+      setSaleFormError(t("saleEndFailed"));
+    }
+  }
+
   async function confirmPendingDelete() {
     const pending = adminUi.pendingDelete;
     if (!pending) return;
@@ -539,6 +711,200 @@ export default function FunctionsPage() {
         }}
         onConfirm={() => void confirmPendingDelete()}
       />
+
+      {/* Category edit modal */}
+      {saleModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl border border-admin-border bg-admin-panel p-6 shadow-lg">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-semibold text-admin-ink">
+                {saleEditId ? t("editSale") : t("createSale")}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setSaleModalOpen(false);
+                  resetSaleForm();
+                }}
+                className="rounded-lg p-1 text-admin-muted hover:bg-[rgba(31,68,60,0.06)]"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form noValidate onSubmit={handleSaveSale} className="space-y-4">
+              {saleFormError ? (
+                <InlineBanner variant="error">
+                  <p>{saleFormError}</p>
+                </InlineBanner>
+              ) : null}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label={t("saleName")} value={saleName} onChange={setSaleName} />
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-admin-muted">
+                    {t("defaultDiscountType")}
+                  </label>
+                  <select
+                    value={saleDefaultType}
+                    onChange={(e) => setSaleDefaultType(e.target.value as SaleDiscountType)}
+                    className="admin-input"
+                  >
+                    <option value="percentage">{t("discountTypePercentage")}</option>
+                    <option value="amount">{t("discountTypeAmount")}</option>
+                  </select>
+                </div>
+                <Field
+                  label={t("defaultDiscountValue")}
+                  value={saleDefaultValue}
+                  onChange={setSaleDefaultValue}
+                  type="number"
+                />
+                <Field
+                  label={t("startJerusalem")}
+                  value={saleStartAt}
+                  onChange={setSaleStartAt}
+                  type="datetime-local"
+                />
+                <Field
+                  label={t("endJerusalem")}
+                  value={saleEndAt}
+                  onChange={setSaleEndAt}
+                  type="datetime-local"
+                />
+              </div>
+
+              <div className="rounded-lg border border-admin-border p-4">
+                <p className="text-sm font-semibold text-admin-ink">{t("productsInSale")}</p>
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <input
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder={t("searchProduct")}
+                    className="admin-input"
+                  />
+                  <select
+                    value={productCategoryFilter}
+                    onChange={(e) => setProductCategoryFilter(e.target.value)}
+                    className="admin-input"
+                  >
+                    <option value="">{t("allCategories")}</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {locale === "ar" && cat.name_ar ? cat.name_ar : cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-admin-muted">
+                    {t("selectedCount")}: {selectedProductIds.length}
+                  </p>
+                </div>
+                {products.filter((product) => {
+                  const text = productSearch.trim().toLowerCase();
+                  const productName = `${product.name} ${product.name_ar ?? ""}`.toLowerCase();
+                  const categoryMatch = productCategoryFilter
+                    ? product.category_id === productCategoryFilter
+                    : true;
+                  return (!text || productName.includes(text)) && categoryMatch;
+                }).length === 0 ? (
+                  <p className="mt-3 text-xs text-admin-muted">{t("noProductsFoundForFilter")}</p>
+                ) : null}
+                <div className="mt-3 max-h-64 overflow-auto rounded-lg border border-admin-border">
+                  {products
+                    .filter((product) => {
+                      const text = productSearch.trim().toLowerCase();
+                      const productName = `${product.name} ${product.name_ar ?? ""}`.toLowerCase();
+                      const categoryMatch = productCategoryFilter
+                        ? product.category_id === productCategoryFilter
+                        : true;
+                      return (!text || productName.includes(text)) && categoryMatch;
+                    })
+                    .map((product) => {
+                      const selected = selectedProductIds.includes(product.id);
+                      const override = saleOverrides[product.id];
+                      return (
+                        <div
+                          key={product.id}
+                          className="flex flex-wrap items-center gap-2 border-b border-admin-border px-3 py-2 last:border-b-0"
+                        >
+                          <label className="flex min-w-[14rem] flex-1 items-center gap-2 text-sm text-admin-ink">
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedProductIds((prev) => [...prev, product.id]);
+                                } else {
+                                  setSelectedProductIds((prev) =>
+                                    prev.filter((id) => id !== product.id)
+                                  );
+                                }
+                              }}
+                            />
+                            <span>{locale === "ar" && product.name_ar ? product.name_ar : product.name}</span>
+                          </label>
+                          {selected ? (
+                            <>
+                              <select
+                                value={override?.type ?? saleDefaultType}
+                                onChange={(e) =>
+                                  setSaleOverrides((prev) => ({
+                                    ...prev,
+                                    [product.id]: {
+                                      type: e.target.value as SaleDiscountType,
+                                      value: prev[product.id]?.value ?? "",
+                                    },
+                                  }))
+                                }
+                                className="rounded border border-admin-border px-2 py-1 text-xs"
+                              >
+                                <option value="percentage">{t("discountTypePercentage")}</option>
+                                <option value="amount">{t("discountTypeAmount")}</option>
+                              </select>
+                              <input
+                                type="number"
+                                value={override?.value ?? ""}
+                                onChange={(e) =>
+                                  setSaleOverrides((prev) => ({
+                                    ...prev,
+                                    [product.id]: {
+                                      type: prev[product.id]?.type ?? saleDefaultType,
+                                      value: e.target.value,
+                                    },
+                                  }))
+                                }
+                                placeholder="Override"
+                                className="w-24 rounded border border-admin-border px-2 py-1 text-xs"
+                              />
+                            </>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSaleModalOpen(false);
+                    resetSaleForm();
+                  }}
+                  className="rounded-lg border border-admin-border px-4 py-2 text-sm text-admin-muted"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saleSaving}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#082018] disabled:opacity-50"
+                >
+                  {saleSaving ? t("saving") : saleEditId ? t("saveSale") : t("createSale")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
 
       {/* Category edit modal */}
       {categoryEditOpen ? (
@@ -630,7 +996,7 @@ export default function FunctionsPage() {
 
       {/* Tab nav */}
       <div className="mb-6 flex w-fit gap-1 rounded-xl border border-admin-border bg-admin-panel p-1">
-        {(["products", "categories", "drivers"] as FunctionsTab[]).map((tab) => (
+        {(["products", "categories", "sales", "drivers"] as FunctionsTab[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -645,6 +1011,8 @@ export default function FunctionsPage() {
               ? t("products")
               : tab === "categories"
                 ? t("categories")
+                : tab === "sales"
+                  ? t("sales")
                 : t("drivers")}
           </button>
         ))}
@@ -1105,6 +1473,121 @@ export default function FunctionsPage() {
       )}
 
       {/* ── Drivers tab ── */}
+      {activeTab === "sales" && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Percent className="h-4 w-4 text-primary" />
+              </div>
+              <h2 className="text-lg font-semibold text-admin-ink">{t("sales")}</h2>
+            </div>
+            <button
+              type="button"
+              onClick={openNewSale}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#082018] transition-colors hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              {t("addSale")}
+            </button>
+          </div>
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-admin-border bg-admin-panel p-3">
+            <Search className="h-4 w-4 text-admin-muted" />
+            <input
+              value={salesSearch}
+              onChange={(e) => setSalesSearch(e.target.value)}
+              placeholder={t("searchSaleByNameOrId")}
+              className="w-full bg-transparent text-sm text-admin-ink outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => void fetchSales(salesSearch.trim())}
+              className="rounded-lg border border-admin-border px-3 py-1 text-xs font-semibold text-admin-ink"
+            >
+              Search
+            </button>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-panel shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="admin-table-head text-start">
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("saleName")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("saleWindow")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("defaultDiscountValue")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-semibold text-admin-muted">
+                      {t("productsInSale")}
+                    </th>
+                    <th className="w-40 px-4 py-3 text-start font-semibold text-admin-muted">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-admin-border">
+                  {sales.map((sale) => (
+                    <tr key={sale.id}>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-admin-ink">{sale.name}</p>
+                        <p className="text-xs text-admin-muted">{sale.id}</p>
+                      </td>
+                      <td className="px-4 py-3 text-admin-muted">
+                        <p>{new Date(sale.start_at).toLocaleString("en-US", { timeZone: "Asia/Jerusalem" })}</p>
+                        <p>{new Date(sale.end_at).toLocaleString("en-US", { timeZone: "Asia/Jerusalem" })}</p>
+                      </td>
+                      <td className="px-4 py-3 text-admin-ink">
+                        {sale.default_type === "percentage"
+                          ? `${sale.default_value}%`
+                          : `₪${sale.default_value}`}
+                      </td>
+                      <td className="px-4 py-3 text-admin-muted">{sale.sale_products?.length ?? 0}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditSale(sale)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-admin-border px-2.5 py-1.5 text-xs font-medium text-admin-ink hover:bg-[rgba(31,68,60,0.06)]"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            {t("editSale")}
+                          </button>
+                          {sale.ended_at ? (
+                            <span className="rounded-full bg-[rgba(31,68,60,0.12)] px-2 py-1 text-xs font-semibold text-admin-muted">
+                              {t("ended")}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => void endSale(sale)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                            >
+                              {t("endNow")}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {!salesLoading && sales.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-12 text-center text-admin-muted">
+                        {t("noSalesFound")}
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Drivers tab ── */}
       {activeTab === "drivers" && (
         <section>
           <div className="mb-4 flex items-center gap-2">
@@ -1298,4 +1781,13 @@ function Field({
       )}
     </div>
   );
+}
+
+function toDateTimeLocalFromIso(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
 }

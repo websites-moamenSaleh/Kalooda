@@ -5,6 +5,10 @@ import {
   createOrderBodySchema,
   ORDER_VALIDATION_ERROR,
 } from "@/lib/order-create-body";
+import {
+  computeDiscountedPrice,
+  getActiveSalePricingByProductIds,
+} from "@/lib/sale-pricing";
 
 const ORD_PREFIX = /^ORD-(\d+)$/;
 
@@ -115,8 +119,44 @@ export async function POST(req: NextRequest) {
       if (updErr) console.error("Profile update on order:", updErr);
     }
 
-    let lastError: { code?: string; message: string; details?: string; hint?: string } | null =
-      null;
+    const productIds = [...new Set(body.items.map((item) => item.product_id))];
+    const { data: productRows, error: productError } = await supabaseAdmin
+      .from("products")
+      .select("id, name, name_ar, price")
+      .in("id", productIds);
+    if (productError) throw productError;
+
+    const productMap = new Map(
+      (productRows ?? []).map((row) => [String(row.id), row])
+    );
+    const saleMap = await getActiveSalePricingByProductIds(productIds);
+
+    const normalizedItems = body.items.map((item) => {
+      const product = productMap.get(item.product_id);
+      if (!product) {
+        throw Object.assign(new Error("Missing product"), {
+          code: "MISSING_PRODUCT",
+          product_id: item.product_id,
+        });
+      }
+      const basePrice = Number(product.price) || 0;
+      const sale = saleMap.get(item.product_id);
+      const unitPrice = sale
+        ? computeDiscountedPrice(basePrice, sale.discount_value, sale.discount_type)
+        : Math.round(basePrice * 100) / 100;
+      return {
+        product_id: item.product_id,
+        product_name: String(product.name ?? item.product_name),
+        product_name_ar: product.name_ar ? String(product.name_ar) : null,
+        quantity: item.quantity,
+        unit_price: unitPrice,
+      };
+    });
+    const normalizedTotal = Math.round(
+      normalizedItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0) * 100
+    ) / 100;
+
+    let lastError: { code?: string; message: string; details?: string; hint?: string } | null = null;
 
     for (let attempt = 0; attempt < 5; attempt++) {
       const displayId = await nextOrderDisplayId();
@@ -128,8 +168,8 @@ export async function POST(req: NextRequest) {
           user_id: userId,
           customer_name: customerName,
           customer_phone: customerPhone,
-          items: body.items,
-          total_price: body.total_price,
+          items: normalizedItems,
+          total_price: normalizedTotal,
           status: "pending",
           fulfillment_type: body.fulfillment_type,
           delivery_address: body.delivery_address,
@@ -208,6 +248,12 @@ export async function POST(req: NextRequest) {
     if (lastError) throw Object.assign(new Error(lastError.message), lastError);
   } catch (err) {
     console.error("Create order error:", err);
+    if ((err as { code?: string }).code === "MISSING_PRODUCT") {
+      return NextResponse.json(
+        { error: "One or more products in your cart are no longer available." },
+        { status: 400 }
+      );
+    }
     const details =
       process.env.NODE_ENV === "development" && err instanceof Error
         ? err.message

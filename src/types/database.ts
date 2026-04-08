@@ -20,6 +20,16 @@ export interface Product {
   ingredients_ar: string | null;
   allergens_ar: string[] | null;
   unavailable_today: boolean;
+  base_price?: number;
+  effective_price?: number;
+  active_sale?: {
+    id: string;
+    name: string;
+    start_at: string;
+    end_at: string;
+    discount_type: "amount" | "percentage";
+    discount_value: number;
+  } | null;
 }
 
 export interface Order {

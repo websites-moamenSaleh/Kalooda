@@ -7,6 +7,7 @@ import { useCart } from "@/contexts/cart-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
 import Link from "next/link";
+import { getProductEffectivePrice } from "@/lib/product-pricing";
 
 interface CartDrawerProps {
   open: boolean;
@@ -19,7 +20,15 @@ function subscribeNoop() {
 
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false);
-  const { items, removeItem, updateQuantity, totalPrice, cartReady } = useCart();
+  const {
+    items,
+    removeItem,
+    updateQuantity,
+    totalPrice,
+    cartReady,
+    priceUpdateNotice,
+    clearPriceUpdateNotice,
+  } = useCart();
   const { t, dir, locale } = useLanguage();
   const { user } = useAuth();
 
@@ -95,7 +104,22 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               <p className="mt-2 text-sm text-ink-soft/80">{t("cartEmptyHint")}</p>
             </div>
           ) : (
-            <ul className="space-y-4">
+            <>
+              {priceUpdateNotice ? (
+                <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  <div className="flex items-center justify-between gap-3">
+                    <p>{t("priceUpdatedNotice")}</p>
+                    <button
+                      type="button"
+                      onClick={clearPriceUpdateNotice}
+                      className="font-semibold underline"
+                    >
+                      OK
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+              <ul className="space-y-4">
               {items.map((item) => (
                 <li
                   key={item.product.id}
@@ -119,7 +143,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         {locale === "ar" && item.product.name_ar ? item.product.name_ar : item.product.name}
                       </p>
                       <p className="mt-1 text-xs text-ink-soft/75">
-                        ₪{item.product.price.toFixed(2)} {t("each")}
+                        ₪{getProductEffectivePrice(item.product).toFixed(2)} {t("each")}
                       </p>
                     </div>
                   </div>
@@ -158,7 +182,8 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                   </div>
                 </li>
               ))}
-            </ul>
+              </ul>
+            </>
           )}
         </div>
 

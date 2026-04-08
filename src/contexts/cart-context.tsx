@@ -17,6 +17,8 @@ import {
   broadcastPayloadToPostgresShape,
 } from "@/lib/realtime-products";
 import { subscribeStorefrontCatalog } from "@/lib/storefront-catalog-realtime";
+import { getProductEffectivePrice } from "@/lib/product-pricing";
+import { translations } from "@/lib/translations";
 
 interface CartContextType {
   items: CartItem[];
@@ -28,6 +30,8 @@ interface CartContextType {
   totalItems: number;
   totalPrice: number;
   cartReady: boolean;
+  priceUpdateNotice: string | null;
+  clearPriceUpdateNotice: () => void;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -78,6 +82,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [cartReady, setCartReady] = useState(false);
+  const [priceUpdateNotice, setPriceUpdateNotice] = useState<string | null>(null);
 
   const itemsRef = useRef(items);
   // Keep ref aligned with latest items for async cart persistence (debounced).
@@ -309,6 +314,50 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   }, [schedulePersist]);
 
+  useEffect(() => {
+    if (!cartReady || items.length === 0) return;
+    let cancelled = false;
+    const syncProductPrices = async () => {
+      try {
+        const res = await fetch("/api/products");
+        if (!res.ok) return;
+        const products = (await res.json()) as Product[];
+        if (cancelled || !Array.isArray(products)) return;
+        const priceById = new Map(products.map((product) => [product.id, product]));
+        setItems((prev) => {
+          let changed = false;
+          const next = prev.map((line) => {
+            const latest = priceById.get(line.product.id);
+            if (!latest) return line;
+            const oldPrice = getProductEffectivePrice(line.product);
+            const newPrice = getProductEffectivePrice(latest);
+            if (Math.abs(oldPrice - newPrice) >= 0.01) {
+              changed = true;
+            }
+            return { ...line, product: latest };
+          });
+          if (changed) {
+            setPriceUpdateNotice(translations.en.priceUpdatedNotice);
+          }
+          itemsRef.current = next;
+          return next;
+        });
+      } catch {
+        // no-op
+      }
+    };
+
+    void syncProductPrices();
+    const timer = setInterval(() => {
+      void syncProductPrices();
+    }, 60000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [cartReady, items.length]);
+
   const addItem = useCallback(
     (product: Product) => {
       setItems((prev) => {
@@ -368,7 +417,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
   const totalPrice = items.reduce(
-    (sum, i) => sum + i.product.price * i.quantity,
+    (sum, i) => sum + getProductEffectivePrice(i.product) * i.quantity,
     0
   );
 
@@ -384,6 +433,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         totalItems,
         totalPrice,
         cartReady,
+        priceUpdateNotice,
+        clearPriceUpdateNotice: () => setPriceUpdateNotice(null),
       }}
     >
       {children}
