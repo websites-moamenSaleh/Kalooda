@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Product } from "@/types/database";
 import { useCart } from "@/contexts/cart-context";
 import { useLanguage } from "@/contexts/language-context";
+import { useFlyToCart } from "@/contexts/fly-to-cart-context";
 import { Plus, ShieldAlert } from "lucide-react";
 import { isHttpUrl } from "@/lib/is-http-url";
 
@@ -21,8 +22,10 @@ const productEmoji: Record<string, string> = {
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
+  const { flyToCart } = useFlyToCart();
   const { t, locale } = useLanguage();
   const [imgLoaded, setImgLoaded] = useState(false);
+  const cardRef = useRef<HTMLElement | null>(null);
 
   const name =
     locale === "ar" && product.name_ar ? product.name_ar : product.name;
@@ -38,6 +41,7 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <article
+      ref={cardRef}
       className={`group surface-panel flex flex-col overflow-hidden rounded-xl border transition-all duration-300 ${
         unavailable
           ? "border-[#1F443C]/10 opacity-75"
@@ -133,7 +137,10 @@ export function ProductCard({ product }: { product: Product }) {
           ) : (
             <button
               type="button"
-              onClick={() => addItem(product)}
+              onClick={() => {
+                addItem(product);
+                flyToCart({ sourceEl: cardRef.current });
+              }}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#0A2923] px-4 py-2.5 text-sm font-bold text-[#FFEC94] shadow-md transition-all hover:bg-[#082018] hover:shadow-lg active:scale-[0.97]"
             >
               <Plus className="h-4 w-4" />

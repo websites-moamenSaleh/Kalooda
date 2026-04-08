@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useLanguage } from "@/contexts/language-context";
 import { useCart } from "@/contexts/cart-context";
+import { useFlyToCart } from "@/contexts/fly-to-cart-context";
 import type { Order, OrderItem } from "@/types/database";
 import Image from "next/image";
 import { X, Loader2, ShoppingBag } from "lucide-react";
@@ -26,9 +27,11 @@ export function OrderDetailModal({
 }: Props) {
   const { t, locale } = useLanguage();
   const { addItem } = useCart();
+  const { flyToCart } = useFlyToCart();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [reordered, setReordered] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   const fetchOrder = useCallback(async (id: string) => {
     setLoading(true);
@@ -109,6 +112,7 @@ export function OrderDetailModal({
         addItem(product);
       }
     });
+    flyToCart({ sourceEl: panelRef.current });
     setReordered(true);
     onClose();
   }
@@ -126,7 +130,10 @@ export function OrderDetailModal({
       />
 
       {/* Panel */}
-      <div className="relative w-full max-w-md rounded-2xl surface-panel border border-[#1F443C]/10 shadow-[var(--shadow-elevated)] flex flex-col max-h-[85vh]">
+      <div
+        ref={panelRef}
+        className="relative w-full max-w-md rounded-2xl surface-panel border border-[#1F443C]/10 shadow-[var(--shadow-elevated)] flex flex-col max-h-[85vh]"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F443C]/10 shrink-0">
           <h2 className="font-display text-lg font-semibold text-ink">

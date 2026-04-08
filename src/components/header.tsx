@@ -79,6 +79,7 @@ export function Header({ onCartClick }: HeaderProps) {
           <button
             type="button"
             onClick={onCartClick}
+            data-cart-target="true"
             className="relative ms-2 inline-flex items-center gap-2 rounded-lg bg-gradient-to-b from-[#E6BE68] to-[#D3A94C] px-5 py-2.5 text-sm font-bold text-[#082018] shadow-[0_2px_12px_rgba(211, 169, 76,0.35)] transition-all hover:brightness-105 hover:shadow-[0_4px_20px_rgba(211, 169, 76,0.45)] active:scale-[0.98]"
           >
             <ShoppingCart className="h-4 w-4" />
@@ -95,6 +96,7 @@ export function Header({ onCartClick }: HeaderProps) {
           <button
             type="button"
             onClick={onCartClick}
+            data-cart-target="true"
             className="relative flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-b from-[#E6BE68] to-[#D3A94C] text-[#082018] shadow-md transition-transform active:scale-95"
             aria-label={t("cart")}
           >
