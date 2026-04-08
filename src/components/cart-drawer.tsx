@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Image from "next/image";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
@@ -12,10 +13,17 @@ interface CartDrawerProps {
   onClose: () => void;
 }
 
+function subscribeNoop() {
+  return () => {};
+}
+
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
-  const { items, removeItem, updateQuantity, totalPrice } = useCart();
+  const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false);
+  const { items, removeItem, updateQuantity, totalPrice, cartReady } = useCart();
   const { t, dir, locale } = useLanguage();
   const { user } = useAuth();
+
+  if (!hydrated) return null;
 
   const checkoutHref = user
     ? "/checkout"
@@ -60,7 +68,25 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {items.length === 0 ? (
+          {!open ? null : !cartReady ? (
+            <ul className="space-y-4">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <li
+                  key={`cart-drawer-skeleton-${index}`}
+                  className="flex flex-col gap-4 rounded-xl border border-[#1f443c]/10 bg-white/85 p-4 shadow-sm sm:flex-row sm:items-center"
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <div className="h-12 w-12 shrink-0 animate-pulse rounded-lg bg-[#1f443c]/10" />
+                    <div className="w-full max-w-[10rem] animate-pulse">
+                      <div className="h-4 w-3/4 rounded bg-[#1f443c]/10" />
+                      <div className="mt-2 h-3 w-1/2 rounded bg-[#1f443c]/10" />
+                    </div>
+                  </div>
+                  <div className="h-8 w-24 animate-pulse rounded-lg bg-[#1f443c]/10" />
+                </li>
+              ))}
+            </ul>
+          ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#D3A94C]/30 bg-white/60 px-6 py-20 text-center">
               <ShoppingBag className="h-14 w-14 text-[#D3A94C]/45" />
               <p className="mt-4 font-medium text-ink">
@@ -136,7 +162,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           )}
         </div>
 
-        {items.length > 0 && (
+        {open && cartReady && items.length > 0 && (
           <div className="border-t border-[#1f443c]/10 bg-[#fffcf8] px-6 py-5 shadow-[0_-8px_24px_rgba(10,41,35,0.04)]">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium uppercase tracking-wide text-ink-soft">

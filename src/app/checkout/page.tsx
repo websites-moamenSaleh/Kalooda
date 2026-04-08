@@ -17,6 +17,7 @@ type CheckoutBanner =
   | null
   | { type: "error"; message: string }
   | { type: "signIn" };
+type SubmissionPhase = "idle" | "submitting";
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart, clearRemoteCart, cartReady } = useCart();
@@ -30,7 +31,7 @@ export default function CheckoutPage() {
   );
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [saveAddressToProfile, setSaveAddressToProfile] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [submissionPhase, setSubmissionPhase] = useState<SubmissionPhase>("idle");
   const [orderId, setOrderId] = useState<string | null>(null);
   const [checkoutBanner, setCheckoutBanner] = useState<CheckoutBanner>(null);
   const checkoutNameInputRef = useRef<HTMLInputElement>(null);
@@ -54,7 +55,7 @@ export default function CheckoutPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!items.length || !cartReady) return;
+    if (!items.length || !cartReady || submissionPhase !== "idle") return;
     setCheckoutBanner(null);
 
     if (!profileComplete) {
@@ -82,7 +83,7 @@ export default function CheckoutPage() {
       return;
     }
 
-    setSubmitting(true);
+    setSubmissionPhase("submitting");
 
     const customerName = profileComplete
       ? (profile!.full_name ?? "").trim()
@@ -117,32 +118,42 @@ export default function CheckoutPage() {
       const data = await res.json();
       if (res.status === 401) {
         setCheckoutBanner({ type: "signIn" });
+        setSubmissionPhase("idle");
         return;
       }
       if (res.status === 400 && data?.code === "PROFILE_INCOMPLETE") {
         setCheckoutBanner({ type: "error", message: t("profileIncompleteCheckout") });
+        setSubmissionPhase("idle");
         return;
       }
       if (res.status === 400 && data?.code === ORDER_VALIDATION_ERROR) {
         setCheckoutBanner({ type: "error", message: t("orderInvalidRequest") });
+        setSubmissionPhase("idle");
         return;
       }
       if (res.status === 503 && data?.code === "SCHEMA_OUTDATED") {
         setCheckoutBanner({ type: "error", message: t("orderSchemaOutdated") });
+        setSubmissionPhase("idle");
         return;
       }
       if (!res.ok) {
         setCheckoutBanner({ type: "error", message: t("orderFailed") });
+        setSubmissionPhase("idle");
         return;
       }
-      await clearRemoteCart();
-      clearCart();
-      await refreshProfile();
       setOrderId(data.display_id ?? data.id ?? "confirmed");
+      void (async () => {
+        try {
+          await clearRemoteCart();
+          clearCart();
+          await refreshProfile();
+        } catch {
+          // Checkout is already confirmed; keep navigation bridge active.
+        }
+      })();
     } catch {
       setCheckoutBanner({ type: "error", message: t("orderFailed") });
-    } finally {
-      setSubmitting(false);
+      setSubmissionPhase("idle");
     }
   }
 
@@ -195,7 +206,33 @@ export default function CheckoutPage() {
           {t("checkout")}
         </h1>
 
-        {items.length === 0 ? (
+        {!cartReady ? (
+          <div className="surface-panel mt-8 rounded-xl border border-[#1F443C]/10 p-5 sm:p-6">
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-ink-soft">
+              {t("orderSummary")}
+            </h2>
+            <ul className="mt-4 divide-y divide-[#1F443C]/8">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <li
+                  key={`checkout-skeleton-${index}`}
+                  className="flex items-center justify-between gap-4 py-3 first:pt-0"
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 animate-pulse rounded-lg bg-[#1F443C]/10" />
+                    <div className="w-full max-w-[12rem] animate-pulse">
+                      <div className="h-3.5 w-3/4 rounded bg-[#1F443C]/10" />
+                    </div>
+                  </div>
+                  <div className="h-4 w-16 shrink-0 animate-pulse rounded bg-[#1F443C]/10" />
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 flex items-center justify-between border-t border-[#1F443C]/12 pt-4">
+              <span className="font-semibold text-ink">{t("total")}</span>
+              <div className="h-8 w-28 animate-pulse rounded bg-[#1F443C]/10" />
+            </div>
+          </div>
+        ) : items.length === 0 ? (
           <div className="surface-panel mt-10 rounded-xl border border-dashed border-[#1F443C]/15 p-10 text-center">
             <p className="text-ink-soft">{t("cartEmptyCheckout")}</p>
             <Link
@@ -426,11 +463,11 @@ export default function CheckoutPage() {
               )}
               <button
                 type="submit"
-                disabled={submitting || !cartReady}
+                disabled={submissionPhase !== "idle" || !cartReady}
                 className="btn-primary-solid w-full py-3.5 disabled:opacity-50"
               >
-                {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                {submitting ? t("placingOrder") : t("placeOrder")}
+                {submissionPhase !== "idle" && <Loader2 className="h-4 w-4 animate-spin" />}
+                {submissionPhase === "idle" ? t("placeOrder") : t("placingOrder")}
               </button>
             </form>
           </>
