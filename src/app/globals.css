@@ -257,6 +257,46 @@ html[dir="rtl"] body {
   }
 }
 
+@keyframes fly-cart-target-pulse {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.06);
+    filter: brightness(1.06);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.fly-cart-target-pulse {
+  animation: fly-cart-target-pulse 0.36s ease-out;
+}
+
+.fly-ghost-base {
+  pointer-events: none !important;
+  opacity: 0.98;
+  filter: blur(0);
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0) scale(1);
+  will-change: transform, opacity, filter;
+}
+
+.fly-ghost-base * {
+  pointer-events: none !important;
+}
+
+.fly-ghost-shrink {
+  opacity: 0.68;
+  filter: blur(1px);
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+  clip-path: circle(50% at 50% 50%);
+}
+
 .text-gradient-gold {
   background: linear-gradient(135deg, #ffec94 0%, #d3a94c 50%, #946e2a 100%);
   -webkit-background-clip: text;

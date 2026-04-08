@@ -6,6 +6,7 @@ import { CartProvider } from "@/contexts/cart-context";
 import { LanguageProvider } from "@/contexts/language-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { AdminAuthProvider } from "@/contexts/admin-auth-context";
+import { FlyToCartProvider } from "@/contexts/fly-to-cart-context";
 import { PWARegister } from "@/components/pwa-register";
 import { LocaleSync } from "@/components/locale-sync";
 import {
@@ -81,9 +82,11 @@ export default async function RootLayout({
           <AuthProvider>
             <AdminAuthProvider>
               <CartProvider>
-                <LocaleSync />
-                {children}
-                <PWARegister />
+                <FlyToCartProvider>
+                  <LocaleSync />
+                  {children}
+                  <PWARegister />
+                </FlyToCartProvider>
               </CartProvider>
             </AdminAuthProvider>
           </AuthProvider>
