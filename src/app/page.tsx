@@ -125,9 +125,6 @@ export default function HomePage() {
                 <a href="#categories" className="btn-primary-solid px-8 py-3.5">
                   {t("browseMenu")}
                 </a>
-                <a href="#categories" className="btn-outline-light px-8 py-3.5">
-                  {t("viewCategories")}
-                </a>
                 <button
                   type="button"
                   onClick={() => setCartOpen(true)}

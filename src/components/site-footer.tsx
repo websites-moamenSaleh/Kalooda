@@ -48,14 +48,6 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/#categories"
-                  className="text-ink-soft hover:text-primary-dark transition-colors"
-                >
-                  {t("viewCategories")}
-                </Link>
-              </li>
-              <li>
                 <button
                   type="button"
                   className="text-start text-ink-soft hover:text-primary-dark transition-colors"
