@@ -154,15 +154,16 @@ enabled = true
 site_url = "https://www.kaloodasweets.com"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = [
-  "https://kaloodasweets.com/auth/callback/customer",
-  "https://kaloodasweets.com/auth/callback/admin",
-  "https://www.kaloodasweets.com/auth/callback/customer",
-  "https://www.kaloodasweets.com/auth/callback/admin",
-  "https://www.kaloodasweets.com/auth/callback",
+  "https://*kaloodasweets.com/auth/callback/customer",
+  "https://*kaloodasweets.com/auth/callback/admin",
+  "https://*kaloodasweets.com/auth/callback",
   "http://localhost:3000/auth/callback/admin",
   "http://localhost:3000/auth/callback/customer",
   "http://localhost:3000/auth/callback",
-  "https://www.kaloodasweets.com/auth/reset-password"
+  "https://*kaloodasweets.com/auth/reset-password",
+  "http://localhost:3000/auth/reset-password",
+  "https://*kaloodasweets.com/auth/callback/customer?next=/auth/reset-password",
+  "http://localhost:3000/auth/callback/customer?next=/auth/reset-password"
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
