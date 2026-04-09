@@ -13,12 +13,27 @@ import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
 import { InlineBanner } from "@/components/inline-banner";
 import { ORDER_VALIDATION_ERROR } from "@/lib/order-validation-constants";
 import { getProductEffectivePrice } from "@/lib/product-pricing";
+import type { CustomerAddress } from "@/types/database";
+import { AddressEditor, type AddressDraft } from "@/components/address-editor";
+import dynamic from "next/dynamic";
 
 type CheckoutBanner =
   | null
   | { type: "error"; message: string }
   | { type: "signIn" };
 type SubmissionPhase = "idle" | "submitting";
+const LazyMapPicker = dynamic(
+  () => import("@/components/location-map-picker").then((m) => m.LocationMapPicker),
+  { ssr: false }
+);
+
+function addressMapHref(addr: CustomerAddress): string {
+  if (addr.latitude != null && addr.longitude != null) {
+    return `https://www.google.com/maps?q=${addr.latitude},${addr.longitude}`;
+  }
+  const query = `${addr.city}, ${addr.street_line}, ${addr.building_number}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart, clearRemoteCart, cartReady } = useCart();
@@ -31,28 +46,94 @@ export default function CheckoutPage() {
     "delivery"
   );
   const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryLat, setDeliveryLat] = useState<number | null>(null);
+  const [deliveryLng, setDeliveryLng] = useState<number | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [addressMenuOpen, setAddressMenuOpen] = useState(false);
+  const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
+  const [addressDraftOpen, setAddressDraftOpen] = useState(false);
+  const [addressDraft, setAddressDraft] = useState<AddressDraft>({
+    label_type: null,
+    custom_label: "",
+    city: "",
+    street_line: "",
+    building_number: "",
+    latitude: null,
+    longitude: null,
+    is_default: false,
+  });
+  const [pickup, setPickup] = useState<{
+    pickup_name: string | null;
+    pickup_address: string | null;
+    pickup_latitude: number | null;
+    pickup_longitude: number | null;
+  } | null>(null);
   const [saveAddressToProfile, setSaveAddressToProfile] = useState(false);
   const [submissionPhase, setSubmissionPhase] = useState<SubmissionPhase>("idle");
   const [orderId, setOrderId] = useState<string | null>(null);
   const [checkoutBanner, setCheckoutBanner] = useState<CheckoutBanner>(null);
   const checkoutNameInputRef = useRef<HTMLInputElement>(null);
   const checkoutPhoneInputRef = useRef<HTMLInputElement>(null);
-  const deliveryAddressRef = useRef<HTMLTextAreaElement>(null);
 
   useCartDrawerEvent(setCartOpen);
 
   const profileComplete =
     Boolean(profile?.full_name?.trim()) && Boolean(profile?.phone?.trim());
+  const selectedAddress =
+    (selectedAddressId
+      ? addresses.find((addr) => addr.id === selectedAddressId)
+      : null) ?? null;
+
+  function applySelectedAddress(id: string | null) {
+    setSelectedAddressId(id);
+    const selected = addresses.find((addr) => addr.id === id);
+    if (!selected) return;
+    setDeliveryAddress(
+      `${selected.city}, ${selected.street_line}, ${selected.building_number}`
+    );
+    setDeliveryLat(selected.latitude != null ? Number(selected.latitude) : null);
+    setDeliveryLng(selected.longitude != null ? Number(selected.longitude) : null);
+  }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate checkout fields when profile loads
     if (profile?.full_name) setName(profile.full_name);
     if (profile?.phone) setPhone(profile.phone);
   }, [profile?.full_name, profile?.phone]);
 
   useEffect(() => {
     const saved = profile?.delivery_address?.trim();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- use saved profile address as fallback
     if (saved) setDeliveryAddress(saved);
   }, [profile?.delivery_address]);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const [addressRes, pickupRes] = await Promise.all([
+        fetch("/api/addresses"),
+        fetch("/api/business-settings"),
+      ]);
+      const addressJson = await addressRes.json();
+      const pickupJson = await pickupRes.json();
+      if (!active) return;
+      const list = (addressJson?.data ?? []) as CustomerAddress[];
+      setAddresses(list);
+      const defaultAddr = list.find((item) => item.is_default) ?? list[0];
+      if (defaultAddr) {
+        setSelectedAddressId(defaultAddr.id);
+        setDeliveryAddress(
+          `${defaultAddr.city}, ${defaultAddr.street_line}, ${defaultAddr.building_number}`
+        );
+        setDeliveryLat(defaultAddr.latitude != null ? Number(defaultAddr.latitude) : null);
+        setDeliveryLng(defaultAddr.longitude != null ? Number(defaultAddr.longitude) : null);
+      }
+      if (pickupRes.ok) setPickup(pickupJson.data ?? null);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,10 +161,8 @@ export default function CheckoutPage() {
         type: "error",
         message: t("addressRequiredCheckout"),
       });
-      requestAnimationFrame(() => deliveryAddressRef.current?.focus());
       return;
     }
-
     setSubmissionPhase("submitting");
 
     const customerName = profileComplete
@@ -102,6 +181,12 @@ export default function CheckoutPage() {
           customer_phone: customerPhone,
           fulfillment_type: fulfillmentType,
           delivery_address:
+            fulfillmentType === "delivery" ? deliveryAddress.trim() : null,
+          customer_address_id:
+            fulfillmentType === "delivery" ? selectedAddressId : null,
+          delivery_latitude: fulfillmentType === "delivery" ? deliveryLat : null,
+          delivery_longitude: fulfillmentType === "delivery" ? deliveryLng : null,
+          delivery_formatted_address:
             fulfillmentType === "delivery" ? deliveryAddress.trim() : null,
           payment_method: "cash_on_delivery",
           save_address_to_profile:
@@ -352,45 +437,176 @@ export default function CheckoutPage() {
               </fieldset>
 
               {fulfillmentType === "pickup" ? (
-                <div className="surface-panel flex gap-3 rounded-xl border border-[#1F443C]/10 p-4 text-sm text-ink-soft">
-                  <MapPin className="h-5 w-5 shrink-0 text-primary-dark" aria-hidden />
-                  <div>
-                    <p className="font-semibold text-ink">{t("pickupLocationTitle")}</p>
-                    <p className="mt-1 leading-relaxed">{t("pickupLocationAddress")}</p>
+                <div className="surface-panel flex flex-col gap-3 rounded-xl border border-[#1F443C]/10 p-4 text-sm text-ink-soft">
+                  <div className="flex gap-3">
+                    <MapPin className="h-5 w-5 shrink-0 text-primary-dark" aria-hidden />
+                    <div>
+                      <p className="font-semibold text-ink">{t("pickupLocationTitle")}</p>
+                      <p className="mt-1 leading-relaxed">
+                        {pickup?.pickup_address ?? t("pickupLocationUnavailableFallback")}
+                      </p>
+                    </div>
                   </div>
+                  {pickup?.pickup_latitude != null && pickup?.pickup_longitude != null ? (
+                    <LazyMapPicker
+                      center={{
+                        lat: Number(pickup.pickup_latitude),
+                        lng: Number(pickup.pickup_longitude),
+                      }}
+                      language={locale}
+                      onMarkerChange={() => {}}
+                    />
+                  ) : (
+                    <p className="text-xs text-amber-700">{t("pickupMapUnavailable")}</p>
+                  )}
                 </div>
               ) : (
                 <>
-                  <div>
-                    <label
-                      htmlFor="checkout-delivery-address"
-                      className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft"
-                    >
-                      {t("deliveryAddressLabel")}
+                  {addresses.length ? (
+                    <div className="relative">
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                        {t("savedAddressesTitle")}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setAddressMenuOpen((prev) => !prev)}
+                        className="input-premium flex w-full items-start justify-between gap-2 py-2 text-start"
+                        aria-expanded={addressMenuOpen}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-ink">
+                            {(selectedAddress?.label ?? t("addressNameNone"))}
+                            {selectedAddress?.is_default
+                              ? ` (${t("defaultAddressBadge")})`
+                              : ""}
+                          </span>
+                          {selectedAddress ? (
+                            <span className="mt-0.5 block truncate text-xs text-ink-soft">
+                              {selectedAddress.city}, {selectedAddress.street_line},{" "}
+                              {selectedAddress.building_number}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="shrink-0 text-ink-soft">{addressMenuOpen ? "▲" : "▼"}</span>
+                      </button>
+                      {addressMenuOpen ? (
+                        <div className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-[#1F443C]/12 bg-white shadow-[var(--shadow-elevated)]">
+                          {addresses.map((addr) => (
+                            <button
+                              key={addr.id}
+                              type="button"
+                              onClick={() => {
+                                applySelectedAddress(addr.id);
+                                setAddressMenuOpen(false);
+                              }}
+                              className="w-full border-b border-[#1F443C]/8 px-3 py-2.5 text-start last:border-0 hover:bg-[#F7F4EE]"
+                            >
+                              <span className="block text-sm font-semibold text-ink">
+                                {addr.label ?? t("addressNameNone")}
+                                {addr.is_default ? ` (${t("defaultAddressBadge")})` : ""}
+                              </span>
+                              <span className="mt-1 block text-xs text-ink-soft">
+                                {addr.city}, {addr.street_line}, {addr.building_number}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                      {selectedAddressId ? (
+                        <a
+                          href={addressMapHref(selectedAddress ?? addresses[0])}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary-dark hover:underline"
+                        >
+                          <MapPin className="h-3.5 w-3.5" />
+                          {t("openInMap")}
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setAddressDraftOpen((prev) => !prev)}
+                    className="rounded-xl border border-[#1F443C]/12 bg-white px-4 py-2.5 text-sm font-semibold text-ink-soft"
+                  >
+                    {addressDraftOpen ? t("hideNewAddressForm") : t("addNewAddress")}
+                  </button>
+                  {addressDraftOpen ? (
+                    <div className="rounded-xl border border-[#1F443C]/10 p-3">
+                      <AddressEditor
+                        locale={locale}
+                        value={addressDraft}
+                        onChange={setAddressDraft}
+                        t={(key) => t(key as never)}
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const payload = {
+                            label_type: addressDraft.label_type,
+                            custom_label: addressDraft.custom_label.trim() || null,
+                            city: addressDraft.city.trim(),
+                            street_line: addressDraft.street_line.trim(),
+                            building_number: addressDraft.building_number.trim(),
+                            latitude: addressDraft.latitude,
+                            longitude: addressDraft.longitude,
+                            is_default: addresses.length === 0,
+                          };
+                          const res = await fetch("/api/addresses", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload),
+                          });
+                          const data = await res.json();
+                          if (!res.ok) {
+                            setCheckoutBanner({
+                              type: "error",
+                              message:
+                                data?.code === "ADDRESS_LIMIT_REACHED"
+                                  ? t("addressLimitReached")
+                                  : t("addressSaveFailed"),
+                            });
+                            return;
+                          }
+                          const next = data.data as CustomerAddress;
+                          const refreshed = [next, ...addresses];
+                          setAddresses(refreshed);
+                          setSelectedAddressId(next.id);
+                          setDeliveryAddress(
+                            `${next.city}, ${next.street_line}, ${next.building_number}`
+                          );
+                          setDeliveryLat(next.latitude != null ? Number(next.latitude) : null);
+                          setDeliveryLng(next.longitude != null ? Number(next.longitude) : null);
+                          setAddressDraftOpen(false);
+                          setAddressDraft({
+                            label_type: null,
+                            custom_label: "",
+                            city: "",
+                            street_line: "",
+                            building_number: "",
+                            latitude: null,
+                            longitude: null,
+                            is_default: false,
+                          });
+                        }}
+                        className="btn-primary-solid mt-3 w-full py-3"
+                      >
+                        {t("saveAddress")}
+                      </button>
+                    </div>
+                  ) : null}
+                  {addressDraftOpen ? (
+                    <label className="flex cursor-pointer items-start gap-3 text-sm text-ink">
+                      <input
+                        type="checkbox"
+                        checked={saveAddressToProfile}
+                        onChange={(e) => setSaveAddressToProfile(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-[#1F443C]/25 text-primary focus:ring-primary"
+                      />
+                      <span>{t("saveAddressToProfile")}</span>
                     </label>
-                    <textarea
-                      id="checkout-delivery-address"
-                      ref={deliveryAddressRef}
-                      value={deliveryAddress}
-                      onChange={(e) => {
-                        setCheckoutBanner(null);
-                        setDeliveryAddress(e.target.value);
-                      }}
-                      rows={3}
-                      className="input-premium min-h-[5rem] resize-y"
-                      placeholder={t("deliveryAddressPlaceholder")}
-                      autoComplete="street-address"
-                    />
-                  </div>
-                  <label className="flex cursor-pointer items-start gap-3 text-sm text-ink">
-                    <input
-                      type="checkbox"
-                      checked={saveAddressToProfile}
-                      onChange={(e) => setSaveAddressToProfile(e.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-[#1F443C]/25 text-primary focus:ring-primary"
-                    />
-                    <span>{t("saveAddressToProfile")}</span>
-                  </label>
+                  ) : null}
                 </>
               )}
 

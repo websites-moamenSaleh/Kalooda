@@ -19,6 +19,10 @@ export const createOrderBodySchema = z
     total_price: z.number(),
     fulfillment_type: z.enum(["delivery", "pickup"]).default("delivery"),
     delivery_address: z.union([z.string(), z.null()]).optional(),
+    customer_address_id: z.string().uuid().nullable().optional(),
+    delivery_latitude: z.number().min(-90).max(90).nullable().optional(),
+    delivery_longitude: z.number().min(-180).max(180).nullable().optional(),
+    delivery_formatted_address: z.string().trim().min(1).max(500).nullable().optional(),
     payment_method: z.literal("cash_on_delivery").default("cash_on_delivery"),
     save_address_to_profile: z.boolean().optional().default(false),
   })
@@ -50,6 +54,13 @@ export const createOrderBodySchema = z
       total_price: data.total_price,
       fulfillment_type,
       delivery_address,
+      customer_address_id: data.customer_address_id ?? null,
+      delivery_latitude: fulfillment_type === "pickup" ? null : (data.delivery_latitude ?? null),
+      delivery_longitude: fulfillment_type === "pickup" ? null : (data.delivery_longitude ?? null),
+      delivery_formatted_address:
+        fulfillment_type === "pickup"
+          ? null
+          : (data.delivery_formatted_address ?? delivery_address),
       payment_method: data.payment_method,
       save_address_to_profile: data.save_address_to_profile,
     };

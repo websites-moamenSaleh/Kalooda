@@ -69,6 +69,31 @@ export async function POST(req: NextRequest) {
     }
     const body = parsedBody.data;
 
+    if (body.customer_address_id) {
+      const { data: selectedAddress, error: addressError } = await supabaseAdmin
+        .from("customer_addresses")
+        .select(
+          "id, user_id, city, street_line, building_number, formatted_address, latitude, longitude"
+        )
+        .eq("id", body.customer_address_id)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (addressError) throw addressError;
+      if (!selectedAddress) {
+        return NextResponse.json(
+          { error: "Selected address is invalid", code: ORDER_VALIDATION_ERROR },
+          { status: 400 }
+        );
+      }
+      const normalizedAddress =
+        selectedAddress.formatted_address ||
+        `${selectedAddress.city}, ${selectedAddress.street_line}, ${selectedAddress.building_number}`;
+      body.delivery_address = normalizedAddress;
+      body.delivery_formatted_address = normalizedAddress;
+      body.delivery_latitude = Number(selectedAddress.latitude);
+      body.delivery_longitude = Number(selectedAddress.longitude);
+    }
+
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("full_name, phone")
@@ -173,6 +198,10 @@ export async function POST(req: NextRequest) {
           status: "pending",
           fulfillment_type: body.fulfillment_type,
           delivery_address: body.delivery_address,
+          customer_address_id: body.customer_address_id,
+          delivery_latitude: body.delivery_latitude,
+          delivery_longitude: body.delivery_longitude,
+          delivery_formatted_address: body.delivery_formatted_address,
           payment_method: body.payment_method,
         })
         .select()

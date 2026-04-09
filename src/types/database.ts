@@ -53,8 +53,39 @@ export interface Order {
   fulfillment_type?: "delivery" | "pickup";
   delivery_address?: string | null;
   payment_method?: "cash_on_delivery";
+  customer_address_id?: string | null;
+  delivery_latitude?: number | null;
+  delivery_longitude?: number | null;
+  delivery_formatted_address?: string | null;
   cancellation_reason?: string | null;
   cancellation_notes?: string | null;
+}
+
+export interface CustomerAddress {
+  id: string;
+  user_id: string;
+  label: string | null;
+  label_type: "home" | "work" | "other" | null;
+  custom_label: string | null;
+  city: string;
+  street_line: string;
+  building_number: string;
+  formatted_address: string;
+  latitude: number | null;
+  longitude: number | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BusinessSettings {
+  id: true;
+  pickup_name: string | null;
+  pickup_address: string | null;
+  pickup_latitude: number | null;
+  pickup_longitude: number | null;
+  updated_at: string;
+  updated_by: string | null;
 }
 
 export interface CartItemRow {
