@@ -1,3 +1,5 @@
+import type { CartLineOptionsPersisted } from "@/lib/product-options/types";
+
 export interface Category {
   id: string;
   name: string;
@@ -30,6 +32,8 @@ export interface Product {
     discount_type: "amount" | "percentage";
     discount_value: number;
   } | null;
+  /** True when product has at least one row in product_options_junction (storefront). */
+  has_options?: boolean;
 }
 
 export interface Order {
@@ -89,9 +93,11 @@ export interface BusinessSettings {
 }
 
 export interface CartItemRow {
+  id: string;
   user_id: string;
   product_id: string;
   quantity: number;
+  line_options: CartLineOptionsPersisted | unknown;
   updated_at: string;
 }
 
@@ -102,6 +108,8 @@ export interface OrderItem {
   quantity: number;
   unit_price: number;
   image_url?: string | null;
+  /** Configured product snapshot (issue #123); omitted on legacy orders. */
+  line_options?: CartLineOptionsPersisted | null;
 }
 
 export interface Delivery {
@@ -121,6 +129,9 @@ export interface Driver {
 }
 
 export interface CartItem {
+  lineId: string;
   product: Product;
   quantity: number;
+  /** Set when the line used the options wizard; simple adds use empty selections. */
+  line_options?: CartLineOptionsPersisted | null;
 }

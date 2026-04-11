@@ -12,6 +12,13 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { GUEST_CART_KEY } from "@/lib/guest-cart-constants";
 import type { Product, CartItem } from "@/types/database";
+import type { CartLineOptionsPersisted } from "@/lib/product-options/types";
+import {
+  configurationKeyFromSelections,
+  isSimpleConfiguration,
+} from "@/lib/product-options/configuration-key";
+import { normalizeCartLineOptions } from "@/lib/cart-line-options-normalize";
+import { lineUnitPrice } from "@/lib/cart-line-price";
 import {
   applyProductChangeToCartItems,
   broadcastPayloadToPostgresShape,
@@ -23,8 +30,13 @@ import { translations } from "@/lib/translations";
 interface CartContextType {
   items: CartItem[];
   addItem: (product: Product) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addItemWithOptions: (
+    product: Product,
+    lineOptions: CartLineOptionsPersisted,
+    quantity?: number
+  ) => void;
+  removeItem: (lineId: string) => void;
+  updateQuantity: (lineId: string, quantity: number) => void;
   clearCart: () => void;
   clearRemoteCart: () => Promise<void>;
   totalItems: number;
@@ -36,7 +48,20 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | null>(null);
 
-function readGuestCartRaw(): { product_id: string; quantity: number }[] {
+function isUuid(s: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    s
+  );
+}
+
+type GuestPersistLine = {
+  line_id: string;
+  product_id: string;
+  quantity: number;
+  line_options?: unknown;
+};
+
+function readGuestCartRaw(): GuestPersistLine[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(GUEST_CART_KEY);
@@ -44,12 +69,25 @@ function readGuestCartRaw(): { product_id: string; quantity: number }[] {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .map((x) => ({
-        product_id: String((x as { product_id?: string }).product_id ?? ""),
-        quantity: Math.floor(
+      .map((x) => {
+        const product_id = String((x as { product_id?: string }).product_id ?? "");
+        const quantity = Math.floor(
           Number((x as { quantity?: number }).quantity) || 0
-        ),
-      }))
+        );
+        const line_id_raw = (x as { line_id?: string }).line_id;
+        const line_id =
+          typeof line_id_raw === "string" && isUuid(line_id_raw)
+            ? line_id_raw
+            : typeof crypto !== "undefined" && crypto.randomUUID
+              ? crypto.randomUUID()
+              : `${product_id}-${Math.random().toString(36).slice(2)}`;
+        return {
+          line_id,
+          product_id,
+          quantity,
+          line_options: (x as { line_options?: unknown }).line_options,
+        };
+      })
       .filter((x) => x.product_id && x.quantity > 0);
   } catch {
     return [];
@@ -58,16 +96,22 @@ function readGuestCartRaw(): { product_id: string; quantity: number }[] {
 
 function writeGuestCartRaw(items: CartItem[]) {
   const raw = items.map((i) => ({
+    line_id: i.lineId,
     product_id: i.product.id,
     quantity: i.quantity,
+    line_options: i.line_options ?? normalizeCartLineOptions({}, i.product),
   }));
   localStorage.setItem(GUEST_CART_KEY, JSON.stringify(raw));
 }
 
-async function putRemoteCart(
-  payload: { product_id: string; quantity: number }[],
-  signal: AbortSignal
-) {
+type RemoteLine = {
+  line_id: string;
+  product_id: string;
+  quantity: number;
+  line_options: unknown;
+};
+
+async function putRemoteCart(payload: RemoteLine[], signal: AbortSignal) {
   const res = await fetch("/api/cart", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -78,6 +122,37 @@ async function putRemoteCart(
   if (!res.ok) throw new Error("cart_put_failed");
 }
 
+function mergeServerAndGuestLines(
+  serverItems: CartItem[],
+  guestLines: GuestPersistLine[],
+  productById: Map<string, Product>
+): CartItem[] {
+  const out = serverItems.map((s) => ({ ...s }));
+  for (const g of guestLines) {
+    const p = productById.get(g.product_id);
+    if (!p || p.unavailable_today) continue;
+    const normalized = normalizeCartLineOptions(g.line_options ?? {}, p);
+    const gKey = configurationKeyFromSelections(normalized.selections);
+    const idx = out.findIndex(
+      (s) =>
+        s.product.id === g.product_id &&
+        configurationKeyFromSelections(s.line_options?.selections ?? {}) === gKey
+    );
+    if (idx >= 0) {
+      const cur = out[idx];
+      out[idx] = { ...cur, quantity: cur.quantity + g.quantity };
+    } else {
+      out.push({
+        lineId: g.line_id,
+        product: p,
+        quantity: g.quantity,
+        line_options: normalized,
+      });
+    }
+  }
+  return out;
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
@@ -85,7 +160,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [priceUpdateNotice, setPriceUpdateNotice] = useState<string | null>(null);
 
   const itemsRef = useRef(items);
-  // Keep ref aligned with latest items for async cart persistence (debounced).
   // eslint-disable-next-line react-hooks/refs -- mirror pattern; ref read only in timeouts/async
   itemsRef.current = items;
 
@@ -109,9 +183,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       while (true) {
         syncRunningRef.current = true;
         syncQueuedRef.current = false;
-        const snapshot = itemsRef.current.map((i) => ({
+        const snapshot: RemoteLine[] = itemsRef.current.map((i) => ({
+          line_id: i.lineId,
           product_id: i.product.id,
           quantity: i.quantity,
+          line_options: i.line_options ?? normalizeCartLineOptions({}, i.product),
         }));
         try {
           await putRemoteCart(snapshot, new AbortController().signal);
@@ -164,7 +240,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     if (!user?.id) {
       userIdRef.current = null;
-      (async () => {
+      void (async () => {
         const raw = readGuestCartRaw();
         if (raw.length === 0) {
           if (!cancelled) {
@@ -184,7 +260,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
           for (const line of raw) {
             const p = map.get(line.product_id);
             if (p && !p.unavailable_today) {
-              built.push({ product: p, quantity: line.quantity });
+              built.push({
+                lineId: line.line_id,
+                product: p,
+                quantity: line.quantity,
+                line_options: normalizeCartLineOptions(line.line_options ?? {}, p),
+              });
             }
           }
           setItems(built);
@@ -208,7 +289,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const uid = user.id;
     userIdRef.current = uid;
 
-    (async () => {
+    void (async () => {
       const guestLines = readGuestCartRaw();
       let serverItems: CartItem[] = [];
       try {
@@ -222,63 +303,53 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
       }
 
-      const qtyByProduct = new Map<string, number>();
-      for (const it of serverItems) {
-        qtyByProduct.set(it.product.id, it.quantity);
-      }
-      for (const g of guestLines) {
-        qtyByProduct.set(
-          g.product_id,
-          (qtyByProduct.get(g.product_id) ?? 0) + g.quantity
-        );
-      }
-
       const productById = new Map<string, Product>();
       for (const it of serverItems) {
         productById.set(it.product.id, it.product);
       }
-
-      const mergedIds = [...qtyByProduct.entries()].filter(
-        ([, q]) => q > 0
-      ) as [string, number][];
-
-      const missingIds = mergedIds
-        .map(([id]) => id)
-        .filter((id) => !productById.has(id));
-
-      if (missingIds.length > 0) {
-        try {
-          const res = await fetch("/api/products");
-          const all = (await res.json()) as Product[];
-          if (cancelled) return;
+      try {
+        const res = await fetch("/api/products");
+        const all = (await res.json()) as Product[];
+        if (!cancelled) {
           for (const p of all) {
-            if (!productById.has(p.id)) productById.set(p.id, p);
+            productById.set(p.id, p);
           }
-        } catch {
-          /* ignore */
         }
+      } catch {
+        /* ignore */
       }
 
-      const mergedItems: CartItem[] = [];
-      for (const [pid, qty] of mergedIds) {
-        const p = productById.get(pid);
+      const mergedItems =
+        guestLines.length > 0
+          ? mergeServerAndGuestLines(serverItems, guestLines, productById)
+          : serverItems;
+
+      const finalItems: CartItem[] = [];
+      for (const it of mergedItems) {
+        const p = productById.get(it.product.id);
         if (p && !p.unavailable_today) {
-          mergedItems.push({ product: p, quantity: qty });
+          finalItems.push({
+            ...it,
+            product: p,
+            line_options: normalizeCartLineOptions(it.line_options ?? {}, p),
+          });
         }
       }
 
       if (cancelled) return;
 
-      setItems(mergedItems);
-      itemsRef.current = mergedItems;
+      setItems(finalItems);
+      itemsRef.current = finalItems;
 
       if (guestLines.length > 0) {
         localStorage.removeItem(GUEST_CART_KEY);
         try {
           await putRemoteCart(
-            mergedItems.map((i) => ({
+            finalItems.map((i) => ({
+              line_id: i.lineId,
               product_id: i.product.id,
               quantity: i.quantity,
+              line_options: i.line_options ?? normalizeCartLineOptions({}, i.product),
             })),
             new AbortController().signal
           );
@@ -329,12 +400,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const next = prev.map((line) => {
             const latest = priceById.get(line.product.id);
             if (!latest) return line;
-            const oldPrice = getProductEffectivePrice(line.product);
-            const newPrice = getProductEffectivePrice(latest);
-            if (Math.abs(oldPrice - newPrice) >= 0.01) {
-              changed = true;
+            const mergedProduct = { ...line.product, ...latest } as Product;
+            if (!line.line_options || isSimpleConfiguration(line.line_options.selections)) {
+              const oldP = getProductEffectivePrice(line.product);
+              const newP = getProductEffectivePrice(latest);
+              if (Math.abs(oldP - newP) >= 0.01) {
+                changed = true;
+              }
+              return {
+                ...line,
+                product: mergedProduct,
+                line_options: normalizeCartLineOptions(
+                  line.line_options ?? {},
+                  mergedProduct
+                ),
+              };
             }
-            return { ...line, product: latest };
+            return { ...line, product: mergedProduct };
           });
           if (changed) {
             setPriceUpdateNotice(translations.en.priceUpdatedNotice);
@@ -361,14 +443,66 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback(
     (product: Product) => {
       setItems((prev) => {
-        const existing = prev.find((i) => i.product.id === product.id);
+        const simple = (i: CartItem) =>
+          !i.line_options || isSimpleConfiguration(i.line_options.selections);
+        const existing = prev.find(
+          (i) => i.product.id === product.id && simple(i)
+        );
+        const lineOptions = normalizeCartLineOptions({}, product);
         const next = existing
           ? prev.map((i) =>
-              i.product.id === product.id
-                ? { ...i, quantity: i.quantity + 1 }
+              i.lineId === existing.lineId
+                ? { ...i, quantity: i.quantity + 1, line_options: lineOptions }
                 : i
             )
-          : [...prev, { product, quantity: 1 }];
+          : [
+              ...prev,
+              {
+                lineId:
+                  typeof crypto !== "undefined" && crypto.randomUUID
+                    ? crypto.randomUUID()
+                    : `${product.id}-${Date.now()}`,
+                product,
+                quantity: 1,
+                line_options: lineOptions,
+              },
+            ];
+        itemsRef.current = next;
+        queueMicrotask(() => schedulePersist());
+        return next;
+      });
+    },
+    [schedulePersist]
+  );
+
+  const addItemWithOptions = useCallback(
+    (product: Product, lineOptions: CartLineOptionsPersisted, quantity = 1) => {
+      const q = Math.max(1, Math.floor(quantity));
+      setItems((prev) => {
+        const key = configurationKeyFromSelections(lineOptions.selections);
+        const existing = prev.find(
+          (i) =>
+            i.product.id === product.id &&
+            configurationKeyFromSelections(i.line_options?.selections ?? {}) === key
+        );
+        const next = existing
+          ? prev.map((i) =>
+              i.lineId === existing.lineId
+                ? { ...i, quantity: i.quantity + q, line_options: lineOptions }
+                : i
+            )
+          : [
+              ...prev,
+              {
+                lineId:
+                  typeof crypto !== "undefined" && crypto.randomUUID
+                    ? crypto.randomUUID()
+                    : `${product.id}-${Date.now()}`,
+                product,
+                quantity: q,
+                line_options: lineOptions,
+              },
+            ];
         itemsRef.current = next;
         queueMicrotask(() => schedulePersist());
         return next;
@@ -378,9 +512,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const removeItem = useCallback(
-    (productId: string) => {
+    (lineId: string) => {
       setItems((prev) => {
-        const next = prev.filter((i) => i.product.id !== productId);
+        const next = prev.filter((i) => i.lineId !== lineId);
         itemsRef.current = next;
         queueMicrotask(() => schedulePersist());
         return next;
@@ -390,14 +524,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const updateQuantity = useCallback(
-    (productId: string, quantity: number) => {
+    (lineId: string, quantity: number) => {
       setItems((prev) => {
         let next: CartItem[];
         if (quantity <= 0) {
-          next = prev.filter((i) => i.product.id !== productId);
+          next = prev.filter((i) => i.lineId !== lineId);
         } else {
           next = prev.map((i) =>
-            i.product.id === productId ? { ...i, quantity } : i
+            i.lineId === lineId ? { ...i, quantity } : i
           );
         }
         itemsRef.current = next;
@@ -417,7 +551,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
   const totalPrice = items.reduce(
-    (sum, i) => sum + getProductEffectivePrice(i.product) * i.quantity,
+    (sum, i) => sum + lineUnitPrice(i) * i.quantity,
     0
   );
 
@@ -426,6 +560,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       value={{
         items,
         addItem,
+        addItemWithOptions,
         removeItem,
         updateQuantity,
         clearCart,

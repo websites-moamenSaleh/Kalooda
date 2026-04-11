@@ -12,7 +12,7 @@ import Link from "next/link";
 import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
 import { InlineBanner } from "@/components/inline-banner";
 import { ORDER_VALIDATION_ERROR } from "@/lib/order-validation-constants";
-import { getProductEffectivePrice } from "@/lib/product-pricing";
+import { lineUnitPrice } from "@/lib/cart-line-price";
 import type { CustomerAddress } from "@/types/database";
 import { AddressEditor, type AddressDraft } from "@/components/address-editor";
 import dynamic from "next/dynamic";
@@ -196,7 +196,9 @@ export default function CheckoutPage() {
             product_name: i.product.name,
             product_name_ar: i.product.name_ar ?? null,
             quantity: i.quantity,
-            unit_price: getProductEffectivePrice(i.product),
+            unit_price: lineUnitPrice(i),
+            image_url: i.product.image_url?.trim() || null,
+            line_options: i.line_options ?? null,
           })),
           total_price: totalPrice,
         }),
@@ -363,7 +365,7 @@ export default function CheckoutPage() {
                       </span>
                     </div>
                     <span className="font-semibold text-ink shrink-0">
-                      ₪{(getProductEffectivePrice(item.product) * item.quantity).toFixed(2)}
+                      ₪{(lineUnitPrice(item) * item.quantity).toFixed(2)}
                     </span>
                   </li>
                 ))}

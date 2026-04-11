@@ -1,3 +1,5 @@
+import { normalizeCartLineOptions } from "@/lib/cart-line-options-normalize";
+import { isSimpleConfiguration } from "@/lib/product-options/configuration-key";
 import type { CartItem, Product } from "@/types/database";
 import type { StorefrontCatalogBroadcastPayload } from "@/lib/storefront-catalog-types";
 
@@ -73,7 +75,16 @@ export function applyProductChangeToCartItems(
     return prev.filter((i) => i.product.id !== row.id);
   }
 
-  return prev.map((i) =>
-    i.product.id === row.id ? { ...i, product: mergedProduct } : i
-  );
+  return prev.map((i) => {
+    if (i.product.id !== row.id) return i;
+    const lo = i.line_options;
+    if (!lo || isSimpleConfiguration(lo.selections)) {
+      return {
+        ...i,
+        product: mergedProduct as Product,
+        line_options: normalizeCartLineOptions(lo ?? {}, mergedProduct as Product),
+      };
+    }
+    return { ...i, product: mergedProduct as Product };
+  });
 }

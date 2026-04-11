@@ -1,14 +1,17 @@
 import { z } from "zod";
 import { ORDER_VALIDATION_ERROR } from "@/lib/order-validation-constants";
+import { cartLineOptionsPersistedSchema } from "@/lib/product-options/validate-selections";
 
 export { ORDER_VALIDATION_ERROR };
 
 const orderItemSchema = z.object({
-  product_id: z.string(),
+  product_id: z.string().uuid(),
   product_name: z.string(),
   product_name_ar: z.string().nullable().optional(),
   quantity: z.number().int().positive(),
   unit_price: z.number(),
+  image_url: z.string().nullable().optional(),
+  line_options: cartLineOptionsPersistedSchema.nullable().optional(),
 });
 
 export const createOrderBodySchema = z

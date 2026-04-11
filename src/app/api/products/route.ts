@@ -14,7 +14,23 @@ export async function GET() {
 
     if (error) throw error;
     const priced = await applyEffectivePricing((data ?? []) as Product[]);
-    return NextResponse.json(priced);
+
+    const withOptions = new Set<string>();
+    const jRes = await supabaseAdmin
+      .from("product_options_junction")
+      .select("product_id");
+    if (!jRes.error && jRes.data) {
+      for (const r of jRes.data) {
+        withOptions.add(String((r as { product_id: string }).product_id));
+      }
+    }
+
+    return NextResponse.json(
+      priced.map((p) => ({
+        ...p,
+        has_options: withOptions.has(p.id),
+      }))
+    );
   } catch (err) {
     console.error("Fetch products error:", err);
     return NextResponse.json(

@@ -32,11 +32,24 @@ export function selectTopBestSellerProducts(
   return sorted.slice(0, CHEF_SELECTIONS_COUNT);
 }
 
-/** Products in one catalog category (Menu section). */
+/**
+ * Products in one catalog category (Menu section).
+ * Available items first; unavailable (`unavailable_today`) last, with stable name order within each group.
+ */
 export function getProductsForMenuCategory(
   products: Product[],
   categoryId: string | null
 ): Product[] {
   if (!categoryId) return [];
-  return products.filter((p) => p.category_id === categoryId);
+  const inCategory = products.filter((p) => p.category_id === categoryId);
+  return [...inCategory].sort((a, b) => {
+    const aUn = a.unavailable_today ? 1 : 0;
+    const bUn = b.unavailable_today ? 1 : 0;
+    if (aUn !== bUn) return aUn - bUn;
+    const byName = a.name.localeCompare(b.name, undefined, {
+      sensitivity: "base",
+    });
+    if (byName !== 0) return byName;
+    return a.id.localeCompare(b.id);
+  });
 }

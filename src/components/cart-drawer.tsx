@@ -7,7 +7,37 @@ import { useCart } from "@/contexts/cart-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
 import Link from "next/link";
-import { getProductEffectivePrice } from "@/lib/product-pricing";
+import { lineUnitPrice } from "@/lib/cart-line-price";
+import { isSimpleConfiguration } from "@/lib/product-options/configuration-key";
+import type { SnapshotChoiceLine } from "@/lib/product-options/types";
+
+function aggregateSnapshotLines(lines: SnapshotChoiceLine[]) {
+  const map = new Map<
+    string,
+    {
+      name_en: string;
+      name_ar: string | null;
+      totalApplied: number;
+      count: number;
+    }
+  >();
+  for (const cl of lines) {
+    const k = `${cl.option_id}:${cl.choice_id}`;
+    const prev = map.get(k);
+    if (prev) {
+      prev.count += 1;
+      prev.totalApplied += cl.price_applied;
+    } else {
+      map.set(k, {
+        name_en: cl.name_en,
+        name_ar: cl.name_ar,
+        totalApplied: cl.price_applied,
+        count: 1,
+      });
+    }
+  }
+  return [...map.entries()].map(([key, v]) => ({ key, ...v }));
+}
 
 interface CartDrawerProps {
   open: boolean;
@@ -122,7 +152,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               <ul className="space-y-4">
               {items.map((item) => (
                 <li
-                  key={item.product.id}
+                  key={item.lineId}
                   className="flex flex-col gap-4 rounded-xl border border-[#1f443c]/10 bg-white/85 p-4 shadow-sm sm:flex-row sm:items-center"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -143,8 +173,27 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         {locale === "ar" && item.product.name_ar ? item.product.name_ar : item.product.name}
                       </p>
                       <p className="mt-1 text-xs text-ink-soft/75">
-                        ₪{getProductEffectivePrice(item.product).toFixed(2)} {t("each")}
+                        ₪{lineUnitPrice(item).toFixed(2)} {t("each")}
                       </p>
+                      {item.line_options &&
+                      !isSimpleConfiguration(item.line_options.selections) &&
+                      item.line_options.snapshot.choice_lines.length > 0 ? (
+                        <ul className="mt-2 space-y-0.5 text-[11px] text-ink-soft/80">
+                          {aggregateSnapshotLines(
+                            item.line_options.snapshot.choice_lines
+                          ).map((row) => (
+                            <li key={row.key}>
+                              {locale === "ar" && row.name_ar
+                                ? row.name_ar
+                                : row.name_en}
+                              {row.count > 1 ? ` ×${row.count}` : ""}
+                              {row.totalApplied > 0
+                                ? ` (+₪${row.totalApplied.toFixed(2)})`
+                                : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
                     </div>
                   </div>
                   <div className="flex items-center justify-between gap-3 sm:justify-end">
@@ -152,7 +201,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       <button
                         type="button"
                         onClick={() =>
-                          updateQuantity(item.product.id, item.quantity - 1)
+                          updateQuantity(item.lineId, item.quantity - 1)
                         }
                         className="rounded-md p-2 text-ink transition-colors hover:bg-[#D3A94C]/15"
                       >
@@ -164,7 +213,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       <button
                         type="button"
                         onClick={() =>
-                          updateQuantity(item.product.id, item.quantity + 1)
+                          updateQuantity(item.lineId, item.quantity + 1)
                         }
                         className="rounded-md p-2 text-ink transition-colors hover:bg-[#D3A94C]/15"
                       >
@@ -173,7 +222,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => removeItem(item.product.id)}
+                      onClick={() => removeItem(item.lineId)}
                       className="rounded-lg p-2 text-ink-soft/40 transition-colors hover:bg-red-500/[0.08] hover:text-red-600"
                       aria-label="Remove"
                     >

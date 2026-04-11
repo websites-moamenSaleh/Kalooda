@@ -32,6 +32,13 @@ export const translations = {
 
     // Product card
     add: "Add",
+    configure: "Configure",
+    viewDetails: "View details",
+    wizardNext: "Next",
+    wizardBack: "Back",
+    addConfiguredToCart: "Add to cart",
+    optionsStepInvalid: "Complete this step to continue.",
+    optionRemoveOne: "Remove one",
 
     // Cart drawer
     yourCart: "Your Cart",
@@ -202,6 +209,26 @@ export const translations = {
     // Admin nav
     dashboard: "Dashboard",
     functions: "Functions",
+    optionsLibrary: "Options library",
+    createOption: "Create option",
+    addOption: "Add option",
+    optionType: "Type",
+    optionTitleEn: "Title (EN)",
+    optionTitleAr: "Title (AR)",
+    choices: "Choices",
+    choiceNameEn: "Choice name (EN)",
+    choiceNameAr: "Choice name (AR)",
+    priceMarkup: "Price +₪",
+    addChoice: "Add choice",
+    saveOption: "Save option",
+    noOptionsYet: "No global options yet.",
+    noProductOptions: "No options attached. Attach one from the library.",
+    productOptionsUnsavedHint: "You have unsaved changes to product options.",
+    productOptionsSaved: "Product options saved.",
+    productOptionsSaveFailed: "Could not save product options.",
+    attachOption: "Attach option",
+    productOptionsTab: "Product options",
+    productDetailsTab: "Details",
 
     // Product availability (dashboard)
     productAvailability: "Product Availability",
@@ -220,7 +247,6 @@ export const translations = {
     customersLoadFailed: "Could not load customers.",
     searchOrders: "Search orders",
     searchOrdersPlaceholder: "Search by customer, phone, or order ID",
-    viewDetails: "View details",
     searchCustomers: "Search customers",
     searchCustomersPlaceholder: "Search by name or phone",
     noCustomersMatchSearch: "No customers match this search.",
@@ -459,6 +485,13 @@ export const translations = {
 
     // Product card
     add: "أضف",
+    configure: "تخصيص",
+    viewDetails: "عرض التفاصيل",
+    wizardNext: "التالي",
+    wizardBack: "رجوع",
+    addConfiguredToCart: "أضف للسلة",
+    optionsStepInvalid: "أكمل هذه الخطوة للمتابعة.",
+    optionRemoveOne: "إزالة واحدة",
 
     // Cart drawer
     yourCart: "سلة التسوق",
@@ -628,6 +661,26 @@ export const translations = {
     // Admin nav
     dashboard: "لوحة القيادة",
     functions: "الوظائف",
+    optionsLibrary: "مكتبة الخيارات",
+    createOption: "إنشاء خيار",
+    addOption: "إضافة خيار",
+    optionType: "النوع",
+    optionTitleEn: "العنوان (إنجليزي)",
+    optionTitleAr: "العنوان (عربي)",
+    choices: "الاختيارات",
+    choiceNameEn: "اسم الاختيار (إنجليزي)",
+    choiceNameAr: "اسم الاختيار (عربي)",
+    priceMarkup: "سعر إضافي ₪+",
+    addChoice: "إضافة اختيار",
+    saveOption: "حفظ الخيار",
+    noOptionsYet: "لا توجد خيارات عامة بعد.",
+    noProductOptions: "لا خيارات مربوطة. اربط خياراً من المكتبة.",
+    productOptionsUnsavedHint: "لديك تغييرات غير محفوظة على خيارات المنتج.",
+    productOptionsSaved: "تم حفظ خيارات المنتج.",
+    productOptionsSaveFailed: "تعذر حفظ خيارات المنتج.",
+    attachOption: "ربط خيار",
+    productOptionsTab: "خيارات المنتج",
+    productDetailsTab: "التفاصيل",
 
     // Product availability (dashboard)
     productAvailability: "توفر المنتجات",
@@ -646,7 +699,6 @@ export const translations = {
     customersLoadFailed: "تعذر تحميل العملاء.",
     searchOrders: "ابحث في الطلبات",
     searchOrdersPlaceholder: "ابحث باسم العميل أو الهاتف أو رقم الطلب",
-    viewDetails: "عرض التفاصيل",
     searchCustomers: "ابحث في العملاء",
     searchCustomersPlaceholder: "ابحث بالاسم أو رقم الهاتف",
     noCustomersMatchSearch: "لا يوجد عملاء يطابقون البحث.",

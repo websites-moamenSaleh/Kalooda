@@ -6,20 +6,20 @@ A full-stack MVP for a sweets shop with real-time delivery tracking, built with 
 
 | | |
 |---|---|
-| **GitHub** | [github.com/websites-moamenSaleh/Kalooda](https://github.com/websites-moamenSaleh/Kalooda) |
+| **GitHub** | [github.com/VanguardTOfficial/Kalooda](https://github.com/VanguardTOfficial/Kalooda) |
 | **Production** | [www.kaloodasweets.com](https://www.kaloodasweets.com) |
 
 Clone and install:
 
 ```bash
-git clone https://github.com/websites-moamenSaleh/Kalooda.git
+git clone https://github.com/VanguardTOfficial/Kalooda.git
 cd Kalooda
 npm install
 ```
 
 **Vercel:** production deploys use the linked project **`kalooda`**. On a new machine, run `vercel link` (or `npx vercel link`) in the repo root and select that project if you deploy from the CLI.
 
-**Supabase:** use `npx supabase link` (or `supabase link`) against your team project for migrations. If you use **GitHub** in the Supabase Dashboard (e.g. branch previews or integration workflows), set the connected repository to **`websites-moamenSaleh/Kalooda`** so it matches this repo after the organization move.
+**Supabase:** use `npx supabase link` (or `supabase link`) against your team project for migrations. If you use **GitHub** in the Supabase Dashboard (e.g. branch previews or integration workflows), set the connected repository to **`VanguardTOfficial/Kalooda`**.
 
 ## Features
 

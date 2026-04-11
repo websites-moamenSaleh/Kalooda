@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Percent,
   Search,
+  Layers,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import type { Product, Category, Driver } from "@/types/database";
@@ -20,10 +21,12 @@ import { CatalogImageField } from "@/components/admin/catalog-image-field";
 import { AdminConfirmDialog } from "@/components/admin/confirm-dialog";
 import { InlineBanner, inlineBannerErrorTextClassName } from "@/components/inline-banner";
 import { adminUiReducer, initialAdminUiState } from "./admin-ui-reducer";
+import { OptionsLibraryPanel } from "@/components/admin/options/options-library-panel";
+import { ProductOptionsTab } from "@/components/admin/products/product-options-tab";
 
 const PAGE_SIZE = 10;
 
-type FunctionsTab = "products" | "categories" | "drivers" | "sales";
+type FunctionsTab = "products" | "categories" | "drivers" | "sales" | "options";
 
 type SaleDiscountType = "amount" | "percentage";
 type SaleProductMapping = {
@@ -142,6 +145,9 @@ export default function FunctionsPage() {
   const [form, setForm] = useState<ProductFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [langTab, setLangTab] = useState<"en" | "ar">("en");
+  const [productFormTab, setProductFormTab] = useState<"details" | "options">(
+    "details"
+  );
   const [productsVisible, setProductsVisible] = useState(PAGE_SIZE);
   const [productImagePending, setProductImagePending] = useState<File | null>(null);
 
@@ -258,6 +264,7 @@ export default function FunctionsPage() {
     setForm(emptyForm);
     setProductImagePending(null);
     setLangTab("en");
+    setProductFormTab("details");
     setShowForm(true);
   }
 
@@ -267,6 +274,7 @@ export default function FunctionsPage() {
     setForm(productToForm(p));
     setProductImagePending(null);
     setLangTab("en");
+    setProductFormTab("details");
     setShowForm(true);
   }
 
@@ -276,6 +284,7 @@ export default function FunctionsPage() {
     setEditingId(null);
     setForm(emptyForm);
     setProductImagePending(null);
+    setProductFormTab("details");
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -996,7 +1005,9 @@ export default function FunctionsPage() {
 
       {/* Tab nav */}
       <div className="mb-6 flex w-fit gap-1 rounded-xl border border-admin-border bg-admin-panel p-1">
-        {(["products", "categories", "sales", "drivers"] as FunctionsTab[]).map((tab) => (
+        {(
+          ["products", "categories", "sales", "drivers", "options"] as FunctionsTab[]
+        ).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -1013,7 +1024,9 @@ export default function FunctionsPage() {
                 ? t("categories")
                 : tab === "sales"
                   ? t("sales")
-                : t("drivers")}
+                  : tab === "drivers"
+                    ? t("drivers")
+                    : t("optionsLibrary")}
           </button>
         ))}
       </div>
@@ -1062,24 +1075,62 @@ export default function FunctionsPage() {
                 </div>
               ) : null}
 
-              {/* Language tabs */}
-              <div className="mb-4 flex gap-1 rounded-lg bg-[rgba(31,68,60,0.06)] p-1">
-                {(["en", "ar"] as const).map((lang) => (
+              {editingId ? (
+                <div className="mb-4 flex gap-1 rounded-lg bg-[rgba(31,68,60,0.06)] p-1">
                   <button
-                    key={lang}
-                    onClick={() => setLangTab(lang)}
+                    type="button"
+                    onClick={() => setProductFormTab("details")}
                     className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      langTab === lang
+                      productFormTab === "details"
                         ? "bg-[#fffcf8] text-admin-ink shadow-sm"
                         : "text-admin-muted hover:text-admin-ink"
                     }`}
                   >
-                    {lang === "en" ? t("english") : t("arabic")}
+                    {t("productDetailsTab")}
                   </button>
-                ))}
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setProductFormTab("options")}
+                    className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      productFormTab === "options"
+                        ? "bg-[#fffcf8] text-admin-ink shadow-sm"
+                        : "text-admin-muted hover:text-admin-ink"
+                    }`}
+                  >
+                    {t("productOptionsTab")}
+                  </button>
+                </div>
+              ) : null}
 
-              <form onSubmit={handleSave} className="space-y-4">
+              {editingId && productFormTab === "options" ? (
+                <ProductOptionsTab
+                  productId={editingId}
+                  onSaveSuccess={() => {
+                    void fetchProducts();
+                    closeForm();
+                  }}
+                />
+              ) : (
+                <>
+                  {/* Language tabs */}
+                  <div className="mb-4 flex gap-1 rounded-lg bg-[rgba(31,68,60,0.06)] p-1">
+                    {(["en", "ar"] as const).map((lang) => (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => setLangTab(lang)}
+                        className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                          langTab === lang
+                            ? "bg-[#fffcf8] text-admin-ink shadow-sm"
+                            : "text-admin-muted hover:text-admin-ink"
+                        }`}
+                      >
+                        {lang === "en" ? t("english") : t("arabic")}
+                      </button>
+                    ))}
+                  </div>
+
+                  <form onSubmit={handleSave} className="space-y-4">
                 {langTab === "en" ? (
                   <div className="space-y-4">
                     <Field
@@ -1194,6 +1245,8 @@ export default function FunctionsPage() {
                   </button>
                 </div>
               </form>
+                </>
+              )}
             </div>
           )}
 
@@ -1584,6 +1637,21 @@ export default function FunctionsPage() {
               </table>
             </div>
           </div>
+        </section>
+      )}
+
+      {/* ── Options library ── */}
+      {activeTab === "options" && (
+        <section>
+          <div className="mb-4 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Layers className="h-4 w-4 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold text-admin-ink">
+              {t("optionsLibrary")}
+            </h2>
+          </div>
+          <OptionsLibraryPanel />
         </section>
       )}
 

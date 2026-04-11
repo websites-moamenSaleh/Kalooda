@@ -5,6 +5,8 @@ import { useLanguage } from "@/contexts/language-context";
 import { useCart } from "@/contexts/cart-context";
 import { useFlyToCart } from "@/contexts/fly-to-cart-context";
 import type { Order, OrderItem } from "@/types/database";
+import type { CartLineOptionsPersisted } from "@/lib/product-options/types";
+import { isSimpleConfiguration } from "@/lib/product-options/configuration-key";
 import Image from "next/image";
 import { X, Loader2, ShoppingBag } from "lucide-react";
 import type { OrderStatus } from "@/lib/order-status";
@@ -26,7 +28,7 @@ export function OrderDetailModal({
   onClose,
 }: Props) {
   const { t, locale } = useLanguage();
-  const { addItem } = useCart();
+  const { addItem, addItemWithOptions } = useCart();
   const { flyToCart } = useFlyToCart();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
@@ -105,10 +107,26 @@ export function OrderDetailModal({
         description_ar: null,
         ingredients_ar: null,
         unavailable_today: false,
+        effective_price: item.unit_price,
       };
-      // addItem increments by 1 each call — call it quantity times
-      for (let i = 0; i < item.quantity; i++) {
-        addItem(product);
+      const lo = item.line_options;
+      if (
+        lo &&
+        typeof lo === "object" &&
+        "selections" in lo &&
+        !isSimpleConfiguration(
+          (lo as CartLineOptionsPersisted).selections ?? {}
+        )
+      ) {
+        addItemWithOptions(
+          product,
+          lo as CartLineOptionsPersisted,
+          item.quantity
+        );
+      } else {
+        for (let i = 0; i < item.quantity; i++) {
+          addItem(product);
+        }
       }
     });
     flyToCart({ sourceEl: panelRef.current });

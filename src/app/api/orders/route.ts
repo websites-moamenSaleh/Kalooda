@@ -5,10 +5,9 @@ import {
   createOrderBodySchema,
   ORDER_VALIDATION_ERROR,
 } from "@/lib/order-create-body";
-import {
-  computeDiscountedPrice,
-  getActiveSalePricingByProductIds,
-} from "@/lib/sale-pricing";
+import { getActiveSalePricingByProductIds } from "@/lib/sale-pricing";
+import { loadProductOptionsBundlesByProductIds } from "@/lib/load-product-options-bundle";
+import { validateAndBuildOrderLine } from "@/lib/validate-order-line-options";
 
 const ORD_PREFIX = /^ORD-(\d+)$/;
 
@@ -155,7 +154,7 @@ export async function POST(req: NextRequest) {
     const productIds = [...new Set(body.items.map((item) => item.product_id))];
     const { data: productRows, error: productError } = await supabaseAdmin
       .from("products")
-      .select("id, name, name_ar, price")
+      .select("id, name, name_ar, price, image_url")
       .in("id", productIds);
     if (productError) throw productError;
 
@@ -163,28 +162,56 @@ export async function POST(req: NextRequest) {
       (productRows ?? []).map((row) => [String(row.id), row])
     );
     const saleMap = await getActiveSalePricingByProductIds(productIds);
+    const optionBundlesByProductId =
+      await loadProductOptionsBundlesByProductIds(productIds);
 
-    const normalizedItems = body.items.map((item) => {
+    const normalizedItems = [];
+    for (const item of body.items) {
       const product = productMap.get(item.product_id);
       if (!product) {
-        throw Object.assign(new Error("Missing product"), {
-          code: "MISSING_PRODUCT",
-          product_id: item.product_id,
-        });
+        return NextResponse.json(
+          {
+            error: "Invalid product in order",
+            code: ORDER_VALIDATION_ERROR,
+            detail: "MISSING_PRODUCT",
+          },
+          { status: 400 }
+        );
       }
-      const basePrice = Number(product.price) || 0;
       const sale = saleMap.get(item.product_id);
-      const unitPrice = sale
-        ? computeDiscountedPrice(basePrice, sale.discount_value, sale.discount_type)
-        : Math.round(basePrice * 100) / 100;
-      return {
-        product_id: item.product_id,
-        product_name: String(product.name ?? item.product_name),
-        product_name_ar: product.name_ar ? String(product.name_ar) : null,
-        quantity: item.quantity,
-        unit_price: unitPrice,
-      };
-    });
+      try {
+        normalizedItems.push(
+          await validateAndBuildOrderLine(
+            item,
+            {
+              name: String(product.name ?? ""),
+              name_ar: product.name_ar ? String(product.name_ar) : null,
+              price: Number(product.price) || 0,
+              image_url: product.image_url
+                ? String(product.image_url)
+                : null,
+            },
+            sale
+              ? {
+                  discount_type: sale.discount_type,
+                  discount_value: sale.discount_value,
+                }
+              : undefined,
+            optionBundlesByProductId.get(item.product_id)
+          )
+        );
+      } catch (e) {
+        const err = e as Error & { code?: string };
+        return NextResponse.json(
+          {
+            error: err.message || "Order line validation failed",
+            code: ORDER_VALIDATION_ERROR,
+            detail: err.code ?? "ORDER_LINE",
+          },
+          { status: 400 }
+        );
+      }
+    }
     const normalizedTotal = Math.round(
       normalizedItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0) * 100
     ) / 100;
