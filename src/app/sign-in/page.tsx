@@ -129,10 +129,10 @@ function SignInContent() {
           <div className="mt-6 flex flex-col gap-3">
             <button
               type="button"
-              onClick={() => signInWithOAuth("google", { next: nextSafe })}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#1F443C]/12 bg-white py-3 text-sm font-semibold text-ink shadow-sm transition-colors hover:border-[#D3A94C]/35 hover:bg-[#FAFCFB]"
+              disabled
+              className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-[#1F443C]/8 bg-white py-3 text-sm font-semibold text-ink/40 shadow-sm opacity-50"
             >
-              <svg className="h-5 w-5" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 opacity-50" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
                   fill="#4285F4"
