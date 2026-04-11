@@ -212,6 +212,11 @@ export default function CheckoutPage() {
         setSubmissionPhase("idle");
         return;
       }
+      if (res.status === 403 && data?.code === "PHONE_NOT_VERIFIED") {
+        setCheckoutBanner({ type: "error", message: t("orderBlockedUnverifiedPhone") });
+        setSubmissionPhase("idle");
+        return;
+      }
       if (res.status === 400 && data?.code === ORDER_VALIDATION_ERROR) {
         setCheckoutBanner({ type: "error", message: t("orderInvalidRequest") });
         setSubmissionPhase("idle");

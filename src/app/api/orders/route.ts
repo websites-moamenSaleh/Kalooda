@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
 
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("full_name, phone")
+      .select("full_name, phone, phone_verified")
       .eq("id", userId)
       .maybeSingle();
 
@@ -108,6 +108,14 @@ export async function POST(req: NextRequest) {
           code: "PROFILE_INCOMPLETE",
         },
         { status: 400 }
+      );
+    }
+
+    // Block order if a phone is on the profile but hasn't been verified
+    if (profile.phone && !profile.phone_verified) {
+      return NextResponse.json(
+        { error: "Phone number not verified.", code: "PHONE_NOT_VERIFIED" },
+        { status: 403 }
       );
     }
 

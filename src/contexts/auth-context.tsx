@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("id, role, full_name, phone, preferred_language, delivery_address")
+      .select("id, role, full_name, phone, phone_verified, preferred_language, delivery_address")
       .eq("id", userId)
       .single();
     setProfile(data as Profile | null);
@@ -250,7 +250,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
           return "adminPortal";
         }
-        router.push(postCustomerAuthPath());
+        // If a phone was provided and not yet verified, go to OTP verification
+        if (phone && !p?.phone_verified) {
+          const dest = postCustomerAuthPath();
+          const next = dest !== "/" ? `?next=${encodeURIComponent(dest)}` : "";
+          router.push(`/auth/verify-phone${next}`);
+        } else {
+          router.push(postCustomerAuthPath());
+        }
       } else {
         router.push("/sign-in?message=confirm-email");
       }
