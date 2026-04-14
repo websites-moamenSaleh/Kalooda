@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /**
  * Extra dev origins for cross-origin checks on `/_next/*` (Next 16+).
@@ -30,4 +31,16 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: "vanguardt",
+  project: "kalooda",
+
+  // Upload source maps to Sentry for readable stack traces
+  // Requires SENTRY_AUTH_TOKEN env var (set in Vercel, not committed)
+  silent: true,
+  disableLogger: true,
+
+  // Automatically instrument server components and API routes
+  autoInstrumentServerFunctions: true,
+  autoInstrumentMiddleware: true,
+});
