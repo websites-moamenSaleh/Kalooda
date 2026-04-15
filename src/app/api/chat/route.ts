@@ -1,157 +1,118 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { chatCompletion, type ChatMessage } from "@/lib/ai";
 
 interface ProductRow {
   name: string;
   name_ar: string | null;
   price: number;
   allergens: string[];
-  ingredients: string;
-  ingredients_ar: string | null;
-  description: string;
-  description_ar: string | null;
+  allergens_ar: string[] | null;
   unavailable_today: boolean;
 }
 
 async function getProducts(): Promise<ProductRow[]> {
   const { data, error } = await supabaseAdmin
     .from("products")
-    .select(
-      "name, name_ar, price, allergens, ingredients, ingredients_ar, description, description_ar, unavailable_today"
-    );
-
+    .select("name, name_ar, price, allergens, allergens_ar, unavailable_today");
   if (error) throw error;
-  return (data ?? []).filter((p: ProductRow) => !p.unavailable_today);
+  return data ?? [];
 }
 
-function buildSystemPrompt(products: ProductRow[]): string {
-  return `You are SweetBot, the friendly AI assistant for SweetDrop, a premium sweets and candy shop.
+function buildSystemPrompt(products: ProductRow[], lang: "ar" | "en"): string {
+  const available = products.filter((p) => !p.unavailable_today);
+  const unavailable = products.filter((p) => p.unavailable_today);
 
-Your responsibilities:
-1. Help customers find products and answer questions about ingredients and allergens.
-2. When a customer asks about allergies, ALWAYS check the product data below and give specific, accurate answers.
-3. If a product contains an allergen the customer asked about, warn them clearly.
-4. Be warm, helpful, and concise. Use emojis sparingly.
+  const formatProduct = (p: ProductRow) => {
+    const name = lang === "ar" && p.name_ar ? p.name_ar : p.name;
+    const allergens =
+      p.allergens.length > 0
+        ? (lang === "ar" && p.allergens_ar?.length
+            ? p.allergens_ar
+            : p.allergens
+          ).join(", ")
+        : lang === "ar"
+          ? "لا يوجد"
+          : "none";
+    return `• **${name}** — ₪${p.price} | ${allergens}`;
+  };
 
-PRODUCT DATA:
-${products
-  .map(
-    (p) =>
-      `- ${p.name} (₪${p.price}) | Allergens: ${p.allergens.length ? p.allergens.join(", ") : "none"} | Ingredients: ${p.ingredients}`
-  )
-  .join("\n")}
+  const langDirective =
+    lang === "ar"
+      ? "LANGUAGE: Arabic only (العربية فقط). Every word of your response must be in Arabic. Do not use English, Spanish, or any other language."
+      : "LANGUAGE: English only. Every word of your response must be in English. Do not use Arabic, Spanish, or any other language.";
 
-RULES:
-- Never invent products that are not in the list above.
-- If someone asks about a product you don't have data for, say so honestly.
-- If asked about delivery, tell them we offer same-day delivery in the metro area.
-- Keep answers under 3 sentences unless the customer asks for details.`;
+  return `${langDirective}
+
+You are the customer assistant for Kalooda, a premium sweets shop. Your only purpose is to help customers with Kalooda products — what's available, prices, ingredients, and allergens. Nothing else.
+
+STRICT SCOPE:
+- You ONLY answer questions about Kalooda products, availability, allergens, and ingredients
+- If the customer asks about ANYTHING else — weather, news, general knowledge, other businesses, coding, or any off-topic subject — respond with a single short sentence declining and redirect to products. Do not engage with the topic at all, even briefly.
+- Do not answer hypothetical or general food questions not tied to a specific Kalooda product
+
+DATA INTEGRITY — CRITICAL:
+- The ONLY products that exist are those listed below. Do not mention, suggest, or invent any product not in the list.
+- The ONLY allergens that exist are those listed below for each product. Do not use your own knowledge about food ingredients or allergens. If a product has no allergens listed, say it has none.
+- If the available list is empty, tell the customer nothing is available today and do not suggest any products.
+
+RESPONSE RULES:
+- Be concise — 1 to 3 sentences for simple questions
+- Use **bold** for product names
+- Use bullet points when listing multiple items
+- When asked about availability: list available products briefly (max 6) — never dump the full catalog
+- When asked about a specific allergen: only list products from the data below that contain it
+- When asked about a specific product: answer about that product only using only the data below
+- Never volunteer information that wasn't asked for
+
+AVAILABLE TODAY (${available.length}):
+${available.map(formatProduct).join("\n")}
+
+${
+  unavailable.length > 0
+    ? `UNAVAILABLE TODAY (${unavailable.length}):
+${unavailable.map((p) => `• ${lang === "ar" && p.name_ar ? p.name_ar : p.name}`).join("\n")}`
+    : ""
+}
+
+FORMAT: allergens column shows what each product contains (or "none"/"لا يوجد").
+
+REMINDER: Respond in ${lang === "ar" ? "Arabic (العربية) only" : "English only"}. No other language is acceptable.`;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json();
-    const products = await getProducts();
+    const { messages, lang } = (await req.json()) as {
+      messages: ChatMessage[];
+      lang?: "ar" | "en";
+    };
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey || apiKey === "your_openai_api_key") {
-      return fallbackReply(messages, products);
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ error: "Invalid messages" }, { status: 400 });
     }
 
-    const { default: OpenAI } = await import("openai");
-    const openai = new OpenAI({ apiKey });
+    const products = await getProducts();
+    const resolvedLang = lang === "ar" ? "ar" : "en";
+    const available = products.filter((p) => !p.unavailable_today);
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: buildSystemPrompt(products) },
-        ...messages.map((m: { role: string; content: string }) => ({
-          role: m.role,
-          content: m.content,
-        })),
-      ],
-      max_tokens: 300,
-      temperature: 0.7,
-    });
+    if (available.length === 0) {
+      const reply =
+        resolvedLang === "ar"
+          ? "عذرًا، لا تتوفر منتجات متاحة اليوم. يرجى التحقق مرة أخرى لاحقًا."
+          : "Sorry, no products are available today. Please check back later.";
+      return NextResponse.json({ reply });
+    }
 
-    return NextResponse.json({
-      reply:
-        completion.choices[0]?.message?.content ??
-        "I'm not sure how to answer that.",
-    });
+    const systemPrompt = buildSystemPrompt(products, resolvedLang);
+    const reply = await chatCompletion(systemPrompt, messages);
+    return NextResponse.json({ reply });
   } catch (err) {
+    const message =
+      err instanceof Error && err.message.includes("not configured")
+        ? "AI assistant is not available yet."
+        : "Sorry, I'm having trouble right now. Please try again later.";
+
     console.error("Chat error:", err);
-    return NextResponse.json(
-      {
-        reply: "Sorry, I'm having trouble right now. Please try again later.",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ reply: message });
   }
-}
-
-function fallbackReply(
-  messages: { role: string; content: string }[],
-  products: ProductRow[]
-) {
-  const last = messages[messages.length - 1]?.content?.toLowerCase() ?? "";
-
-  if (last.includes("allerg")) {
-    const warnings = products
-      .filter((p) => p.allergens.length > 0)
-      .map((p) => `${p.name}: contains ${p.allergens.join(", ")}`)
-      .join("\n");
-    return NextResponse.json({
-      reply: `Here are products with allergens:\n${warnings}\n\nLet me know if you need details on a specific item!`,
-    });
-  }
-
-  if (
-    last.includes("dairy") ||
-    last.includes("soy") ||
-    last.includes("gluten") ||
-    last.includes("nut") ||
-    last.includes("egg")
-  ) {
-    const allergen =
-      ["dairy", "soy", "gluten", "nuts", "eggs"].find((a) =>
-        last.includes(a.replace("s", ""))
-      ) ?? "";
-    const safe = products.filter(
-      (p) => !p.allergens.some((a) => a.includes(allergen.replace("s", "")))
-    );
-    const unsafe = products.filter((p) =>
-      p.allergens.some((a) => a.includes(allergen.replace("s", "")))
-    );
-
-    let reply = "";
-    if (unsafe.length)
-      reply += `⚠️ Contains ${allergen}: ${unsafe.map((p) => p.name).join(", ")}\n`;
-    if (safe.length)
-      reply += `✅ ${allergen}-free options: ${safe.map((p) => p.name).join(", ")}`;
-    return NextResponse.json({
-      reply:
-        reply ||
-        "I could not find specific allergen info. Please ask about a specific allergen.",
-    });
-  }
-
-  if (last.includes("deliver")) {
-    return NextResponse.json({
-      reply: "We offer same-day delivery in the metro area! Delivery is tracked in real-time.",
-    });
-  }
-
-  const matchedProduct = products.find((p) =>
-    last.includes(p.name.toLowerCase().split(" ")[0])
-  );
-  if (matchedProduct) {
-    return NextResponse.json({
-      reply: `${matchedProduct.name} (₪${matchedProduct.price}) — ${matchedProduct.description}\nIngredients: ${matchedProduct.ingredients}\nAllergens: ${matchedProduct.allergens.length ? matchedProduct.allergens.join(", ") : "none"}`,
-    });
-  }
-
-  return NextResponse.json({
-    reply: "I can help you with our products, ingredients, and allergy info! Just ask about a specific product or allergen.",
-  });
 }

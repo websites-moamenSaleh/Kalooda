@@ -54,8 +54,8 @@ export default function HomePage() {
     ])
       .then(([cats, prods]) => {
         if (cancelled) return;
-        setCategories(cats);
-        setProducts(prods);
+        setCategories(Array.isArray(cats) ? cats : []);
+        setProducts(Array.isArray(prods) ? prods : []);
       })
       .catch((err) => console.error("Failed to load data:", err))
       .finally(() => {

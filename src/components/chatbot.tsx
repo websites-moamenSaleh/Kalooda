@@ -9,8 +9,63 @@ interface Message {
   content: string;
 }
 
+function renderInline(text: string): React.ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={i} className="font-semibold text-[#FFEC94]">
+        {part.slice(2, -2)}
+      </strong>
+    ) : (
+      part
+    )
+  );
+}
+
+function MarkdownMessage({ content }: { content: string }) {
+  const lines = content.split("\n");
+  const nodes: React.ReactNode[] = [];
+  let listItems: React.ReactNode[] = [];
+
+  const flushList = () => {
+    if (listItems.length > 0) {
+      nodes.push(
+        <ul key={nodes.length} className="mt-1.5 space-y-1 ps-1">
+          {listItems}
+        </ul>
+      );
+      listItems = [];
+    }
+  };
+
+  lines.forEach((line, i) => {
+    const isBullet = /^[-•*]\s/.test(line);
+    if (isBullet) {
+      const text = line.replace(/^[-•*]\s/, "");
+      listItems.push(
+        <li key={i} className="flex gap-1.5">
+          <span className="mt-0.5 shrink-0 text-[#D3A94C]">•</span>
+          <span>{renderInline(text)}</span>
+        </li>
+      );
+    } else {
+      flushList();
+      if (line.trim() !== "") {
+        nodes.push(
+          <p key={i} className={nodes.length > 0 ? "mt-2" : ""}>
+            {renderInline(line)}
+          </p>
+        );
+      }
+    }
+  });
+
+  flushList();
+
+  return <div className="text-sm leading-relaxed">{nodes}</div>;
+}
+
 export function Chatbot() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -45,7 +100,7 @@ export function Chatbot() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...messages, userMsg] }),
+        body: JSON.stringify({ messages: [...messages, userMsg], lang: locale }),
       });
       const data = await res.json();
       setMessages((prev) => [
@@ -112,13 +167,17 @@ export function Chatbot() {
                   )}
                 </div>
                 <div
-                  className={`max-w-[82%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                  className={`max-w-[82%] rounded-xl px-3.5 py-2.5 ${
                     msg.role === "user"
-                      ? "bg-gradient-to-br from-[#E6BE68] to-[#D3A94C] text-[#082018]"
+                      ? "bg-gradient-to-br from-[#E6BE68] to-[#D3A94C] text-sm leading-relaxed text-[#082018]"
                       : "border border-[#D3A94C]/12 bg-[#082018]/80 text-[#E5EDE8]"
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === "user" ? (
+                    msg.content
+                  ) : (
+                    <MarkdownMessage content={msg.content} />
+                  )}
                 </div>
               </div>
             ))}
