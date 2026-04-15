@@ -1,7 +1,7 @@
 # GitHub issue execution order (Kalooda)
 
 **Purpose:** Recommended order for open work, derived from **blocking** dependencies only (no cycles).  
-**Last updated:** 2026-04-07
+**Last updated:** 2026-04-15
 
 > **Agent maintenance:** Whenever a tracked issue is **completed** (closed as done, or explicitly verified shipped), update this file: adjust phases, mark items done, refresh the diagram, and bump **Last updated**.
 
@@ -17,6 +17,7 @@ These are closed or no longer gate other work; kept for context when reading iss
 - **#57** — Unavailable-today storefront UX (chatbot #29 still references behavior)
 - **#41** — Checkout delivery/pickup, address, cash on delivery; profile saved address
 - **#28** — Customer `/account/orders` Realtime (status + delete sync), live modal status, shared status badge colors with admin (PR #103; optional admin “new order” toast/sound not in scope)
+- **#51** — Delivery zones (PostGIS geofencing shipped in PR #130)
 
 ---
 
@@ -34,7 +35,6 @@ Read **top to bottom**; within a wave, items can run **in parallel** unless a ro
 | **3**       | **#72** *after #49*                | Admin redesign (tabs, search).                                                                                 |
 | **3**       | **#40** *after #74*                | Phone OTP (uses rate limits from #74).                                                                         |
 | **3**       | **#55** *after #74*                | Card payments.                                                                                                 |
-| **3**       | **#51** *after #66*                | Delivery zones.                                                                                                |
 | **4**       | **#53** *after #40 + #72*          | Customer blacklist (Customers tab + verified phones).                                                          |
 | **4**       | **#52** *after #49 + #72*          | Admin analytics.                                                                                               |
 | **4**       | **#75** *after #72*                | Product sales / strikethrough pricing (also needs DB work; see issue).                                         |
@@ -67,7 +67,6 @@ flowchart TB
     I72["#72 Admin tabs"]
     I40["#40 Phone OTP"]
     I55["#55 Card pay"]
-    I51["#51 Delivery zones"]
   end
 
   subgraph W4["Wave 4 — features on new admin"]
@@ -82,8 +81,6 @@ flowchart TB
   I49 --> I72
   I74 --> I40
   I74 --> I55
-
-  I66 --> I51
 
   I40 --> I53
   I72 --> I53
