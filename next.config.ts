@@ -33,14 +33,17 @@ const nextConfig: NextConfig = {
 
 export default withSentryConfig(nextConfig, {
   org: "vanguardt",
-  project: "kalooda",
+  project: "javascript-nextjs",
 
-  // Upload source maps to Sentry for readable stack traces
-  // Requires SENTRY_AUTH_TOKEN env var (set in Vercel, not committed)
+  // Upload source maps to Sentry for readable stack traces.
+  // Requires SENTRY_AUTH_TOKEN env var (set in Vercel, not committed).
   silent: true,
-  disableLogger: true,
 
-  // Automatically instrument server components and API routes
-  autoInstrumentServerFunctions: true,
-  autoInstrumentMiddleware: true,
+  webpack: {
+    autoInstrumentServerFunctions: true,
+    autoInstrumentMiddleware: true,
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 });
