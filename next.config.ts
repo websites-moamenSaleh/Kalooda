@@ -31,19 +31,17 @@ const nextConfig: NextConfig = {
   },
 };
 
+const isDev = process.env.NODE_ENV === "development";
+
 export default withSentryConfig(nextConfig, {
   org: "vanguardt",
   project: "javascript-nextjs",
-
-  // Upload source maps to Sentry for readable stack traces.
-  // Requires SENTRY_AUTH_TOKEN env var (set in Vercel, not committed).
   silent: true,
 
-  webpack: {
-    autoInstrumentServerFunctions: true,
-    autoInstrumentMiddleware: true,
-    treeshake: {
-      removeDebugLogging: true,
-    },
-  },
+  // In development, skip source maps and auto-instrumentation — Sentry loads
+  // OpenTelemetry and dozens of integrations even when disabled, causing
+  // significant dev server overhead with no benefit locally.
+  sourcemaps: { disable: isDev },
+  autoInstrumentServerFunctions: !isDev,
+  autoInstrumentMiddleware: !isDev,
 });
