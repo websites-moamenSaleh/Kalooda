@@ -9,6 +9,11 @@ export async function GET(
 ) {
   const { id: productId } = await params;
 
+  // SENTRY TEST — remove after confirming error capture in production
+  if (productId === "sentry-test") {
+    throw new Error("Sentry test error — intentional, safe to resolve");
+  }
+
   const { data: product, error: pErr } = await supabaseAdmin
     .from("products")
     .select("id")
