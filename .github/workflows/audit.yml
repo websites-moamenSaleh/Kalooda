@@ -6,6 +6,9 @@ on:
     - cron: "0 9 * * 1"
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   audit:
     name: npm audit
@@ -16,11 +19,33 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
       - name: Audit
-        run: npm audit --audit-level=high
+        id: audit
+        run: |
+          set +e
+          npm audit --audit-level=high --json > audit_result.json 2>&1
+          EXIT_CODE=$?
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          set -e
+
+      - name: Post to Slack
+        if: always()
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          if [ "${{ steps.audit.outputs.exit_code }}" = "0" ]; then
+            TEXT=":white_check_mark: *Weekly dependency audit passed* — no high or critical vulnerabilities found."
+          else
+            VULNS=$(cat audit_result.json | node -e "const d=require('fs').readFileSync('/dev/stdin','utf8'); const j=JSON.parse(d); console.log(j.metadata?.vulnerabilities ? JSON.stringify(j.metadata.vulnerabilities) : 'unknown')" 2>/dev/null || echo "check GitHub Actions for details")
+            TEXT=":warning: *Weekly dependency audit found vulnerabilities* — $VULNS\nSee: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
+          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"channel\": \"C0ASJHCE9AR\", \"text\": \"$TEXT\"}"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
@@ -11,15 +11,10 @@ import { useAuth } from "@/contexts/auth-context";
 export default function ForgotPasswordPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(user?.email ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Pre-fill email from logged-in user
-  useEffect(() => {
-    if (user?.email) setEmail(user.email);
-  }, [user]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
