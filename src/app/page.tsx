@@ -270,7 +270,8 @@ export default function HomePage() {
       </main>
 
       <SiteFooter />
-      <Chatbot />
+      {/* Chatbot disabled — feature not ready for production */}
+      {/* <Chatbot /> */}
     </>
   );
 }
