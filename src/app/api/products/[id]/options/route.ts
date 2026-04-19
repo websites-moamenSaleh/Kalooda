@@ -12,7 +12,7 @@ export async function GET(
 
   // SENTRY TEST — remove after testing webhook
   if (productId === "sentry-test") {
-    const err = new Error("Sentry webhook test — verifying full alert pipeline");
+    const err = new Error("Sentry legacy webhook test — checking plugin payload");
     Sentry.captureException(err);
     await Sentry.flush(2000);
     return NextResponse.json({ error: "sentry-test triggered" }, { status: 500 });
