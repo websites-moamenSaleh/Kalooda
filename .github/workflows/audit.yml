@@ -2,8 +2,8 @@ name: Dependency Audit
 
 on:
   schedule:
-    # Every Monday at 09:00 UTC
-    - cron: "0 9 * * 1"
+    # Every Monday at 09:00 Israel time (UTC+3 summer / UTC+2 winter)
+    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 env:
