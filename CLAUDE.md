@@ -1,5 +1,40 @@
 @AGENTS.md
 
+# Project Briefing
+
+**Kalooda** — a multi-tenant sweets shop platform built by VanguardT (2 devs: AbedAwaisy + moamenSaleh-ghub).
+Full integration map and secrets reference: `docs/integrations.md` — read it when context on any service is needed.
+
+## Stack
+- **Frontend/API:** Next.js 16 (App Router, TypeScript) hosted on Vercel (vanguardtechnologies-team, free/Hobby plan)
+- **Database:** Supabase (Frankfurt, project `mxbnmoagdufitnwrmsrn`)
+- **Error monitoring:** Sentry (EU region, org `vanguardt`, project `javascript-nextjs`)
+- **Team comms:** Slack workspace `vanguardt.slack.com`
+- **Repo:** `VanguardTOfficial/Kalooda` (public, GitHub free plan)
+- **CI:** GitHub Actions — type check + lint + build on every PR; weekly npm audit → `#kalooda-alerts`
+
+## Key constraints
+- Vercel Hobby plan: no private org repos, no log drains, 1h log retention
+- Branch protection on `main`: CI must pass + 1 reviewer approval required
+- Never push directly to `main` — all changes via PR
+- Toggling repo visibility may silently drop branch protection reviewer rule — verify after
+
+## MCP & CLI tools available
+- `mcp__slack__*` — read/post to Slack channels
+- `mcp__sentry__*` — query/triage Sentry issues
+- `mcp__supabase__*` — DB operations (no destructive ops without explicit user request)
+- `mcp__gdrive__*` — Google Drive (Kalooda folder ID: `1iTxRbSysblrslKFWzozPCGVUleCw7bmN`)
+- `vercel` CLI — env vars, deployments, logs (token: `vcp_2DBV...` in terminal sessions)
+- `sentry` CLI — authenticated at `~/.sentry/cli.db`, token expires 2026-05-15
+- `gh` CLI — GitHub API access
+
+## Active Vercel env vars (production)
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+`NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`,
+`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SLACK_BOT_TOKEN`, `OPENAI_API_KEY`
+
+---
+
 # Startup
 
 At the start of every new chat session, sync with the default branch before other work:
