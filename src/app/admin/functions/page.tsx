@@ -25,6 +25,7 @@ import { InlineBanner, inlineBannerErrorTextClassName } from "@/components/inlin
 import { adminUiReducer, initialAdminUiState } from "./admin-ui-reducer";
 import { OptionsLibraryPanel } from "@/components/admin/options/options-library-panel";
 import { ProductOptionsTab } from "@/components/admin/products/product-options-tab";
+import { ModalBackdrop } from "@/components/ui/modal-backdrop";
 
 const PAGE_SIZE = 10;
 
@@ -970,20 +971,16 @@ export default function FunctionsPage() {
       />
 
       {showForm ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        <ModalBackdrop
+          onClose={closeForm}
+          disabled={saving || !!(editingId && productFormTab === "options")}
           role="dialog"
           aria-modal
           aria-labelledby="product-form-title"
-          onClick={() => {
-            if (saving) return;
-            if (editingId && productFormTab === "options") return;
-            closeForm();
-          }}
         >
           <div
             className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-admin-border bg-admin-panel p-6 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 id="product-form-title" className="font-semibold text-admin-ink">
@@ -1179,22 +1176,20 @@ export default function FunctionsPage() {
               </>
             )}
           </div>
-        </div>
+        </ModalBackdrop>
       ) : null}
 
       {categoryAddOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        <ModalBackdrop
+          onClose={closeCategoryAdd}
+          disabled={addingCategory}
           role="dialog"
           aria-modal
           aria-labelledby="category-add-title"
-          onClick={() => {
-            if (!addingCategory) closeCategoryAdd();
-          }}
         >
           <div
             className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-admin-border bg-admin-panel p-6 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 id="category-add-title" className="font-semibold text-admin-ink">
@@ -1270,22 +1265,20 @@ export default function FunctionsPage() {
               </div>
             </form>
           </div>
-        </div>
+        </ModalBackdrop>
       ) : null}
 
       {driverAddOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        <ModalBackdrop
+          onClose={closeDriverAdd}
+          disabled={addingDriver}
           role="dialog"
           aria-modal
           aria-labelledby="driver-add-title"
-          onClick={() => {
-            if (!addingDriver) closeDriverAdd();
-          }}
         >
           <div
             className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-admin-border bg-admin-panel p-6 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 id="driver-add-title" className="font-semibold text-admin-ink">
@@ -1350,7 +1343,7 @@ export default function FunctionsPage() {
               </div>
             </form>
           </div>
-        </div>
+        </ModalBackdrop>
       ) : null}
 
       {/* Category edit modal */}
