@@ -48,7 +48,13 @@ export async function POST(req: NextRequest) {
   } else if (body.event) {
     // Legacy webhook plugin format: { project, message, event, url, level }
     const event = body.event as Record<string, unknown>;
-    title = (body.message as string) ?? (event.title as string) ?? "Unknown error";
+    // message is empty for captureException — fall back to event.exception or event.type
+    const exception = event.exception as Record<string, unknown> | undefined;
+    const firstValue = (exception?.values as Array<Record<string, unknown>>)?.[0];
+    const exceptionTitle = firstValue
+      ? `${firstValue.type ?? ""}: ${firstValue.value ?? ""}`.trim().replace(/^:\s*/, "")
+      : undefined;
+    title = (body.message as string) || (event.title as string) || exceptionTitle || "Unknown error";
     culprit = (event.culprit as string) ?? "";
     permalink = (body.url as string) ?? "";
     level = (body.level as string) ?? "error";
