@@ -17,6 +17,7 @@ import { isSimpleConfiguration } from "@/lib/product-options/configuration-key";
 import type { SnapshotChoiceLine } from "@/lib/product-options/types";
 import type { CustomerAddress } from "@/types/database";
 import { AddressEditor, type AddressDraft } from "@/components/address-editor";
+import { addressManualEntryNeedsListPick } from "@/lib/address-draft";
 import dynamic from "next/dynamic";
 
 type CheckoutBanner =
@@ -63,6 +64,10 @@ function aggregateSnapshotLines(lines: SnapshotChoiceLine[]) {
   return [...map.entries()].map(([key, value]) => ({ key, ...value }));
 }
 
+function addressHasCoordinates(address: CustomerAddress) {
+  return address.latitude != null && address.longitude != null;
+}
+
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart, clearRemoteCart, cartReady } = useCart();
   const { t, locale } = useLanguage();
@@ -90,6 +95,7 @@ export default function CheckoutPage() {
     place_id: null,
     latitude: null,
     longitude: null,
+    location_source: null,
     is_default: false,
   });
   const [deliveryZoneValidation, setDeliveryZoneValidation] =
@@ -158,7 +164,11 @@ export default function CheckoutPage() {
       if (!active) return;
       const list = (addressJson?.data ?? []) as CustomerAddress[];
       setAddresses(list);
-      const defaultAddr = list.find((item) => item.is_default) ?? list[0];
+      const defaultAddr =
+        list.find((item) => item.is_default && addressHasCoordinates(item)) ??
+        list.find(addressHasCoordinates) ??
+        list.find((item) => item.is_default) ??
+        list[0];
       if (defaultAddr) {
         setSelectedAddressId(defaultAddr.id);
         setDeliveryAddress(
@@ -248,6 +258,22 @@ export default function CheckoutPage() {
       });
       return;
     }
+    if (fulfillmentType === "delivery") {
+      if (!selectedAddressId && addressManualEntryNeedsListPick(addressDraft)) {
+        setCheckoutBanner({
+          type: "error",
+          message: t("addressPickFromListRequired"),
+        });
+        return;
+      }
+      if (deliveryLat == null || deliveryLng == null) {
+        setCheckoutBanner({
+          type: "error",
+          message: t("addressCoordinatesRequired"),
+        });
+        return;
+      }
+    }
     if (
       fulfillmentType === "delivery" &&
       effectiveDeliveryZoneValidation.state === "blocked"
@@ -316,7 +342,13 @@ export default function CheckoutPage() {
         return;
       }
       if (res.status === 400 && data?.code === ORDER_VALIDATION_ERROR) {
-        setCheckoutBanner({ type: "error", message: t("orderInvalidRequest") });
+        setCheckoutBanner({
+          type: "error",
+          message:
+            data?.detail === "MISSING_DELIVERY_COORDINATES"
+              ? t("addressCoordinatesRequired")
+              : t("orderInvalidRequest"),
+        });
         setSubmissionPhase("idle");
         return;
       }
@@ -459,7 +491,7 @@ export default function CheckoutPage() {
                           width={40}
                           height={40}
                           sizes="40px"
-                          className="rounded-lg object-cover shrink-0"
+                          className="h-10 w-10 shrink-0 rounded-lg object-cover"
                         />
                       ) : (
                         <div className="h-10 w-10 rounded-lg bg-[#1F443C]/8 shrink-0" />
@@ -483,8 +515,10 @@ export default function CheckoutPage() {
                                   ? row.name_ar
                                   : row.name_en}
                                 {row.count > 1 ? ` ×${row.count}` : ""}
-                                {row.totalApplied > 0
-                                  ? ` (+₪${row.totalApplied.toFixed(2)})`
+                                {row.totalApplied !== 0
+                                  ? ` (${row.totalApplied > 0 ? "+" : "-"}₪${Math.abs(
+                                      row.totalApplied
+                                    ).toFixed(2)})`
                                   : ""}
                               </li>
                             ))}
@@ -682,6 +716,24 @@ export default function CheckoutPage() {
                       <button
                         type="button"
                         onClick={async () => {
+                          if (
+                            !addressDraft.city.trim() ||
+                            !addressDraft.street_line.trim() ||
+                            !addressDraft.building_number.trim()
+                          ) {
+                            setCheckoutBanner({
+                              type: "error",
+                              message: t("addressThreeSectionsRequired"),
+                            });
+                            return;
+                          }
+                          if (addressManualEntryNeedsListPick(addressDraft)) {
+                            setCheckoutBanner({
+                              type: "error",
+                              message: t("addressPickFromListRequired"),
+                            });
+                            return;
+                          }
                           const payload = {
                             label_type: addressDraft.label_type,
                             custom_label: addressDraft.custom_label.trim() || null,
@@ -692,12 +744,24 @@ export default function CheckoutPage() {
                             longitude: addressDraft.longitude,
                             is_default: addresses.length === 0,
                           };
-                          const res = await fetch("/api/addresses", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(payload),
-                          });
-                          const data = await res.json();
+                          let res: Response;
+                          try {
+                            res = await fetch("/api/addresses", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify(payload),
+                            });
+                          } catch {
+                            setCheckoutBanner({
+                              type: "error",
+                              message: t("addressSaveNetworkError"),
+                            });
+                            return;
+                          }
+                          const data = (await res.json().catch(() => null)) as {
+                            code?: string;
+                            data?: CustomerAddress;
+                          } | null;
                           if (!res.ok) {
                             setCheckoutBanner({
                               type: "error",
@@ -708,7 +772,14 @@ export default function CheckoutPage() {
                             });
                             return;
                           }
-                          const next = data.data as CustomerAddress;
+                          const next = data?.data;
+                          if (!next) {
+                            setCheckoutBanner({
+                              type: "error",
+                              message: t("addressSaveFailed"),
+                            });
+                            return;
+                          }
                           const refreshed = [next, ...addresses];
                           setAddresses(refreshed);
                           setSelectedAddressId(next.id);
@@ -728,6 +799,7 @@ export default function CheckoutPage() {
                             place_id: null,
                             latitude: null,
                             longitude: null,
+                            location_source: null,
                             is_default: false,
                           });
                         }}

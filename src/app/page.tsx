@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { CategoryCard } from "@/components/category-card";
@@ -30,6 +30,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [menuCategoryId, setMenuCategoryId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const menuProductsRef = useRef<HTMLDivElement | null>(null);
+  const shouldScrollToMenuProductsRef = useRef(false);
   const { t } = useLanguage();
   const { user } = useAuth();
 
@@ -83,10 +85,36 @@ export default function HomePage() {
     [products, menuCategoryId]
   );
 
+  useEffect(() => {
+    if (
+      !shouldScrollToMenuProductsRef.current ||
+      loading ||
+      menuCategoryId === null
+    ) {
+      return;
+    }
+
+    shouldScrollToMenuProductsRef.current = false;
+    const frameId = window.requestAnimationFrame(() => {
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+      menuProductsRef.current?.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [loading, menuCategoryId, menuCategoryProducts.length]);
+
   function handleMenuCategorySelect(categoryId: string) {
-    setMenuCategoryId((prev) =>
-      prev === categoryId ? null : categoryId
-    );
+    setMenuCategoryId((prev) => {
+      const nextCategoryId = prev === categoryId ? null : categoryId;
+      shouldScrollToMenuProductsRef.current = nextCategoryId !== null;
+      return nextCategoryId;
+    });
   }
 
   return (
@@ -114,7 +142,7 @@ export default function HomePage() {
                   alt="Kalooda"
                   width={3429}
                   height={1764}
-                  className="h-auto w-full max-w-[260px] object-contain sm:max-w-[340px] lg:max-w-[400px]"
+                  className="brand-logo-outline h-auto w-full max-w-[260px] object-contain sm:max-w-[340px] lg:max-w-[400px]"
                   priority
                 />
               </h1>
@@ -199,7 +227,7 @@ export default function HomePage() {
               )}
             </div>
 
-            <div className="mt-12">
+            <div ref={menuProductsRef} className="mt-12 scroll-mt-24">
               {menuCategoryId !== null && loading ? (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {[...Array(4)].map((_, i) => (

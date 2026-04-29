@@ -70,12 +70,15 @@ export function canAdminSetStatus(params: {
   return iTo > iFrom;
 }
 
-/** Driver magic-link: unchanged — only pending → preparing. */
+/** Driver magic-link: only the driver-owned delivery steps. */
 export function canTokenSetStatus(
   from: OrderStatus,
   to: OrderStatus
 ): boolean {
-  return from === "pending" && to === "preparing";
+  return (
+    (from === "preparing" && to === "out_for_delivery") ||
+    (from === "out_for_delivery" && to === "completed")
+  );
 }
 
 export function adminSelectableStatuses(params: {
@@ -92,6 +95,18 @@ export function adminSelectableStatuses(params: {
     return [...flow];
   }
   return flow.slice(i);
+}
+
+export function nextAdminOrderStatus(params: {
+  current: OrderStatus | "cancelled";
+  fulfillment: FulfillmentType;
+}): OrderStatus | null {
+  const { current, fulfillment } = params;
+  if (current === "completed" || (current as string) === "cancelled") return null;
+  const flow = orderStatusFlow(fulfillment);
+  const i = flow.indexOf(current as OrderStatus);
+  if (i === -1 || i >= flow.length - 1) return null;
+  return flow[i + 1];
 }
 
 export function orderStatusTranslationKey(params: {

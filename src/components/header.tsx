@@ -52,7 +52,7 @@ export function Header({ onCartClick }: HeaderProps) {
             alt="Kalooda"
             width={160}
             height={82}
-            className="h-9 w-auto object-contain transition-opacity group-hover:opacity-90 sm:h-11"
+            className="brand-logo-outline h-9 w-auto object-contain transition-opacity group-hover:opacity-90 sm:h-11"
             priority
           />
         </Link>

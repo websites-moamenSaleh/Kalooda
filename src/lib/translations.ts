@@ -40,6 +40,7 @@ export const translations = {
     saveChanges: "Save changes",
     optionsStepInvalid: "Complete this step to continue.",
     optionRemoveOne: "Remove one",
+    optionAddOne: "Add one",
 
     // Cart drawer
     yourCart: "Your Cart",
@@ -115,9 +116,19 @@ export const translations = {
     addressSaved: "Address saved.",
     addressDeleted: "Address deleted.",
     addressSaveFailed: "Could not save address.",
+    addressSaveNetworkError:
+      "Could not reach the server. If you are running locally, make sure the dev server is running and try again.",
     addressDeleteFailed: "Could not delete address.",
     addressLimitReached: "You can save up to 5 addresses.",
     addressCoordinatesRequired: "Please pick a valid location on map/search.",
+    addressPickFromListRequired:
+      "Choose your street address from the suggestions list so we can confirm delivery coverage.",
+    addressNoSuggestionsInDeliveryZone:
+      "No matching addresses inside our delivery area. Try a nearby street or use map / current location.",
+    addressZoneFilterUnavailable:
+      "Could not filter addresses by delivery zone. Try again or use map / current location.",
+    addressSuggestionOutsideDeliveryZone:
+      "That address is outside our delivery area. Pick another suggestion or use the map.",
     addressLabelDefault: "Address",
     addressLabelPlaceholder: "Label (Home, Work...)",
     addressSearching: "Searching addresses...",
@@ -147,6 +158,7 @@ export const translations = {
     openInMap: "Open in map",
     paymentSection: "Payment method",
     cashOnDelivery: "Cash on delivery",
+    creditCard: "Credit card",
     orderInvalidRequest: "Check your order details and try again.",
     deliveryZoneChecking: "Checking delivery coverage...",
     deliveryZoneOutOfRange: "We don't deliver to this location yet.",
@@ -199,6 +211,13 @@ export const translations = {
     items: "Items",
     status: "Status",
     actions: "Actions",
+    markAs: "Mark as",
+    copyDriverLink: "Copy driver link",
+    driverLinkCopied: "Link copied",
+    confirmStatusChange: "Confirm status change",
+    confirmStatusChangeAction: "Confirm change",
+    adminDriverStatusConfirm:
+      "This delivery step is the driver's responsibility. Are you sure you want to mark this order as {status}?",
     noOrders: "No orders yet.",
     orders: "Orders",
     cancelled: "Cancelled",
@@ -224,6 +243,7 @@ export const translations = {
     noDeliveryZones: "No delivery zones configured yet.",
     optionsLibrary: "Options library",
     createOption: "Create option",
+    editOption: "Edit option",
     addOption: "Add option",
     optionType: "Type",
     optionTitleEn: "Title (EN)",
@@ -239,6 +259,8 @@ export const translations = {
     productOptionsUnsavedHint: "You have unsaved changes to product options.",
     productOptionsSaved: "Product options saved.",
     productOptionsSaveFailed: "Could not save product options.",
+    productOptionsSaveDetailsFirst:
+      "Save the product details first, then you can attach options to it.",
     attachOption: "Attach option",
     productOptionsTab: "Product options",
     productDetailsTab: "Details",
@@ -258,6 +280,7 @@ export const translations = {
     productsLoadFailed: "Could not load products.",
     driversLoadFailed: "Could not load drivers.",
     customersLoadFailed: "Could not load customers.",
+    clearSearch: "Clear",
     searchOrders: "Search orders",
     searchOrdersPlaceholder: "Search by customer, phone, or order ID",
     searchCustomers: "Search customers",
@@ -283,6 +306,7 @@ export const translations = {
     saveProduct: "Save",
     saving: "Saving...",
     cancel: "Cancel",
+    searchProducts: "Search products",
     productName: "Product Name",
     productNameAr: "Product Name (Arabic)",
     description: "Description",
@@ -391,10 +415,13 @@ export const translations = {
     orderAssigned: "is now assigned to you.",
     newDelivery: "New Delivery",
     customerLabel: "Customer:",
-    yourName: "Your Name",
-    enterYourName: "Enter your name",
-    acceptDelivery: "Accept Delivery",
-    accepting: "Accepting...",
+    orderPickedUp: "Order picked up",
+    delivered: "Delivered",
+    updatingOrder: "Updating order...",
+    deliveryComplete: "Delivery completed.",
+    driverOrderNotReady:
+      "This order is not ready for driver updates yet. Wait until the order is preparing.",
+    driverLinkExpired: "This driver link has expired. Ask admin for a new link.",
 
     // Auth
     signIn: "Sign In",
@@ -525,6 +552,7 @@ export const translations = {
     saveChanges: "حفظ التعديلات",
     optionsStepInvalid: "أكمل هذه الخطوة للمتابعة.",
     optionRemoveOne: "إزالة واحدة",
+    optionAddOne: "إضافة واحدة",
 
     // Cart drawer
     yourCart: "سلة التسوق",
@@ -599,9 +627,19 @@ export const translations = {
     addressSaved: "تم حفظ العنوان.",
     addressDeleted: "تم حذف العنوان.",
     addressSaveFailed: "تعذر حفظ العنوان.",
+    addressSaveNetworkError:
+      "تعذر الاتصال بالخادم. إذا كنت تعمل محلياً، تأكد من تشغيل خادم التطوير ثم أعد المحاولة.",
     addressDeleteFailed: "تعذر حذف العنوان.",
     addressLimitReached: "يمكنك حفظ حتى 5 عناوين فقط.",
     addressCoordinatesRequired: "يرجى اختيار موقع صالح من الخريطة أو البحث.",
+    addressPickFromListRequired:
+      "اختر عنوان الشارع من قائمة الاقتراحات حتى نتمكن من تأكيد نطاق التوصيل.",
+    addressNoSuggestionsInDeliveryZone:
+      "لا توجد عناوين مطابقة ضمن منطقة التوصيل. جرّب شارعاً قريباً أو استخدم الخريطة أو الموقع الحالي.",
+    addressZoneFilterUnavailable:
+      "تعذر تصفية العناوين حسب منطقة التوصيل. أعد المحاولة أو استخدم الخريطة أو الموقع الحالي.",
+    addressSuggestionOutsideDeliveryZone:
+      "هذا العنوان خارج منطقة التوصيل لدينا. اختر اقتراحاً آخر أو استخدم الخريطة.",
     addressLabelDefault: "عنوان",
     addressLabelPlaceholder: "التسمية (منزل، عمل...)",
     addressSearching: "جارٍ البحث عن العناوين...",
@@ -631,6 +669,7 @@ export const translations = {
     openInMap: "فتح في الخريطة",
     paymentSection: "طريقة الدفع",
     cashOnDelivery: "الدفع عند الاستلام (نقداً)",
+    creditCard: "بطاقة ائتمان",
     orderInvalidRequest: "تحقق من تفاصيل الطلب وحاول مرة أخرى.",
     deliveryZoneChecking: "جارٍ التحقق من نطاق التوصيل...",
     deliveryZoneOutOfRange: "نحن لا نوصل لهذا الموقع بعد.",
@@ -683,6 +722,13 @@ export const translations = {
     items: "المنتجات",
     status: "الحالة",
     actions: "الإجراءات",
+    markAs: "تحديد كـ",
+    copyDriverLink: "نسخ رابط السائق",
+    driverLinkCopied: "تم نسخ الرابط",
+    confirmStatusChange: "تأكيد تغيير الحالة",
+    confirmStatusChangeAction: "تأكيد التغيير",
+    adminDriverStatusConfirm:
+      "هذه الخطوة من مسؤولية السائق. هل أنت متأكد أنك تريد تغيير حالة الطلب إلى {status}؟",
     noOrders: "لا توجد طلبات بعد.",
     orders: "الطلبات",
     cancelled: "ملغى",
@@ -707,6 +753,7 @@ export const translations = {
     noDeliveryZones: "لا توجد نطاقات توصيل حتى الآن.",
     optionsLibrary: "مكتبة الخيارات",
     createOption: "إنشاء خيار",
+    editOption: "تعديل الخيار",
     addOption: "إضافة خيار",
     optionType: "النوع",
     optionTitleEn: "العنوان (إنجليزي)",
@@ -722,6 +769,8 @@ export const translations = {
     productOptionsUnsavedHint: "لديك تغييرات غير محفوظة على خيارات المنتج.",
     productOptionsSaved: "تم حفظ خيارات المنتج.",
     productOptionsSaveFailed: "تعذر حفظ خيارات المنتج.",
+    productOptionsSaveDetailsFirst:
+      "احفظ تفاصيل المنتج أولاً، ثم يمكنك ربط الخيارات به.",
     attachOption: "ربط خيار",
     productOptionsTab: "خيارات المنتج",
     productDetailsTab: "التفاصيل",
@@ -741,6 +790,7 @@ export const translations = {
     productsLoadFailed: "تعذر تحميل المنتجات.",
     driversLoadFailed: "تعذر تحميل السائقين.",
     customersLoadFailed: "تعذر تحميل العملاء.",
+    clearSearch: "مسح",
     searchOrders: "ابحث في الطلبات",
     searchOrdersPlaceholder: "ابحث باسم العميل أو الهاتف أو رقم الطلب",
     searchCustomers: "ابحث في العملاء",
@@ -766,6 +816,7 @@ export const translations = {
     saveProduct: "حفظ",
     saving: "جارٍ الحفظ...",
     cancel: "إلغاء",
+    searchProducts: "ابحث في المنتجات",
     productName: "اسم المنتج",
     productNameAr: "اسم المنتج (عربي)",
     description: "الوصف",
@@ -874,10 +925,13 @@ export const translations = {
     orderAssigned: "تم تعيينه لك الآن.",
     newDelivery: "توصيل جديد",
     customerLabel: "العميل:",
-    yourName: "اسمك",
-    enterYourName: "أدخل اسمك",
-    acceptDelivery: "قبول التوصيل",
-    accepting: "جارٍ القبول...",
+    orderPickedUp: "تم استلام الطلب",
+    delivered: "تم التوصيل",
+    updatingOrder: "جارٍ تحديث الطلب...",
+    deliveryComplete: "تم إكمال التوصيل.",
+    driverOrderNotReady:
+      "هذا الطلب غير جاهز لتحديثات السائق بعد. انتظر حتى يصبح الطلب قيد التحضير.",
+    driverLinkExpired: "انتهت صلاحية رابط السائق. اطلب رابطاً جديداً من الإدارة.",
 
     // Auth
     signIn: "تسجيل الدخول",

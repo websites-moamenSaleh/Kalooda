@@ -96,7 +96,7 @@ function SignUpContent() {
             alt="Kalooda"
             width={180}
             height={92}
-            className="h-12 w-auto object-contain"
+            className="brand-logo-outline h-12 w-auto object-contain"
             priority
           />
         </Link>
@@ -118,7 +118,7 @@ function SignUpContent() {
               alt="Kalooda"
               width={160}
               height={82}
-              className="h-10 w-auto object-contain"
+              className="brand-logo-outline h-10 w-auto object-contain"
               priority
             />
           </Link>

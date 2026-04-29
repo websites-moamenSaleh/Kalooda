@@ -40,7 +40,7 @@ export default function AdminLayout({
               alt="Kalooda"
               width={120}
               height={62}
-              className="h-8 w-auto object-contain transition-opacity group-hover:opacity-90"
+              className="brand-logo-outline h-8 w-auto object-contain transition-opacity group-hover:opacity-90"
             />
           </Link>
           <div className="flex min-w-0 shrink items-center gap-1.5 sm:gap-3">

@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useCartDrawerEvent } from "@/hooks/use-cart-drawer-event";
 import { InlineBanner } from "@/components/inline-banner";
 import { AddressEditor, type AddressDraft } from "@/components/address-editor";
+import { addressManualEntryNeedsListPick } from "@/lib/address-draft";
 import type { CustomerAddress } from "@/types/database";
 
 type ProfileMessage =
@@ -47,6 +48,7 @@ export default function AccountPage() {
     building_number: "",
     latitude: null,
     longitude: null,
+    location_source: null,
     is_default: false,
   });
   const [profileMessage, setProfileMessage] = useState<ProfileMessage>(null);
@@ -131,6 +133,7 @@ export default function AccountPage() {
       building_number: "",
       latitude: null,
       longitude: null,
+      location_source: null,
       is_default: false,
     });
     setEditingAddressId(null);
@@ -142,6 +145,10 @@ export default function AccountPage() {
     setAddressMessage(null);
     if (!addressDraft.city.trim() || !addressDraft.street_line.trim() || !addressDraft.building_number.trim()) {
       setAddressMessage({ variant: "error", text: t("addressThreeSectionsRequired") });
+      return;
+    }
+    if (addressManualEntryNeedsListPick(addressDraft)) {
+      setAddressMessage({ variant: "error", text: t("addressPickFromListRequired") });
       return;
     }
 
@@ -165,7 +172,10 @@ export default function AccountPage() {
           body: JSON.stringify(payload),
         }
       );
-      const data = await res.json();
+      const data = (await res.json().catch(() => null)) as {
+        code?: string;
+        error?: string;
+      } | null;
       if (!res.ok) {
         setAddressMessage({
           variant: "error",
@@ -179,6 +189,8 @@ export default function AccountPage() {
       resetAddressDraft();
       setAddressMessage({ variant: "success", text: t("addressSaved") });
       await loadAddresses();
+    } catch {
+      setAddressMessage({ variant: "error", text: t("addressSaveNetworkError") });
     } finally {
       setAddressSaving(false);
     }
@@ -205,6 +217,7 @@ export default function AccountPage() {
       building_number: addr.building_number,
       latitude: addr.latitude != null ? Number(addr.latitude) : null,
       longitude: addr.longitude != null ? Number(addr.longitude) : null,
+      location_source: "saved",
       is_default: addr.is_default,
     });
   }
@@ -445,6 +458,7 @@ export default function AccountPage() {
                     building_number: "",
                     latitude: null,
                     longitude: null,
+                    location_source: null,
                     is_default: false,
                   });
                   setAddressFormOpen(true);

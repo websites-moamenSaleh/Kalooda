@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useReducer, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useReducer, useRef } from "react";
 import {
   Plus,
   Trash2,
@@ -150,6 +150,10 @@ function productCategoryId(p: Pick<Product, "category_id">): string {
   return p.category_id ?? "";
 }
 
+function searchValue(value: string | number | null | undefined): string {
+  return String(value ?? "").trim().toLowerCase();
+}
+
 export default function FunctionsPage() {
   const { t, locale } = useLanguage();
   const { profile } = useAdminAuth();
@@ -171,6 +175,7 @@ export default function FunctionsPage() {
     "details"
   );
   const [productsVisible, setProductsVisible] = useState(PAGE_SIZE);
+  const [adminProductSearch, setAdminProductSearch] = useState("");
   const [productImagePending, setProductImagePending] = useState<File | null>(null);
 
   // --- Categories state ---
@@ -401,15 +406,14 @@ export default function FunctionsPage() {
     setProductFormTab("details");
   }
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.name.trim() || saving) return;
+  async function saveProductDetails(): Promise<Product | null> {
+    if (!form.name.trim() || saving) return null;
     if (!form.category_id.trim()) {
       dispatch({
         type: "setProductFormError",
         value: t("productCategoryRequired"),
       });
-      return;
+      return null;
     }
     dispatch({ type: "setProductFormError", value: null });
     setSaving(true);
@@ -422,7 +426,7 @@ export default function FunctionsPage() {
         } catch {
           dispatch({ type: "setProductFormError", value: t("imageUploadFailed") });
           setSaving(false);
-          return;
+          return null;
         }
       }
       const payload = formToPayload({ ...form, image_url });
@@ -451,12 +455,37 @@ export default function FunctionsPage() {
         }
         return [saved, ...prev];
       });
-      closeForm();
+      setEditingId(saved.id);
+      setForm(productToForm(saved));
+      setProductImagePending(null);
+      setLangTab("en");
+      return saved;
     } catch {
       dispatch({ type: "setProductFormError", value: t("productSaveFailed") });
+      return null;
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    const saved = await saveProductDetails();
+    if (!saved) return;
+    if (editingId) {
+      closeForm();
+      return;
+    }
+    setProductFormTab("options");
+  }
+
+  async function openProductOptionsTab() {
+    setProductFormTab("options");
+  }
+
+  async function saveProductAndOpenOptions() {
+    const saved = await saveProductDetails();
+    if (saved) setProductFormTab("options");
   }
 
   function requestDeleteProduct(id: string) {
@@ -941,9 +970,66 @@ export default function FunctionsPage() {
       ? { message: t("confirmDeleteProduct"), confirm: t("deleteProduct") }
       : { message: t("confirmDeleteCategory"), confirm: t("removeCategory") };
 
-  const visibleProducts = products.slice(0, productsVisible);
+  const filteredProducts = useMemo(() => {
+    const query = searchValue(adminProductSearch);
+    if (!query) return products;
+
+    return products.filter((product) => {
+      const category = categories.find((cat) => cat.id === product.category_id);
+      const haystack = [
+        product.name,
+        product.name_ar,
+        product.description,
+        product.description_ar,
+        product.ingredients,
+        product.ingredients_ar,
+        product.price,
+        category?.name,
+        category?.name_ar,
+      ]
+        .map(searchValue)
+        .join(" ");
+
+      return haystack.includes(query);
+    });
+  }, [adminProductSearch, categories, products]);
+
+  function categoryDisplayName(categoryId: string | null | undefined) {
+    const category = categories.find((cat) => cat.id === categoryId);
+    if (!category) return "—";
+    return locale === "ar" && category.name_ar ? category.name_ar : category.name;
+  }
+
+  function productDisplayName(product: Product) {
+    return locale === "ar" && product.name_ar ? product.name_ar : product.name;
+  }
+
+  function productDisplayNameWithCategory(product: Product) {
+    return `${productDisplayName(product)} (${categoryDisplayName(product.category_id)})`;
+  }
+
+  function renderProductNameWithCategory(
+    product: Product,
+    name = productDisplayName(product),
+    categoryName = categoryDisplayName(product.category_id)
+  ) {
+    return (
+      <>
+        <span>{name}</span>
+        <span className="ms-1 text-xs font-normal text-admin-muted">
+          ({categoryName})
+        </span>
+      </>
+    );
+  }
+
+  const visibleProducts = filteredProducts.slice(0, productsVisible);
   const visibleCategories = categories.slice(0, categoriesVisible);
   const visibleDrivers = drivers.slice(0, driversVisible);
+
+  useEffect(() => {
+    setProductsVisible(PAGE_SIZE);
+  }, [adminProductSearch]);
 
   function handleTabChange(tab: FunctionsTab) {
     if (tab !== "products" && showForm) closeForm();
@@ -1004,41 +1090,67 @@ export default function FunctionsPage() {
               </div>
             ) : null}
 
-            {editingId ? (
-              <div className="mb-4 flex gap-1 rounded-lg bg-[rgba(31,68,60,0.06)] p-1">
-                <button
-                  type="button"
-                  onClick={() => setProductFormTab("details")}
-                  className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    productFormTab === "details"
-                      ? "bg-[#fffcf8] text-admin-ink shadow-sm"
-                      : "text-admin-muted hover:text-admin-ink"
-                  }`}
-                >
-                  {t("productDetailsTab")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setProductFormTab("options")}
-                  className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    productFormTab === "options"
-                      ? "bg-[#fffcf8] text-admin-ink shadow-sm"
-                      : "text-admin-muted hover:text-admin-ink"
-                  }`}
-                >
-                  {t("productOptionsTab")}
-                </button>
-              </div>
-            ) : null}
+            <div className="mb-4 flex gap-1 rounded-lg bg-[rgba(31,68,60,0.06)] p-1">
+              <button
+                type="button"
+                onClick={() => setProductFormTab("details")}
+                disabled={saving}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${
+                  productFormTab === "details"
+                    ? "bg-[#fffcf8] text-admin-ink shadow-sm"
+                    : "text-admin-muted hover:text-admin-ink"
+                }`}
+              >
+                {t("productDetailsTab")}
+              </button>
+              <button
+                type="button"
+                onClick={() => void openProductOptionsTab()}
+                disabled={saving}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${
+                  productFormTab === "options"
+                    ? "bg-[#fffcf8] text-admin-ink shadow-sm"
+                    : "text-admin-muted hover:text-admin-ink"
+                }`}
+              >
+                {t("productOptionsTab")}
+              </button>
+            </div>
 
-            {editingId && productFormTab === "options" ? (
-              <ProductOptionsTab
-                productId={editingId}
-                onSaveSuccess={() => {
-                  void fetchProducts();
-                  closeForm();
-                }}
-              />
+            {productFormTab === "options" ? (
+              editingId ? (
+                <ProductOptionsTab
+                  productId={editingId}
+                  onSaveSuccess={() => {
+                    void fetchProducts();
+                    closeForm();
+                  }}
+                />
+              ) : (
+                <div className="space-y-4 rounded-xl border border-admin-border bg-[#fffcf8] p-4">
+                  <InlineBanner variant="warning">
+                    <p>{t("productOptionsSaveDetailsFirst")}</p>
+                  </InlineBanner>
+                  <div className="flex flex-wrap justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setProductFormTab("details")}
+                      disabled={saving}
+                      className="rounded-lg border border-admin-border px-4 py-2 text-sm font-medium text-admin-muted transition-colors hover:bg-[rgba(31,68,60,0.06)] disabled:opacity-50"
+                    >
+                      {t("productDetailsTab")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void saveProductAndOpenOptions()}
+                      disabled={saving || !form.name.trim() || !form.category_id.trim()}
+                      className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#082018] transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {saving ? t("saving") : t("saveProduct")}
+                    </button>
+                  </div>
+                </div>
+              )
             ) : (
               <>
                 <div className="mb-4 flex gap-1 rounded-lg bg-[rgba(31,68,60,0.06)] p-1">
@@ -1473,7 +1585,7 @@ export default function FunctionsPage() {
                                 }
                               }}
                             />
-                            <span>{locale === "ar" && product.name_ar ? product.name_ar : product.name}</span>
+                            <span>{renderProductNameWithCategory(product)}</span>
                           </label>
                           {selected ? (
                             <>
@@ -1687,7 +1799,9 @@ export default function FunctionsPage() {
                 <p className="text-sm font-semibold text-admin-ink">
                   {t("categoryProductsMoveTitle")}
                 </p>
-                <p className="text-sm font-medium text-admin-ink">{moveOutProduct.name}</p>
+                <p className="text-sm font-medium text-admin-ink">
+                  {renderProductNameWithCategory(moveOutProduct)}
+                </p>
                 <p className="text-xs text-admin-muted">{t("categoryProductsMoveDescription")}</p>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-admin-muted">
@@ -1754,7 +1868,7 @@ export default function FunctionsPage() {
                           .sort((a, b) => a.name.localeCompare(b.name))
                           .map((p) => (
                             <option key={p.id} value={p.id}>
-                              {locale === "ar" && p.name_ar ? p.name_ar : p.name}
+                              {productDisplayNameWithCategory(p)}
                             </option>
                           ))}
                       </select>
@@ -1793,7 +1907,7 @@ export default function FunctionsPage() {
                         className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5"
                       >
                         <span className="min-w-0 text-sm text-admin-ink">
-                          {locale === "ar" && p.name_ar ? p.name_ar : p.name}
+                          {renderProductNameWithCategory(p)}
                         </span>
                         <button
                           type="button"
@@ -1876,6 +1990,26 @@ export default function FunctionsPage() {
             </button>
           </div>
 
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-admin-border bg-admin-panel p-3">
+            <Search className="h-4 w-4 text-admin-muted" />
+            <input
+              type="search"
+              value={adminProductSearch}
+              onChange={(e) => setAdminProductSearch(e.target.value)}
+              placeholder={t("searchProducts")}
+              className="w-full bg-transparent text-sm text-admin-ink outline-none"
+            />
+            {adminProductSearch.trim() ? (
+              <button
+                type="button"
+                onClick={() => setAdminProductSearch("")}
+                className="rounded-lg border border-admin-border px-3 py-1 text-xs font-semibold text-admin-ink"
+              >
+                {t("clearSearch")}
+              </button>
+            ) : null}
+          </div>
+
           {/* Products table */}
           <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-panel shadow-sm">
             <div className="overflow-x-auto">
@@ -1905,10 +2039,20 @@ export default function FunctionsPage() {
                     return (
                       <tr key={p.id}>
                         <td className="px-4 py-3">
-                          <p className="font-medium text-admin-ink">{p.name}</p>
+                          <p className="font-medium text-admin-ink">
+                            {renderProductNameWithCategory(
+                              p,
+                              p.name,
+                              cat?.name ?? "—"
+                            )}
+                          </p>
                           {p.name_ar && (
                             <p className="text-xs text-admin-muted" dir="rtl">
-                              {p.name_ar}
+                              {renderProductNameWithCategory(
+                                p,
+                                p.name_ar,
+                                cat?.name_ar ?? cat?.name ?? "—"
+                              )}
                             </p>
                           )}
                         </td>
@@ -1977,7 +2121,7 @@ export default function FunctionsPage() {
                       </tr>
                     );
                   })}
-                  {products.length === 0 && (
+                  {products.length === 0 ? (
                     <tr>
                       <td
                         colSpan={5}
@@ -1986,13 +2130,22 @@ export default function FunctionsPage() {
                         {t("noProductsYet")}
                       </td>
                     </tr>
-                  )}
+                  ) : filteredProducts.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-4 py-12 text-center text-admin-muted"
+                      >
+                        {t("noProductsFoundForFilter")}
+                      </td>
+                    </tr>
+                  ) : null}
                 </tbody>
               </table>
             </div>
           </div>
 
-          {products.length > productsVisible && (
+          {filteredProducts.length > productsVisible && (
             <div className="mt-4 flex justify-center">
               <button
                 type="button"

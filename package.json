@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack --disable-source-maps",
+    "dev:turbo": "next dev --disable-source-maps",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -18,7 +19,6 @@
     "@sentry/nextjs": "^10.48.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.100.1",
-    "@vis.gl/react-google-maps": "^1.8.2",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
     "openai": "^6.33.0",
@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/google.maps": "^3.64.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

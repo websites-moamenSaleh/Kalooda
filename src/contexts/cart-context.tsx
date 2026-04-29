@@ -22,6 +22,7 @@ import { lineUnitPrice } from "@/lib/cart-line-price";
 import {
   applyProductChangeToCartItems,
   broadcastPayloadToPostgresShape,
+  type ProductsPostgresChangePayload,
 } from "@/lib/realtime-products";
 import { subscribeStorefrontCatalog } from "@/lib/storefront-catalog-realtime";
 import { getProductEffectivePrice } from "@/lib/product-pricing";
@@ -373,20 +374,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [authLoading, user?.id, clearDebounce]);
 
   useEffect(() => {
+    const batch: ProductsPostgresChangePayload[] = [];
+    let microScheduled = false;
+    const flushBatch = () => {
+      microScheduled = false;
+      if (batch.length === 0) return;
+      const slice = batch.splice(0, batch.length);
+      setItems((prev) => {
+        let cur = prev;
+        for (const payload of slice) {
+          cur = applyProductChangeToCartItems(cur, payload);
+        }
+        if (cur === prev) return prev;
+        itemsRef.current = cur;
+        queueMicrotask(() => schedulePersist());
+        return cur;
+      });
+    };
+
     return subscribeStorefrontCatalog((event) => {
       const payload =
         event.type === "postgres"
           ? event.payload
           : broadcastPayloadToPostgresShape(event.data);
       if (!payload) return;
-
-      setItems((prev) => {
-        const next = applyProductChangeToCartItems(prev, payload);
-        if (next === prev) return prev;
-        itemsRef.current = next;
-        queueMicrotask(() => schedulePersist());
-        return next;
-      });
+      batch.push(payload);
+      if (!microScheduled) {
+        microScheduled = true;
+        queueMicrotask(flushBatch);
+      }
     });
   }, [schedulePersist]);
 
@@ -436,8 +452,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     void syncProductPrices();
     const timer = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+        return;
+      }
       void syncProductPrices();
-    }, 60000);
+    }, 120_000);
 
     return () => {
       cancelled = true;

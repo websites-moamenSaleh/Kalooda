@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
               alt="Kalooda"
               width={160}
               height={82}
-              className="h-10 w-auto object-contain"
+              className="brand-logo-outline h-10 w-auto object-contain"
               priority
             />
           </Link>

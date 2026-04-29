@@ -13,9 +13,8 @@ function roundPrice(value: number): number {
 }
 
 /** v1: ignore vat_percentage on choices (no extra VAT layer). */
-function choiceDisplayMarkup(choice: OptionChoiceRow): number {
-  const m = Number(choice.price_markup) || 0;
-  return Math.max(0, m);
+function choicePriceAdjustment(choice: OptionChoiceRow): number {
+  return Number(choice.price_markup) || 0;
 }
 
 /**
@@ -49,7 +48,7 @@ export function computeOptionsPricing(
 
     const freeCount = Math.max(0, j.items_free);
     selectedRows.forEach((choice, index) => {
-      const fullMarkup = choiceDisplayMarkup(choice);
+      const fullMarkup = choicePriceAdjustment(choice);
       const priceApplied = index < freeCount ? 0 : fullMarkup;
       optionsSubtotal += priceApplied;
       choiceLines.push({

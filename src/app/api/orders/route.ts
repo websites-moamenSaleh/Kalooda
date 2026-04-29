@@ -316,6 +316,10 @@ export async function POST(req: NextRequest) {
           delivery_longitude: body.delivery_longitude,
           delivery_formatted_address: body.delivery_formatted_address,
           payment_method: body.payment_method,
+          delivery_token_expires_at:
+            body.fulfillment_type === "delivery"
+              ? new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString()
+              : null,
         })
         .select()
         .single();

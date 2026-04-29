@@ -1,0 +1,33 @@
+-- spatial_ref_sys (PostGIS SRID catalog) — locking down API access
+--
+-- WHY THE DASHBOARD / db push FAILS
+-- The table is owned by supabase_admin (extension objects). The SQL Editor runs as
+-- dashboard_user; migrations run as another non-owner role. Enabling RLS requires
+-- owner or superuser, which customer-facing roles are not.
+--
+-- WHAT TO DO (pick one)
+--
+-- 1) RECOMMENDED FIRST TRY — strip PostgREST access without RLS (Supabase team suggestion).
+--    Run in SQL Editor. If you get "must be owner" or "permission denied", use (2).
+--    Afterward, test maps / delivery zones / any query that might call ST_Transform.
+--
+--    revoke all privileges on table public.spatial_ref_sys from anon, authenticated;
+--
+--    If your table lives in extensions instead of public, use:
+--    revoke all privileges on table extensions.spatial_ref_sys from anon, authenticated;
+--
+-- 2) SUPABASE SUPPORT — ask them to enable RLS (and a SELECT policy) or apply the revoke
+--    above as supabase_admin. Reference: extension-owned PostGIS catalog, 42501 owner errors.
+--
+-- 3) LONGER TERM — move PostGIS to a dedicated schema so the catalog is not in public /
+--    not on the API search path (may require dropping dependents or platform fixes for
+--    ALTER EXTENSION ... SET SCHEMA on supabase_admin-owned extensions).
+
+-- Uncomment ONLY if support runs this as the owning role (will fail from SQL Editor otherwise):
+--
+-- alter table public.spatial_ref_sys enable row level security;
+-- drop policy if exists spatial_ref_sys_select_public on public.spatial_ref_sys;
+-- create policy spatial_ref_sys_select_public
+--   on public.spatial_ref_sys for select
+--   to anon, authenticated
+--   using (true);

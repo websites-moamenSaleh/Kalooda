@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { bundleForProductRows } from "@/lib/product-options/pricing";
+import { loadCategoryProductChoicesForOptions } from "@/lib/product-options/category-product-choices";
 import type {
   CatalogOptionRow,
   OptionChoiceRow,
@@ -61,22 +62,34 @@ export async function loadProductOptionsBundlesByProductIds(
     return map;
   }
 
-  const { data: choices, error: cErr } = await supabaseAdmin
-    .from("option_choices")
-    .select("*")
-    .in("option_id", optionIds)
-    .order("sort_order", { ascending: true });
+  const optRows = (options ?? []) as CatalogOptionRow[];
+  const manualOptionIds = optRows
+    .filter((option) => option.choice_source !== "category_products")
+    .map((option) => option.id);
 
-  if (cErr) {
-    console.error("loadProductOptionsBundles choices", cErr);
-    for (const id of unique) {
-      map.set(id, emptyBundle());
+  let choices: unknown[] = [];
+  if (manualOptionIds.length > 0) {
+    const { data, error: cErr } = await supabaseAdmin
+      .from("option_choices")
+      .select("*")
+      .in("option_id", manualOptionIds)
+      .order("sort_order", { ascending: true });
+
+    if (cErr) {
+      console.error("loadProductOptionsBundles choices", cErr);
+      for (const id of unique) {
+        map.set(id, emptyBundle());
+      }
+      return map;
     }
-    return map;
+    choices = data ?? [];
   }
 
-  const optRows = (options ?? []) as CatalogOptionRow[];
-  const choiceRows = (choices ?? []) as OptionChoiceRow[];
+  const dynamicChoices = await loadCategoryProductChoicesForOptions(optRows);
+  const choiceRows = [
+    ...((choices ?? []) as OptionChoiceRow[]),
+    ...dynamicChoices,
+  ];
 
   const junctionsByProduct = new Map<string, ProductOptionJunctionRow[]>();
   for (const row of jRows) {

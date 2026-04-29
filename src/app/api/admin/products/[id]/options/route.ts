@@ -9,7 +9,6 @@ const attachBodySchema = z.object({
   min_select: z.number().int().min(0).optional(),
   max_select: z.number().int().min(1).optional(),
   items_free: z.number().int().min(0).optional(),
-  must_select_count: z.number().int().min(0).optional(),
   hidden_conditional: z.any().nullable().optional(),
   display_name_en: z.string().trim().nullable().optional(),
   display_name_ar: z.string().trim().nullable().optional(),
@@ -31,7 +30,6 @@ const junctionUpdateSchema = z.object({
   min_select: z.number().int().min(0).optional(),
   max_select: z.number().int().min(1).optional(),
   items_free: z.number().int().min(0).optional(),
-  must_select_count: z.number().int().min(0).optional(),
   hidden_conditional: z.any().nullable().optional(),
   display_name_en: z.string().trim().nullable().optional(),
   display_name_ar: z.string().trim().nullable().optional(),
@@ -108,8 +106,6 @@ export async function POST(
         min_select: b.min_select ?? defaultMin,
         max_select: b.max_select ?? defaultMax,
         items_free: b.items_free ?? 0,
-        must_select_count:
-          b.must_select_count ?? (isMultiple ? 0 : 1),
         hidden_conditional: b.hidden_conditional ?? null,
         display_name_en: b.display_name_en?.trim() || null,
         display_name_ar: b.display_name_ar?.trim() || null,
@@ -163,8 +159,6 @@ export async function PATCH(
       if (fields.min_select !== undefined) update.min_select = fields.min_select;
       if (fields.max_select !== undefined) update.max_select = fields.max_select;
       if (fields.items_free !== undefined) update.items_free = fields.items_free;
-      if (fields.must_select_count !== undefined)
-        update.must_select_count = fields.must_select_count;
       if (fields.hidden_conditional !== undefined)
         update.hidden_conditional = fields.hidden_conditional;
       if (fields.display_name_en !== undefined)

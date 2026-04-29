@@ -4,6 +4,8 @@ export type CatalogOptionRow = {
   type: "single" | "multiple";
   title_en: string;
   title_ar: string | null;
+  choice_source: "manual" | "category_products";
+  source_category_id: string | null;
   show_to_courier: boolean;
   pos_id: string | null;
   created_at?: string;
@@ -34,7 +36,6 @@ export type ProductOptionJunctionRow = {
   min_select: number;
   max_select: number;
   items_free: number;
-  must_select_count: number;
   hidden_conditional: HiddenConditionalV1 | null;
   display_name_en: string | null;
   display_name_ar: string | null;
