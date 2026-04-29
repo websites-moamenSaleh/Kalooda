@@ -30,12 +30,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
-    const selectColumns = token
-      ? "id, delivery_token, delivery_token_expires_at, status, fulfillment_type"
-      : "id, status, fulfillment_type";
     const { data: order, error: fetchErr } = await supabaseAdmin
       .from("orders")
-      .select(selectColumns)
+      .select("id, delivery_token, delivery_token_expires_at, status, fulfillment_type")
       .eq("id", orderId)
       .maybeSingle();
 
