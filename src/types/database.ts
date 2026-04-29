@@ -54,10 +54,11 @@ export interface Order {
     | "cancelled";
   created_at: string;
   delivery_token: string;
+  delivery_token_expires_at?: string | null;
   /** Present after checkout fulfillment migration; treat missing as delivery. */
   fulfillment_type?: "delivery" | "pickup";
   delivery_address?: string | null;
-  payment_method?: "cash_on_delivery";
+  payment_method?: "cash_on_delivery" | "credit_card" | string | null;
   customer_address_id?: string | null;
   delivery_latitude?: number | null;
   delivery_longitude?: number | null;

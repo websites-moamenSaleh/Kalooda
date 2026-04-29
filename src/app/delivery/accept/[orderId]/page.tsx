@@ -8,21 +8,48 @@ import {
   XCircle,
   Loader2,
   Package,
+  Phone,
+  MapPin,
+  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/language-context";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
-type DeliveryStatus = "loading" | "idle" | "accepting" | "accepted" | "error";
+type DeliveryStatus = "loading" | "ready" | "updating" | "expired" | "error";
 
 interface OrderData {
   id: string;
   display_id: string;
   customer_name: string;
+  customer_phone: string | null;
   items: { product_name: string; quantity: number }[];
   total_price: number;
   status: string;
+  payment_method?: "cash_on_delivery" | "credit_card" | string | null;
+  delivery_address?: string | null;
+  delivery_formatted_address?: string | null;
+  delivery_latitude?: number | null;
+  delivery_longitude?: number | null;
+}
+
+function orderMapHref(order: OrderData): string | null {
+  const lat = Number(order.delivery_latitude);
+  const lng = Number(order.delivery_longitude);
+  const hasValidCoords =
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    Math.abs(lat) <= 90 &&
+    Math.abs(lng) <= 180 &&
+    !(Math.abs(lat) < 0.000001 && Math.abs(lng) < 0.000001);
+
+  if (hasValidCoords) {
+    return `https://www.google.com/maps?q=${lat},${lng}`;
+  }
+  const query = (order.delivery_formatted_address ?? order.delivery_address ?? "").trim();
+  if (!query) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
 export default function DeliveryAcceptPage({
@@ -36,40 +63,184 @@ export default function DeliveryAcceptPage({
   const { t } = useLanguage();
   const [order, setOrder] = useState<OrderData | null>(null);
   const [status, setStatus] = useState<DeliveryStatus>("loading");
-  const [driverName, setDriverName] = useState("");
 
   useEffect(() => {
     fetch(`/api/orders/${orderId}?token=${encodeURIComponent(token)}`)
       .then((r) => {
-        if (!r.ok) throw new Error("Not found");
+        if (r.status === 410) throw new Error("expired");
+        if (!r.ok) throw new Error("not-found");
         return r.json();
       })
       .then((found: OrderData) => {
         setOrder(found);
-        if (found.status === "preparing") setStatus("accepted");
-        else if (found.status === "pending") setStatus("idle");
-        else setStatus("error");
+        setStatus("ready");
       })
-      .catch(() => setStatus("error"));
+      .catch((err: Error) => {
+        setStatus(err.message === "expired" ? "expired" : "error");
+      });
   }, [orderId, token]);
 
-  async function handleAccept() {
-    if (!driverName.trim()) return;
-    setStatus("accepting");
+  async function updateDriverStatus(nextStatus: "out_for_delivery" | "completed") {
+    if (!order || status === "updating") return;
+    setStatus("updating");
     try {
       const res = await fetch(
         `/api/orders/${orderId}/status?token=${encodeURIComponent(token)}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "preparing" }),
+          body: JSON.stringify({ status: nextStatus }),
         }
       );
+      if (res.status === 410) {
+        setStatus("expired");
+        return;
+      }
       if (!res.ok) throw new Error();
-      setStatus("accepted");
+      const updated = (await res.json()) as OrderData;
+      setOrder(updated);
+      setStatus("ready");
     } catch {
       setStatus("error");
     }
+  }
+
+  function paymentMethodLabel(paymentMethod: OrderData["payment_method"]) {
+    if ((paymentMethod ?? "cash_on_delivery") === "cash_on_delivery") {
+      return t("cashOnDelivery");
+    }
+    if (paymentMethod === "credit_card") return t("creditCard");
+    return paymentMethod ?? t("cashOnDelivery");
+  }
+
+  function renderOrderDetails() {
+    if (!order) return null;
+    const mapHref = orderMapHref(order);
+
+    return (
+      <div className="mb-6 rounded-xl border border-[#D3A94C]/14 bg-[#143C34]/70 p-4">
+        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#D3A94C]/55">
+          {t("orderDetails")}
+        </p>
+        <div className="space-y-2 text-sm text-[#E5EDE8]/85">
+          <p>
+            <span className="font-semibold text-[#FFEC94]">{t("order")}:</span>{" "}
+            {order.display_id}
+          </p>
+          <p>
+            <span className="font-semibold text-[#FFEC94]">{t("customer")}:</span>{" "}
+            {order.customer_name}
+          </p>
+          <p className="flex items-center gap-2">
+            <Phone className="h-3.5 w-3.5 shrink-0 text-[#D3A94C]/55" />
+            {order.customer_phone ? (
+              <a href={`tel:${order.customer_phone}`} className="hover:underline">
+                {order.customer_phone}
+              </a>
+            ) : (
+              "—"
+            )}
+          </p>
+          <p className="flex items-center gap-2">
+            <CreditCard className="h-3.5 w-3.5 shrink-0 text-[#D3A94C]/55" />
+            {paymentMethodLabel(order.payment_method)}
+          </p>
+          <div className="flex items-start gap-2">
+            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D3A94C]/55" />
+            <div>
+              <p>{order.delivery_address ?? order.delivery_formatted_address ?? "—"}</p>
+              {mapHref ? (
+                <a
+                  href={mapHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-flex text-xs font-semibold text-[#FFEC94] hover:underline"
+                >
+                  {t("openInMap")}
+                </a>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <p className="mb-2 mt-5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#D3A94C]/55">
+          {t("items")}
+        </p>
+        <ul className="space-y-2">
+          {order.items.map((item, i) => (
+            <li key={i} className="flex items-center gap-2 text-sm text-[#E5EDE8]/85">
+              <Package className="h-3.5 w-3.5 shrink-0 text-[#D3A94C]/45" />
+              <span>
+                {item.product_name} × {item.quantity}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 font-display text-lg font-bold text-[#FFEC94]">
+          {t("total")}: ₪{order.total_price.toFixed(2)}
+        </p>
+      </div>
+    );
+  }
+
+  function renderDriverAction() {
+    if (!order) return null;
+
+    if (order.status === "preparing") {
+      return (
+        <button
+          type="button"
+          onClick={() => void updateDriverStatus("out_for_delivery")}
+          disabled={status === "updating"}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-emerald-300 to-emerald-400 py-3.5 text-sm font-bold text-[#073126] shadow-lg transition-all hover:brightness-105 disabled:opacity-45"
+        >
+          {status === "updating" ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("updatingOrder")}
+            </>
+          ) : (
+            <>
+              <Truck className="h-4 w-4" /> {t("orderPickedUp")}
+            </>
+          )}
+        </button>
+      );
+    }
+
+    if (order.status === "out_for_delivery") {
+      return (
+        <button
+          type="button"
+          onClick={() => void updateDriverStatus("completed")}
+          disabled={status === "updating"}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-emerald-300 to-emerald-400 py-3.5 text-sm font-bold text-[#073126] shadow-lg transition-all hover:brightness-105 disabled:opacity-45"
+        >
+          {status === "updating" ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("updatingOrder")}
+            </>
+          ) : (
+            <>
+              <CheckCircle className="h-4 w-4" /> {t("delivered")}
+            </>
+          )}
+        </button>
+      );
+    }
+
+    if (order.status === "completed") {
+      return (
+        <p className="rounded-xl border border-emerald-400/20 bg-emerald-300/10 px-4 py-3 text-center text-sm font-semibold text-emerald-100">
+          {t("deliveryComplete")}
+        </p>
+      );
+    }
+
+    return (
+      <p className="rounded-xl border border-[#D3A94C]/15 bg-[#D3A94C]/10 px-4 py-3 text-center text-sm font-medium text-[#E5EDE8]/80">
+        {t("driverOrderNotReady")}
+      </p>
+    );
   }
 
   return (
@@ -81,13 +252,13 @@ export default function DeliveryAcceptPage({
             alt="Kalooda"
             width={160}
             height={82}
-            className="h-10 w-auto object-contain"
+            className="brand-logo-outline h-10 w-auto object-contain"
           />
         </Link>
         <LanguageSwitcher className="flex items-center gap-1.5 rounded-lg border border-[#1F443C]/12 bg-white/90 px-3 py-2 text-sm font-medium text-ink-soft hover:border-[#D3A94C]/35" />
       </div>
 
-      <div className="w-full max-w-md rounded-2xl border border-[#D3A94C]/20 bg-gradient-to-b from-[#0A2923] to-[#082018] p-6 shadow-2xl sm:p-8">
+      <div className="w-full max-w-md rounded-2xl border border-[#D3A94C]/20 bg-gradient-to-b from-[#1B4D43] to-[#123A33] p-6 shadow-2xl sm:p-8">
         {status === "loading" && (
           <div className="flex flex-col items-center py-12 text-[#A8B5AD]/65">
             <Loader2 className="h-9 w-9 animate-spin text-[#FFEC94]" />
@@ -104,21 +275,16 @@ export default function DeliveryAcceptPage({
           </div>
         )}
 
-        {status === "accepted" && (
-          <div className="flex flex-col items-center py-10 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10">
-              <CheckCircle className="h-10 w-10 text-emerald-400" />
-            </div>
-            <h2 className="mt-6 font-display text-xl font-semibold text-[#F0F5F3]">
-              {t("deliveryAccepted")}
-            </h2>
-            <p className="mt-2 text-sm text-[#A8B5AD]/80">
-              {t("order")} {order?.display_id} {t("orderAssigned")}
+        {status === "expired" && (
+          <div className="flex flex-col items-center py-12 text-center">
+            <XCircle className="h-12 w-12 text-amber-300" />
+            <p className="mt-4 text-sm font-semibold text-amber-100">
+              {t("driverLinkExpired")}
             </p>
           </div>
         )}
 
-        {(status === "idle" || status === "accepting") && order && (
+        {(status === "ready" || status === "updating") && order && (
           <>
             <div className="mb-6 flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#D3A94C]/25 bg-[#D3A94C]/10">
@@ -134,56 +300,8 @@ export default function DeliveryAcceptPage({
               </div>
             </div>
 
-            <div className="mb-6 rounded-xl border border-[#D3A94C]/12 bg-[#082018]/60 p-4">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#D3A94C]/55">
-                {t("items")}
-              </p>
-              <ul className="space-y-2">
-                {order.items.map((item, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-[#E5EDE8]/85">
-                    <Package className="h-3.5 w-3.5 shrink-0 text-[#D3A94C]/45" />
-                    <span>
-                      {item.product_name} × {item.quantity}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 font-display text-lg font-bold text-[#FFEC94]">
-                {t("total")}: ₪{order.total_price.toFixed(2)}
-              </p>
-              <p className="mt-2 text-xs text-[#A8B5AD]/60">
-                {t("customerLabel")} {order.customer_name}
-              </p>
-            </div>
-
-            <div className="mb-5">
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-[#A8B5AD]/75">
-                {t("yourName")}
-              </label>
-              <input
-                value={driverName}
-                onChange={(e) => setDriverName(e.target.value)}
-                placeholder={t("enterYourName")}
-                className="input-premium-dark w-full"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={handleAccept}
-              disabled={status === "accepting" || !driverName.trim()}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-emerald-600 to-emerald-700 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:brightness-105 disabled:opacity-45"
-            >
-              {status === "accepting" ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> {t("accepting")}
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4" /> {t("acceptDelivery")}
-                </>
-              )}
-            </button>
+            {renderOrderDetails()}
+            {renderDriverAction()}
           </>
         )}
       </div>

@@ -25,7 +25,6 @@ export function validateStepSelections(
   junction: {
     min_select: number;
     max_select: number;
-    must_select_count: number;
   },
   optionType: "single" | "multiple",
   enabledChoiceIds: Set<string>,
@@ -40,23 +39,7 @@ export function validateStepSelections(
     if (selectedIds.length > 1) return "single_only_one";
   }
   const n = selectedIds.length;
-  let minReq: number;
-  if (junction.must_select_count > 0) {
-    minReq = Math.max(junction.min_select, junction.must_select_count);
-  } else if (
-    optionType === "multiple" &&
-    junction.min_select === 1 &&
-    (junction.max_select > 1 || enabledChoiceIds.size > 1)
-  ) {
-    // must_select_count === 0: step is optional. min_select 1 here is usually the old default
-    // while "must" was cleared to 0. Allow 0 picks. Require min_select >= 2 or must_select_count > 0
-    // when a minimum number of picks is mandatory. (min 1 max 1 with a single enabled choice
-    // still requires that one pick.)
-    minReq = 0;
-  } else {
-    minReq = junction.min_select;
-  }
-  if (n < minReq) return "below_min";
+  if (n < junction.min_select) return "below_min";
   if (n > junction.max_select) return "above_max";
   return null;
 }

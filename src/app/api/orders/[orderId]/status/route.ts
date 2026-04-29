@@ -30,9 +30,12 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
+    const selectColumns = token
+      ? "id, delivery_token, delivery_token_expires_at, status, fulfillment_type"
+      : "id, status, fulfillment_type";
     const { data: order, error: fetchErr } = await supabaseAdmin
       .from("orders")
-      .select("id, delivery_token, status, fulfillment_type")
+      .select(selectColumns)
       .eq("id", orderId)
       .maybeSingle();
 
@@ -46,7 +49,20 @@ export async function PATCH(
       order.fulfillment_type === "pickup" ? "pickup" : "delivery";
 
     if (token) {
-      if (!order.delivery_token || order.delivery_token !== token) {
+      const tokenOrder = order as typeof order & {
+        delivery_token?: string | null;
+        delivery_token_expires_at?: string | null;
+      };
+      if (!tokenOrder.delivery_token || tokenOrder.delivery_token !== token) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      if (
+        !tokenOrder.delivery_token_expires_at ||
+        new Date(tokenOrder.delivery_token_expires_at).getTime() <= Date.now()
+      ) {
+        return NextResponse.json({ error: "Delivery link expired" }, { status: 410 });
+      }
+      if (fulfillment !== "delivery") {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
       if (!canTokenSetStatus(from, status)) {

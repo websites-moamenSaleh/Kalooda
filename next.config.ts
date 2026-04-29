@@ -16,6 +16,10 @@ const privateLanDevOrigins = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Fewer modules to compile/transform on each dev refresh (large icon sets).
+    optimizePackageImports: ["lucide-react"],
+  },
   // Hide the floating Next.js "N" dev tools badge in the browser (dev only).
   devIndicators: false,
   // Next.js blocks /_next dev assets from "unknown" origins; LAN IPs must be allowlisted.
@@ -31,6 +35,8 @@ const nextConfig: NextConfig = {
   },
 };
 
+const isProductionBuild = process.env.NODE_ENV === "production";
+
 export default withSentryConfig(nextConfig, {
   org: "vanguardt",
   project: "javascript-nextjs",
@@ -39,11 +45,19 @@ export default withSentryConfig(nextConfig, {
   // Requires SENTRY_AUTH_TOKEN env var (set in Vercel, not committed).
   silent: true,
 
-  webpack: {
-    autoInstrumentServerFunctions: true,
-    autoInstrumentMiddleware: true,
-    treeshake: {
-      removeDebugLogging: true,
-    },
-  },
+  // Sentry webpack injection is for production builds; skipping it in dev
+  // avoids extra compilation work on every `next dev` refresh.
+  ...(isProductionBuild
+    ? {
+        webpack: {
+          autoInstrumentServerFunctions: true,
+          autoInstrumentMiddleware: true,
+          treeshake: {
+            removeDebugLogging: true,
+          },
+        },
+      }
+    : {
+        disableSentryConfig: true,
+      }),
 });

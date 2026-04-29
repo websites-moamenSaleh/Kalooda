@@ -63,7 +63,6 @@ Add tables, enums, RLS, and indexes via a new migration under `supabase/migratio
 | `min_select`         | `int`        | Align with `options.type` (single → typically 1) |
 | `max_select`         | `int`        |                                                  |
 | `items_free`         | `int`        | e.g. first N choices free                        |
-| `must_select_count`  | `int`        | Cannot proceed until satisfied                   |
 | `hidden_conditional` | `jsonb` null | See **Hidden conditional (v1)** below            |
 | `display_name_en`    | `text` null  | “Option name in app” override per product        |
 | `display_name_ar`    | `text` null  |                                                  |
@@ -89,7 +88,7 @@ Enable **Supabase Realtime** on `options`, `option_choices`, and `product_option
   - Middle steps → **Back** / **Next**
   - Last step → **Back** / **Add to cart**
 - **Skip / visibility**: respect `hidden_conditional` so steps that do not apply are **skipped** (see below).
-- **Validation**: cannot use **Next** or **Add to cart** until the current step satisfies `min_select` / `max_select` / `must_select_count` / `items_free` for that junction. Use **Zod 4** schemas for wizard step validation; **mirror or share** the same rules on the server for cart and order APIs so rules cannot be bypassed from the client.
+- **Validation**: cannot use **Next** or **Add to cart** until the current step satisfies `min_select` / `max_select` / `items_free` for that junction. Use **Zod 4** schemas for wizard step validation; **mirror or share** the same rules on the server for cart and order APIs so rules cannot be bypassed from the client.
 - **Pricing**: show running total; add `price_markup` (and VAT rules) for selected choices; final line `unit_price` must match **server-side** validation/recomputation from DB where appropriate.
 
 ## 4. State management & data flow

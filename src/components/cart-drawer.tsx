@@ -2,7 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import Image from "next/image";
-import { X, Minus, Plus, ShoppingBag } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
@@ -194,8 +194,10 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                                 ? row.name_ar
                                 : row.name_en}
                               {row.count > 1 ? ` ×${row.count}` : ""}
-                              {row.totalApplied > 0
-                                ? ` (+₪${row.totalApplied.toFixed(2)})`
+                              {row.totalApplied !== 0
+                                ? ` (${row.totalApplied > 0 ? "+" : "-"}₪${Math.abs(
+                                    row.totalApplied
+                                  ).toFixed(2)})`
                                 : ""}
                             </li>
                           ))}
@@ -243,7 +245,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       className="rounded-lg p-2 text-ink-soft/40 transition-colors hover:bg-red-500/[0.08] hover:text-red-600"
                       aria-label="Remove"
                     >
-                      <X className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </li>

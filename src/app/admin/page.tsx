@@ -13,15 +13,16 @@ import {
   X,
   Search,
   Eye,
+  Copy,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { getSupabaseAdminBrowser } from "@/lib/supabase-client-admin";
-import type { Order, Product, Driver } from "@/types/database";
+import type { Order, Product, Category, Driver } from "@/types/database";
 import type { Profile } from "@/types/profile";
 import {
   type OrderStatus,
   type FulfillmentType,
-  adminSelectableStatuses,
+  nextAdminOrderStatus,
   orderStatusTranslationKey,
 } from "@/lib/order-status";
 import {
@@ -137,6 +138,13 @@ export default function AdminDashboard() {
   const [ordersVisible, setOrdersVisible] = useState(PAGE_SIZE);
   const [ordersQuery, setOrdersQuery] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [copiedDriverLinkOrderId, setCopiedDriverLinkOrderId] = useState<string | null>(
+    null
+  );
+  const [driverStatusConfirm, setDriverStatusConfirm] = useState<{
+    order: Order;
+    status: OrderStatus;
+  } | null>(null);
 
   // Cancel modal
   const [cancelOrder, setCancelOrder] = useState<Order | null>(null);
@@ -156,6 +164,7 @@ export default function AdminDashboard() {
 
   // --- Products (availability only) ---
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productsFetchFailed, setProductsFetchFailed] = useState(false);
   const productsLoaded = useRef(false);
@@ -211,13 +220,18 @@ export default function AdminDashboard() {
     setProductsLoading(true);
     setProductsFetchFailed(false);
     try {
-      const res = await fetch("/api/products");
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !Array.isArray(data)) {
+      const [productsRes, categoriesRes] = await Promise.all([
+        fetch("/api/products"),
+        fetch("/api/categories"),
+      ]);
+      const productsData = await productsRes.json().catch(() => null);
+      const categoriesData = await categoriesRes.json().catch(() => null);
+      if (!productsRes.ok || !Array.isArray(productsData)) {
         setProductsFetchFailed(true);
         return;
       }
-      setProducts(data);
+      setProducts(productsData);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       productsLoaded.current = true;
     } catch {
       setProductsFetchFailed(true);
@@ -310,6 +324,76 @@ export default function AdminDashboard() {
       setTimeout(() => setFlashId(null), 3000);
     } catch {
       await loadOrders();
+    }
+  }
+
+  function shouldConfirmDriverStatusChange(order: Order, newStatus: OrderStatus) {
+    return (
+      (order.fulfillment_type ?? "delivery") === "delivery" &&
+      (newStatus === "out_for_delivery" || newStatus === "completed")
+    );
+  }
+
+  function confirmDriverStatusMessage(newStatus: OrderStatus) {
+    const statusLabel = t(
+      orderStatusTranslationKey({
+        status: newStatus,
+        fulfillment_type: "delivery",
+      })
+    );
+    return t("adminDriverStatusConfirm").replace("{status}", statusLabel);
+  }
+
+  function handleAdminStatusChange(order: Order, newStatus: OrderStatus) {
+    if (shouldConfirmDriverStatusChange(order, newStatus)) {
+      setDriverStatusConfirm({ order, status: newStatus });
+      return;
+    }
+    void updateStatus(order.id, newStatus);
+  }
+
+  function paymentMethodLabel(paymentMethod: Order["payment_method"]) {
+    if ((paymentMethod ?? "cash_on_delivery") === "cash_on_delivery") {
+      return t("cashOnDelivery");
+    }
+    if (paymentMethod === "credit_card") return t("creditCard");
+    return paymentMethod ?? t("cashOnDelivery");
+  }
+
+  function driverSharePath(order: Order): string | null {
+    if (!order.delivery_token) return null;
+    return `/delivery/accept/${encodeURIComponent(order.id)}?token=${encodeURIComponent(
+      order.delivery_token
+    )}`;
+  }
+
+  async function copyDriverLink(order: Order) {
+    const path = driverSharePath(order);
+    if (!path) return;
+
+    try {
+      const url = new URL(path, window.location.origin).toString();
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = url;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopiedDriverLinkOrderId(order.id);
+      setTimeout(() => {
+        setCopiedDriverLinkOrderId((current) =>
+          current === order.id ? null : current
+        );
+      }, 2500);
+    } catch {
+      setCopiedDriverLinkOrderId(null);
     }
   }
 
@@ -450,18 +534,91 @@ export default function AdminDashboard() {
   const visibleDrivers = drivers.slice(0, driversVisible);
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
 
+  function categoryDisplayName(categoryId: string | null | undefined) {
+    const category = categories.find((cat) => cat.id === categoryId);
+    if (!category) return "—";
+    return locale === "ar" && category.name_ar ? category.name_ar : category.name;
+  }
+
+  function productDisplayName(product: Product) {
+    return locale === "ar" && product.name_ar ? product.name_ar : product.name;
+  }
+
   const tabs: { key: AdminTab; label: string }[] = [
     { key: "orders", label: t("orders") },
     { key: "customers", label: t("customers") },
     { key: "products", label: t("products") },
     { key: "drivers", label: t("drivers") },
   ];
-
-  const isTerminal = (status: string) =>
-    status === "completed" || status === "cancelled";
+  const driverStatusConfirmLabel = driverStatusConfirm
+    ? t(
+        orderStatusTranslationKey({
+          status: driverStatusConfirm.status,
+          fulfillment_type: "delivery",
+        })
+      )
+    : "";
 
   return (
     <>
+      {/* Driver-owned status confirmation modal */}
+      {driverStatusConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal
+          aria-labelledby="driver-status-confirm-title"
+        >
+          <div className="w-full max-w-md rounded-xl border border-admin-border bg-admin-panel p-6 shadow-lg">
+            <div className="mb-4 flex items-center justify-between">
+              <h3
+                id="driver-status-confirm-title"
+                className="font-semibold text-admin-ink"
+              >
+                {t("confirmStatusChange")}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setDriverStatusConfirm(null)}
+                className="rounded-lg p-1 text-admin-muted hover:bg-[rgba(31,68,60,0.06)]"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-950">
+              <p className="font-semibold">
+                {driverStatusConfirm.order.display_id} → {driverStatusConfirmLabel}
+              </p>
+              <p className="mt-2">
+                {confirmDriverStatusMessage(driverStatusConfirm.status)}
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDriverStatusConfirm(null)}
+                className="rounded-lg border border-admin-border px-4 py-2 text-sm font-medium text-admin-muted transition-colors hover:bg-[rgba(31,68,60,0.06)]"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const pending = driverStatusConfirm;
+                  setDriverStatusConfirm(null);
+                  void updateStatus(pending.order.id, pending.status);
+                }}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-[#102820] transition-colors hover:brightness-105"
+              >
+                {t("confirmStatusChangeAction")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Cancel order modal */}
       {cancelOrder && (
         <div
@@ -609,6 +766,10 @@ export default function AdminDashboard() {
               <p className="text-admin-muted">
                 <span className="font-semibold text-admin-ink">{t("total")}:</span> ₪
                 {selectedOrder.total_price.toFixed(2)}
+              </p>
+              <p className="text-admin-muted">
+                <span className="font-semibold text-admin-ink">{t("adminPaymentMethod")}:</span>{" "}
+                {paymentMethodLabel(selectedOrder.payment_method)}
               </p>
               <p className="sm:col-span-2 text-admin-muted">
                 <span className="font-semibold text-admin-ink">{t("adminFulfillment")}:</span>{" "}
@@ -803,7 +964,6 @@ export default function AdminDashboard() {
                       rowStatusColors[order.status] ?? rowStatusColors.pending;
                     const Icon =
                       rowStatusIcons[order.status] ?? Clock;
-                    const terminal = isTerminal(order.status);
                     const tKey =
                       order.status === "cancelled"
                         ? null
@@ -811,12 +971,13 @@ export default function AdminDashboard() {
                             status: order.status as OrderStatus,
                             fulfillment_type: order.fulfillment_type,
                           });
-                    const selectable = terminal
-                      ? []
-                      : adminSelectableStatuses({
-                          current: order.status as OrderStatus,
-                          fulfillment,
-                        });
+                    const nextStatus = nextAdminOrderStatus({
+                      current: order.status as OrderStatus | "cancelled",
+                      fulfillment,
+                    });
+                    const nextStatusColor = nextStatus
+                      ? (rowStatusColors[nextStatus] ?? rowStatusColors.pending).color
+                      : "";
                     return (
                       <tr
                         key={order.id}
@@ -851,9 +1012,7 @@ export default function AdminDashboard() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-admin-muted">
-                          {(order.payment_method ?? "cash_on_delivery") === "cash_on_delivery"
-                            ? t("cashOnDelivery")
-                            : order.payment_method}
+                          {paymentMethodLabel(order.payment_method)}
                         </td>
                         <td className="px-4 py-3 text-admin-muted">
                           {order.items
@@ -883,27 +1042,27 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-1.5">
-                            {!terminal && (
-                              <select
-                                value={order.status}
-                                onChange={(e) =>
-                                  void updateStatus(order.id, e.target.value)
-                                }
-                                className="admin-input max-w-[13rem] px-2 py-1.5 text-xs"
+                            {nextStatus ? (
+                              <button
+                                type="button"
+                                onClick={() => handleAdminStatusChange(order, nextStatus)}
+                                className="inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-lg border border-admin-border bg-white px-2.5 py-1.5 text-xs font-medium text-admin-ink transition-colors hover:border-primary/40 hover:bg-[rgba(211,169,76,0.08)]"
                               >
-                                {selectable.map((opt) => (
-                                  <option key={opt} value={opt}>
+                                <CheckCircle className="h-3 w-3" />
+                                <span>
+                                  {t("markAs")}{" "}
+                                  <span className={nextStatusColor}>
                                     {t(
                                       orderStatusTranslationKey({
-                                        status: opt,
+                                        status: nextStatus,
                                         fulfillment_type: order.fulfillment_type,
                                       })
                                     )}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                            {!terminal && (
+                                  </span>
+                                </span>
+                              </button>
+                            ) : null}
+                            {nextStatus ? (
                               <button
                                 type="button"
                                 onClick={() => openCancelModal(order)}
@@ -912,7 +1071,7 @@ export default function AdminDashboard() {
                                 <XCircle className="h-3 w-3" />
                                 {t("cancelOrder")}
                               </button>
-                            )}
+                            ) : null}
                             <button
                               type="button"
                               onClick={() => setSelectedOrderId(order.id)}
@@ -921,6 +1080,18 @@ export default function AdminDashboard() {
                               <Eye className="h-3 w-3" />
                               {t("viewDetails")}
                             </button>
+                            {(order.fulfillment_type ?? "delivery") === "delivery" ? (
+                              <button
+                                type="button"
+                                onClick={() => void copyDriverLink(order)}
+                                className="inline-flex w-fit items-center gap-1 rounded-lg border border-admin-border px-2.5 py-1.5 text-xs font-medium text-admin-ink transition-colors hover:bg-[rgba(31,68,60,0.06)]"
+                              >
+                                <Copy className="h-3 w-3" />
+                                {copiedDriverLinkOrderId === order.id
+                                  ? t("driverLinkCopied")
+                                  : t("copyDriverLink")}
+                              </button>
+                            ) : null}
                           </div>
                         </td>
                       </tr>
@@ -1136,7 +1307,10 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-admin-ink">
-                      {locale === "ar" && product.name_ar ? product.name_ar : product.name}
+                      <span>{productDisplayName(product)}</span>
+                      <span className="ms-1 text-xs font-normal text-admin-muted">
+                        ({categoryDisplayName(product.category_id)})
+                      </span>
                     </p>
                     <p className="text-xs text-admin-muted">₪{product.price.toFixed(2)}</p>
                   </div>

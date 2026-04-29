@@ -20,7 +20,7 @@ export default function AuthErrorPage() {
             alt="Kalooda"
             width={160}
             height={82}
-            className="h-11 w-auto object-contain"
+            className="brand-logo-outline h-11 w-auto object-contain"
           />
         </Link>
         <LanguageSwitcher className="flex items-center gap-1.5 rounded-lg border border-[#1F443C]/12 bg-white/80 px-3 py-2 text-sm font-medium text-ink-soft hover:border-[#D3A94C]/35" />

@@ -209,7 +209,7 @@ function ProductModalHero({
 
   return (
     <div className="space-y-2 sm:space-y-3">
-      <div className="relative h-[min(22vh,152px)] w-full shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-[#EBE0D4] via-[#E5D9CC] to-[#DDD0C2] sm:h-[min(24vh,168px)]">
+      <div className="relative h-[min(30vh,220px)] w-full shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-[#EBE0D4] via-[#E5D9CC] to-[#DDD0C2] sm:h-[min(34vh,260px)]">
         {showImage ? (
           <>
             {!imgLoaded && (
@@ -380,6 +380,11 @@ export function ProductStorefrontModal({
           table: "product_options_junction",
           filter: `product_id=eq.${product.id}`,
         },
+        () => void loadBundle()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
         () => void loadBundle()
       )
       .subscribe();
@@ -564,16 +569,14 @@ export function ProductStorefrontModal({
         onClick={onClose}
       />
       <div className="relative flex max-h-[min(92vh,820px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#1F443C]/15 bg-[#fffcf8] shadow-[var(--shadow-elevated)]">
-        <div className="flex shrink-0 items-center justify-end border-b border-[#1F443C]/10 px-3 py-2 sm:px-5 sm:py-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full p-2 text-ink-soft hover:bg-[#1F443C]/8"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-3 top-3 z-10 rounded-full bg-[#fffcf8]/90 p-2 text-ink shadow-sm backdrop-blur hover:bg-[#fffcf8]"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5" />
+        </button>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4">
           <ProductModalHero
@@ -589,10 +592,7 @@ export function ProductStorefrontModal({
                 <p className="text-sm text-red-600">{state.error}</p>
               ) : step && optRow ? (
                 <>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft">
-                    {t("configure")}
-                  </p>
-                  <p className="mt-0.5 text-xs text-ink-soft">
+                  <p className="text-xs text-ink-soft">
                     {state.stepIndex + 1} / {visible.length}
                   </p>
                   <h3 className="mt-1 font-display text-lg font-semibold text-ink sm:text-xl">
@@ -612,9 +612,12 @@ export function ProductStorefrontModal({
                       const atCap = picks.length >= step.max_select;
                       const label =
                         locale === "ar" && c.name_ar ? c.name_ar : c.name_en;
+                      const priceMarkup = Number(c.price_markup) || 0;
                       const extra =
-                        Number(c.price_markup) > 0
-                          ? `+₪${Number(c.price_markup).toFixed(2)}`
+                        priceMarkup !== 0
+                          ? `${priceMarkup > 0 ? "+" : "-"}₪${Math.abs(
+                              priceMarkup
+                            ).toFixed(2)}`
                           : "";
                       return (
                         <li key={c.id}>
@@ -636,33 +639,54 @@ export function ProductStorefrontModal({
                                 <Minus className="h-4 w-4" />
                               </button>
                             ) : null}
-                            <button
-                              type="button"
-                              disabled={
-                                unavailable ||
-                                (!behavesAsSingle && atCap)
-                              }
-                              onClick={() => pickChoice(c.id)}
-                              className={`flex min-w-0 flex-1 items-center justify-between px-3 py-2.5 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                                !behavesAsSingle && !selected
-                                  ? "hover:border-[#D3A94C]/40"
-                                  : ""
-                              } ${behavesAsSingle && !selected ? "hover:border-[#D3A94C]/40" : ""} rounded-e-xl`}
-                            >
-                              <span className="flex items-center gap-2">
-                                {label}
-                                {!behavesAsSingle && countFor > 1 ? (
-                                  <span className="rounded-full bg-[#0A2923]/10 px-2 py-0.5 text-xs font-bold text-ink">
-                                    ×{countFor}
+                            {!behavesAsSingle && selected ? (
+                              <div className="flex min-w-0 flex-1 items-center justify-between px-3 py-2.5 text-left text-sm font-medium">
+                                <span className="flex items-center gap-2">
+                                  {label}
+                                  {countFor > 1 ? (
+                                    <span className="rounded-full bg-[#0A2923]/10 px-2 py-0.5 text-xs font-bold text-ink">
+                                      ×{countFor}
+                                    </span>
+                                  ) : null}
+                                </span>
+                                {extra ? (
+                                  <span className="shrink-0 text-xs text-ink-soft">
+                                    {extra}
                                   </span>
                                 ) : null}
-                              </span>
-                              {extra ? (
-                                <span className="shrink-0 text-xs text-ink-soft">
-                                  {extra}
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={unavailable || (!behavesAsSingle && atCap)}
+                                onClick={() => pickChoice(c.id)}
+                                className={`flex min-w-0 flex-1 items-center justify-between px-3 py-2.5 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                                  !behavesAsSingle
+                                    ? "hover:border-[#D3A94C]/40"
+                                    : ""
+                                } ${behavesAsSingle && !selected ? "hover:border-[#D3A94C]/40" : ""} rounded-e-xl`}
+                              >
+                                <span className="flex items-center gap-2">
+                                  {label}
                                 </span>
-                              ) : null}
-                            </button>
+                                {extra ? (
+                                  <span className="shrink-0 text-xs text-ink-soft">
+                                    {extra}
+                                  </span>
+                                ) : null}
+                              </button>
+                            )}
+                            {!behavesAsSingle && selected ? (
+                              <button
+                                type="button"
+                                disabled={unavailable || atCap}
+                                onClick={() => pickChoice(c.id)}
+                                className="flex w-11 shrink-0 items-center justify-center rounded-e-xl border-s border-[#D3A94C]/35 text-ink hover:bg-[#D3A94C]/15 disabled:cursor-not-allowed disabled:opacity-50"
+                                aria-label={t("optionAddOne")}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            ) : null}
                           </div>
                         </li>
                       );

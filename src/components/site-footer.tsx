@@ -22,7 +22,7 @@ export function SiteFooter() {
                 alt="Kalooda"
                 width={160}
                 height={82}
-                className="h-11 w-auto object-contain opacity-95 transition-opacity group-hover:opacity-100"
+                className="brand-logo-outline h-11 w-auto object-contain opacity-95 transition-opacity group-hover:opacity-100"
               />
             </Link>
           </div>

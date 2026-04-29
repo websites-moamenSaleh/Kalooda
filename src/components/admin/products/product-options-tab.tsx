@@ -28,7 +28,6 @@ type Junction = {
   min_select: number;
   max_select: number;
   items_free: number;
-  must_select_count: number;
 };
 
 type CatalogOption = {
@@ -49,7 +48,6 @@ function junctionsSignature(junctions: Junction[]): string {
       min: j.min_select,
       max: j.max_select,
       free: j.items_free,
-      must: j.must_select_count,
     }))
   );
 }
@@ -69,7 +67,6 @@ function normalizeSingleJunctionRow(
     min_select: 1,
     max_select: 1,
     items_free: 0,
-    must_select_count: 1,
   };
 }
 
@@ -88,7 +85,6 @@ function makeDraftJunction(
     min_select: isMultiple ? 0 : 1,
     max_select: isMultiple ? 50 : 1,
     items_free: 0,
-    must_select_count: isMultiple ? 0 : 1,
   };
 }
 
@@ -121,7 +117,6 @@ type JunctionUpsertBody = {
   min_select: number;
   max_select: number;
   items_free: number;
-  must_select_count: number;
 };
 
 function junctionPersistPayload(
@@ -137,7 +132,6 @@ function junctionPersistPayload(
       min_select: j.min_select,
       max_select: j.max_select,
       items_free: j.items_free,
-      must_select_count: j.must_select_count,
     };
   }
   if (o && o.type !== "multiple") {
@@ -147,7 +141,6 @@ function junctionPersistPayload(
       min_select: 1,
       max_select: 1,
       items_free: 0,
-      must_select_count: 1,
     };
   }
   return {
@@ -156,7 +149,6 @@ function junctionPersistPayload(
     min_select: j.min_select,
     max_select: j.max_select,
     items_free: j.items_free,
-    must_select_count: j.must_select_count,
   };
 }
 
@@ -189,7 +181,7 @@ function SortableJunctionRow({
 }: {
   junction: Junction;
   title: string;
-  /** Single-choice steps use fixed min/max/free/must; hide the quantity row. */
+  /** Single-choice steps use fixed min/max/free; hide the quantity row. */
   isSingleChoice: boolean;
   onDetach: () => void;
   onPatch: (partial: Partial<Junction>) => void;
@@ -227,7 +219,7 @@ function SortableJunctionRow({
       <div className="min-w-0 flex-1">
         <p className="font-medium text-admin-ink">{title}</p>
         {!isSingleChoice ? (
-          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
             <label className="text-xs text-admin-muted">
               min
               <input
@@ -260,22 +252,6 @@ function SortableJunctionRow({
                 value={junction.items_free}
                 onChange={(e) =>
                   onPatch({ items_free: Math.max(0, Number(e.target.value) || 0) })
-                }
-              />
-            </label>
-            <label className="text-xs text-admin-muted">
-              must
-              <input
-                type="number"
-                className="admin-input mt-1 w-full"
-                value={junction.must_select_count}
-                onChange={(e) =>
-                  onPatch({
-                    must_select_count: Math.max(
-                      0,
-                      Number(e.target.value) || 0
-                    ),
-                  })
                 }
               />
             </label>

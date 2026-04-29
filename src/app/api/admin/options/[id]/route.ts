@@ -19,6 +19,8 @@ const patchBodySchema = z.object({
   type: z.enum(["single", "multiple"]).optional(),
   title_en: z.string().trim().min(1).optional(),
   title_ar: z.string().trim().nullable().optional(),
+  choice_source: z.enum(["manual", "category_products"]).optional(),
+  source_category_id: z.string().uuid().nullable().optional(),
   show_to_courier: z.boolean().optional(),
   pos_id: z.string().trim().nullable().optional(),
   choices: z.array(choicePatch).optional(),
@@ -42,11 +44,24 @@ export async function PATCH(
       );
     }
     const body = parsed.data;
+    const isCategorySource = body.choice_source === "category_products";
+    if (isCategorySource && !body.source_category_id) {
+      return NextResponse.json(
+        { error: "source_category_id is required for category product choices" },
+        { status: 400 }
+      );
+    }
 
     const update: Record<string, unknown> = {};
     if (body.type !== undefined) update.type = body.type;
     if (body.title_en !== undefined) update.title_en = body.title_en;
     if (body.title_ar !== undefined) update.title_ar = body.title_ar?.trim() ?? null;
+    if (body.choice_source !== undefined) {
+      update.choice_source = body.choice_source;
+      update.source_category_id = isCategorySource ? body.source_category_id : null;
+    } else if (body.source_category_id !== undefined) {
+      update.source_category_id = body.source_category_id;
+    }
     if (body.show_to_courier !== undefined) update.show_to_courier = body.show_to_courier;
     if (body.pos_id !== undefined) update.pos_id = body.pos_id?.trim() || null;
     update.updated_at = new Date().toISOString();
@@ -59,7 +74,13 @@ export async function PATCH(
       if (uErr) throw uErr;
     }
 
-    if (body.choices) {
+    if (isCategorySource) {
+      const { error: dErr } = await supabaseAdmin
+        .from("option_choices")
+        .delete()
+        .eq("option_id", optionId);
+      if (dErr) throw dErr;
+    } else if (body.choices) {
       const { data: existing, error: exErr } = await supabaseAdmin
         .from("option_choices")
         .select("id")

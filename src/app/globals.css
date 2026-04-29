@@ -57,6 +57,15 @@ html[dir="rtl"] body {
   font-family: var(--font-display), "Georgia", serif;
 }
 
+.brand-logo-outline {
+  filter:
+    drop-shadow(0 0 0.45px #1f443c)
+    drop-shadow(0.45px 0 0 #1f443c)
+    drop-shadow(-0.45px 0 0 #1f443c)
+    drop-shadow(0 0.45px 0 #1f443c)
+    drop-shadow(0 -0.45px 0 #1f443c);
+}
+
 /* Premium surfaces */
 .surface-panel {
   background: linear-gradient(

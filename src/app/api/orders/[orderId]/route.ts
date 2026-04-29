@@ -44,6 +44,15 @@ export async function GET(
       if (data.delivery_token !== token) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
+      if (data.fulfillment_type === "pickup") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      if (
+        !data.delivery_token_expires_at ||
+        new Date(data.delivery_token_expires_at).getTime() <= Date.now()
+      ) {
+        return NextResponse.json({ error: "Delivery link expired" }, { status: 410 });
+      }
       return NextResponse.json(enrichedData);
     }
 
